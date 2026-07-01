@@ -114,11 +114,6 @@
   }
   .day-pill b{color:var(--white);font-weight:600;}
   .day-pill .tag{color:var(--orange);font-weight:600;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;}
-  .hero-panel--video{padding:16px;min-height:0;}
-  .hero-panel--video .label{margin-bottom:12px;color:var(--orange);display:flex;align-items:center;gap:8px;}
-  .hero-panel--video .label::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--orange);}
-  .video-embed{position:relative;width:100%;padding-top:56.25%;background:#000;border-radius:var(--radius);overflow:hidden;}
-  .video-embed iframe{position:absolute;top:0;left:0;width:100%;height:100%;}
 
   /* SECTION GENERIC */
   section{padding:96px 0;}
@@ -268,10 +263,14 @@
         <div class="stat"><b>Global</b><span>Hosted on UK time</span></div>
       </div>
     </div>
-    <div class="hero-panel hero-panel--video">
-      <div class="label">· Live · Town hall</div>
-      <div class="video-embed">
-        <iframe src="https://teams.microsoft.com/convene/townhall?eventId=5234ab50-5122-4075-b2f2-06864e464d00@3b1678f4-6247-41c3-8632-a82c85c20e2d&sessionId=6d99eedc-5f07-4361-bacc-3116b92582a0" frameborder="0" scrolling="no" allowfullscreen style="border:none;" allow="autoplay; camera; microphone"></iframe>
+    <div class="hero-panel">
+      <div class="label">This week at a glance</div>
+      <div class="week">
+        <div class="day-pill"><b>Mon 6 Jul</b><span class="tag">2 sessions</span></div>
+        <div class="day-pill"><b>Tue 7 Jul</b><span class="tag">4 sessions</span></div>
+        <div class="day-pill"><b>Wed 8 Jul</b><span class="tag">1 session</span></div>
+        <div class="day-pill"><b>Thu 9 Jul</b><span class="tag">3 sessions</span></div>
+        <div class="day-pill"><b>Fri 10 Jul</b><span class="tag">1 session</span></div>
       </div>
     </div>
   </div>
