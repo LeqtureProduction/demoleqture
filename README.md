@@ -1,6 +1,6 @@
 # Learning at Work Week 2026 — Quantexa
 
-A single-page site for Quantexa's Learning at Work Week 2026 (6–10 July), styled in Leqture's black/orange visual language. Content mirrors the original event page; design (colors, type, layout) is adapted from leqture.com.
+A single-page site for Quantexa's Learning at Work Week 2026 (6–10 July), styled in Leqture's black/purple visual language. Content mirrors the original event page; design (colors, type, layout) is adapted from leqture.com.
 
 ## Structure
 

@@ -168,6 +168,8 @@
   /* RECORDINGS */
   .rec-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:26px;margin-top:44px;}
   .rec-card{border:1px solid #232323;border-radius:var(--radius);overflow:hidden;background:#0e0e0e;}
+  a.rec-card{display:block;transition:border-color .15s;}
+  a.rec-card:hover{border-color:var(--purple);}
   .rec-thumb{
     height:190px;background:linear-gradient(150deg,#3a1a3a,#12060f);
     display:flex;align-items:center;justify-content:center;position:relative;
@@ -614,13 +616,13 @@
       <p>Missed a session, or in an awkward timezone? Every session is recorded and lands here within 24 hours, so you can watch back whenever suits you.</p>
     </div>
     <div class="rec-grid">
-      <div class="rec-card">
-        <div class="rec-thumb"><span class="avail-badge">Available soon</span><div class="play"></div></div>
+      <a class="rec-card" href="https://youtu.be/8qpad45mnCM" target="_blank" rel="noopener">
+        <div class="rec-thumb"><span class="avail-badge">Available now</span><div class="play"></div></div>
         <div class="rec-info">
           <div class="meta">Karim Benammar · Mon 6 Jul</div>
           <div class="title">Reframing AI: exploring radically different ways of working</div>
         </div>
-      </div>
+      </a>
       <div class="rec-card">
         <div class="rec-thumb"><span class="avail-badge">Available soon</span><div class="play"></div></div>
         <div class="rec-info">
