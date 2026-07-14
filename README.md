@@ -40,10 +40,14 @@ as static files.
 - **Shows only when you turn it on.** The site polls `/api/survey-state`
   every 15 seconds. Flip it on from `admin.html` and visitors currently on
   the page will see it within ~15 seconds; new visitors see it on load.
-  Once someone completes or closes it, their browser remembers
-  (`localStorage`) so they won't be nagged again on that device — this is
-  just a "don't re-annoy this visitor" flag, not where the actual answers
-  are stored.
+  Once someone completes or closes it, they see a "Thanks for your
+  feedback!" confirmation and the popup closes on its own. Their browser
+  then remembers that specific round (`localStorage`, keyed to the
+  survey's activation timestamp) so they won't be nagged again on that
+  device *for that round* — this is just a "don't re-annoy this visitor"
+  flag, not where the actual answers are stored. If you turn the survey
+  off and later on again, that's a new round: everyone, including people
+  who already answered before, gets a blank form again.
 
 ## Admin: triggering the survey and getting results
 
