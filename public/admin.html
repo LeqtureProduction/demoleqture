@@ -66,6 +66,13 @@
   .actions .btn{flex:1;}
   .divider{border-top:1px solid #232323;margin:22px 0;}
   .hint{font-size:11.5px;color:var(--gray);margin-top:18px;line-height:1.5;}
+  textarea.announce-textarea{
+    width:100%;background:#0e0e0e;border:1px solid #262626;border-radius:var(--radius);
+    padding:11px 13px;color:var(--white);font-family:'Inter',sans-serif;font-size:13.5px;
+    resize:vertical;min-height:70px;outline:none;transition:border-color .15s;margin-bottom:12px;
+  }
+  textarea.announce-textarea:focus{border-color:var(--purple);}
+  .char-count{font-size:11px;color:var(--gray);text-align:right;margin:-6px 0 12px;}
 </style>
 </head>
 <body>
@@ -104,6 +111,20 @@
       </div>
 
       <p class="hint">Turning the survey on makes it appear for visitors, within about 15 seconds. Click refresh to load the new survey responses.</p>
+
+      <div class="divider"></div>
+
+      <div class="status-row">
+        <span>Site announcement</span>
+        <span class="badge" id="announce-badge">—</span>
+      </div>
+      <textarea id="announce-input" class="announce-textarea" maxlength="300" placeholder="Type a message to show on the site&hellip;"></textarea>
+      <div class="char-count"><span id="announce-charcount">0</span>/300</div>
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="announce-publish">Publish</button>
+        <button type="button" class="btn btn-outline" id="announce-clear">Clear</button>
+      </div>
+      <p class="hint">Publishing shows this message in a bar at the top of the site for everyone within about 15 seconds, until you clear it or publish something else.</p>
     </div>
   </div>
 </div>
@@ -122,6 +143,11 @@
   var refreshBtn = document.getElementById("refresh-btn");
   var downloadCsvBtn = document.getElementById("download-csv");
   var downloadJsonBtn = document.getElementById("download-json");
+  var announceInput = document.getElementById("announce-input");
+  var announceCharcount = document.getElementById("announce-charcount");
+  var announceBadge = document.getElementById("announce-badge");
+  var announcePublishBtn = document.getElementById("announce-publish");
+  var announceClearBtn = document.getElementById("announce-clear");
   var currentActive = false;
 
   try { key = sessionStorage.getItem("qxa_admin_key") || ""; } catch (e) {}
@@ -145,6 +171,7 @@
         countBadge.textContent = list.length;
         gate.hidden = true;
         panel.hidden = false;
+        fetchAnnouncement();
         return fetchState();
       })
       .catch(function (err) {
@@ -187,7 +214,7 @@
       .finally(function () { toggleBtn.disabled = false; });
   });
 
-  refreshBtn.addEventListener("click", function () { fetchState(); refreshCount(); });
+  refreshBtn.addEventListener("click", function () { fetchState(); refreshCount(); fetchAnnouncement(); });
 
   function refreshCount() {
     fetch("/api/survey-export?format=json", { headers: { "x-admin-key": key }, cache: "no-store" })
@@ -220,6 +247,56 @@
 
   downloadCsvBtn.addEventListener("click", function () { download("csv"); });
   downloadJsonBtn.addEventListener("click", function () { download("json"); });
+
+  announceInput.addEventListener("input", function () {
+    announceCharcount.textContent = announceInput.value.length;
+  });
+
+  function fetchAnnouncement() {
+    return fetch("/api/announcement", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var text = (data && data.text) || "";
+        announceInput.value = text;
+        announceCharcount.textContent = text.length;
+        announceBadge.textContent = text ? "LIVE" : "NONE";
+        announceBadge.className = "badge " + (text ? "badge-on" : "");
+      })
+      .catch(function () {});
+  }
+
+  function publishAnnouncement(text) {
+    announcePublishBtn.disabled = true;
+    announceClearBtn.disabled = true;
+    fetch("/api/announcement", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify({ text: text }),
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error("Request failed (" + r.status + ").");
+        return r.json();
+      })
+      .then(function (data) {
+        var t = (data.state && data.state.text) || "";
+        announceInput.value = t;
+        announceCharcount.textContent = t.length;
+        announceBadge.textContent = t ? "LIVE" : "NONE";
+        announceBadge.className = "badge " + (t ? "badge-on" : "");
+      })
+      .catch(function (err) { alert(err.message); })
+      .finally(function () {
+        announcePublishBtn.disabled = false;
+        announceClearBtn.disabled = false;
+      });
+  }
+
+  announcePublishBtn.addEventListener("click", function () {
+    publishAnnouncement(announceInput.value.trim());
+  });
+  announceClearBtn.addEventListener("click", function () {
+    publishAnnouncement("");
+  });
 })();
 </script>
 </body>

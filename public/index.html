@@ -204,6 +204,21 @@
   }
   .footer-bottom b{color:#1f0a33;}
 
+  /* ANNOUNCEMENT BAR */
+  .announce-bar{background:var(--purple);color:#1f0a33;}
+  .announce-bar[hidden]{display:none;}
+  .announce-inner{
+    position:relative;display:flex;align-items:center;justify-content:center;
+    padding:10px 44px;gap:12px;
+  }
+  .announce-text{font-size:13.5px;font-weight:600;text-align:center;line-height:1.4;}
+  .announce-close{
+    position:absolute;right:20px;top:50%;transform:translateY(-50%);
+    width:24px;height:24px;border:none;background:transparent;color:#1f0a33;
+    font-size:17px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:.7;
+  }
+  .announce-close:hover{opacity:1;}
+
   /* SURVEY */
   .survey-overlay{
     position:fixed;inset:0;z-index:200;background:rgba(10,10,10,0.72);
@@ -265,6 +280,13 @@
 </style>
 </head>
 <body>
+<div class="announce-bar" id="announce-bar" hidden>
+  <div class="wrap announce-inner">
+    <span class="announce-text" id="announce-text"></span>
+    <button type="button" class="announce-close" id="announce-close" aria-label="Dismiss announcement">&times;</button>
+  </div>
+</div>
+
 
 <header class="nav">
   <div class="nav-inner">
@@ -914,6 +936,48 @@
   checkState();
   setInterval(function () { if (!document.hidden) checkState(); }, 15000);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) checkState(); });
+})();
+</script>
+<script>
+(function () {
+  var bar = document.getElementById("announce-bar");
+  var textEl = document.getElementById("announce-text");
+  var closeBtn = document.getElementById("announce-close");
+  var DISMISS_KEY = "qxa_announce_dismissed";
+  var dismissedId = null;
+  try { dismissedId = localStorage.getItem(DISMISS_KEY); } catch (e) {}
+  var currentId = null;
+
+  closeBtn.addEventListener("click", function () {
+    bar.hidden = true;
+    if (currentId) {
+      dismissedId = currentId;
+      try { localStorage.setItem(DISMISS_KEY, currentId); } catch (e) {}
+    }
+  });
+
+  function check() {
+    fetch("/api/announcement", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data || !data.text) {
+          bar.hidden = true;
+          return;
+        }
+        currentId = String(data.updated_at);
+        if (currentId === dismissedId) {
+          bar.hidden = true;
+          return;
+        }
+        textEl.textContent = data.text;
+        bar.hidden = false;
+      })
+      .catch(function () {});
+  }
+
+  check();
+  setInterval(function () { if (!document.hidden) check(); }, 15000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
 })();
 </script>
 </body>

@@ -14,6 +14,7 @@ netlify/functions/         → serverless functions
   survey-state.mjs           GET (public): is the survey on? / POST (admin): turn it on or off
   survey-response.mjs        POST: create/update a response, backed by Netlify Blobs
   survey-export.mjs          GET (admin): download all responses as CSV or JSON
+  announcement.mjs           GET (public): current site announcement / POST (admin): publish or clear it
 netlify.toml                publish = "public", functions directory
 package.json                 @netlify/blobs dependency
 ```
@@ -49,6 +50,24 @@ as static files.
   off and later on again, that's a new round: everyone, including people
   who already answered before, gets a blank form again.
 
+## Site announcement bar
+
+A separate feature from the survey: a one-line message you can push to the
+site whenever you want, e.g. "Lunch is now being served in the atrium."
+
+- It shows as a bar across the top of the page, styled in the site's purple.
+- Visitors poll for it every 15 seconds, same as the survey.
+- Each visitor can dismiss it with the × — dismissing is remembered per
+  message (`localStorage`, keyed to when it was published), so publishing a
+  new message, or re-publishing after clearing it, shows up again for
+  everyone even if they dismissed an earlier one.
+- Clearing it (empty text) hides it for everyone within ~15 seconds.
+- Backed by `announcement.mjs` / Netlify Blobs, same strong-consistency
+  pattern as everything else here — nothing shared is ever kept only in
+  `localStorage`.
+
+Controlled from the same `admin.html` page as the survey — see below.
+
 ## Admin: triggering the survey and getting results
 
 Open `/admin.html` on your deployed site (e.g.
@@ -69,6 +88,9 @@ downloading responses, not meant as strong security.
    in-progress popup).
 4. **Download CSV** or **Download JSON** any time to get everything
    collected so far.
+5. Under **Site announcement**, type a message and click **Publish** to push
+   it live, or **Clear** to take it down. The box shows whatever is
+   currently live when you unlock the page.
 
 ## Setup
 
@@ -83,7 +105,7 @@ npm install -g netlify-cli   # if you don't have it
 netlify dev                  # run from the project root, not from inside public/
 ```
 
-This serves `public/` and runs all three functions together (with a local
+This serves `public/` and runs all four functions together (with a local
 Blobs emulator) at `http://localhost:8888`. Opening `index.html` directly as
 a file (double-click / `file://`) will never work for the survey — there's
 no server behind it in that case.
@@ -96,8 +118,8 @@ netlify link                  # or: netlify init, to create a new site
 netlify deploy --prod
 ```
 
-Confirm the deploy summary lists **3 functions** (`survey-state`,
-`survey-response`, `survey-export`). If it says 0, you're deploying from
+Confirm the deploy summary lists **4 functions** (`survey-state`,
+`survey-response`, `survey-export`, `announcement`). If it says 0, you're deploying from
 inside `public/` instead of the project root.
 
 Don't forget to set `ADMIN_KEY` (see above) — without it, every admin action
@@ -119,18 +141,27 @@ curl -X POST https://<site>/api/survey-response -H "content-type: application/js
 
 # 3. Download everything and confirm both fields are on the same row
 curl -H "x-admin-key: <key>" https://<site>/api/survey-export
+
+# 4. Publish an announcement, then confirm it, then clear it
+curl -X POST https://<site>/api/announcement -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"text":"Test announcement"}'
+curl https://<site>/api/announcement   # should show {"text":"Test announcement",...}
+curl -X POST https://<site>/api/announcement -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"text":""}'
+curl https://<site>/api/announcement   # should show {"text":"",...}
 ```
 
 Then manually:
 
-4. Open the live URL in a normal window with the survey on — it should
+5. Open the live URL in a normal window with the survey on — it should
    appear. Rate both stars, confirm the close (×) button becomes clickable,
    close it, and check `admin.html`'s response count went up by one.
-5. Open it again in an incognito window, fill all 5 fields and hit
+6. Open it again in an incognito window, fill all 5 fields and hit
    **Submit feedback**, then confirm that response also shows up in the
    CSV/JSON download with `complete = true`.
-6. Load the site on mobile and confirm the popup and star buttons are
+7. Load the site on mobile and confirm the popup and star buttons are
    usable at that width.
+8. Publish an announcement from `admin.html` and confirm the purple bar
+   shows up at the top of the site within ~15 seconds, that the × dismisses
+   it, and that **Clear** removes it for everyone.
 
 ## Before a live event
 
