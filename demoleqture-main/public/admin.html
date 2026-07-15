@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Survey admin | Demo Leqture</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --black:#0a0a0a;
+    --purple:#a855f7;
+    --purple-dark:#7c3aed;
+    --white:#ffffff;
+    --gray:#9a9a95;
+    --gray-dark:#565550;
+    --radius:2px;
+    --green:#3ecf8e;
+    --red:#f26d6d;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;min-height:100vh;background:var(--black);color:var(--white);
+    font-family:'Inter',Arial,Helvetica,sans-serif;
+    display:flex;align-items:center;justify-content:center;padding:24px;
+  }
+  h1,h2,h3{font-family:'Poppins',Arial,sans-serif;margin:0;line-height:1.15;}
+  .wrap{width:100%;max-width:480px;}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:12.5px;
+    letter-spacing:0.14em;text-transform:uppercase;color:var(--purple);
+  }
+  .eyebrow::before{content:"";width:6px;height:6px;background:var(--purple);border-radius:50%;display:inline-block;}
+  .card{
+    border:1px solid #2c2c2c;border-radius:var(--radius);padding:28px;
+    background:linear-gradient(155deg,#141414,#0a0a0a);
+  }
+  h1{font-size:22px;font-weight:800;margin:14px 0 8px;}
+  .lede{font-size:13.5px;color:#c7c5bf;line-height:1.55;margin-bottom:22px;}
+  label{display:block;font-weight:600;font-size:13px;margin-bottom:8px;}
+  input[type="password"], input[type="text"]{
+    width:100%;background:#0e0e0e;border:1px solid #262626;border-radius:var(--radius);
+    padding:11px 13px;color:var(--white);font-family:'Inter',sans-serif;font-size:13.5px;
+    outline:none;transition:border-color .15s;margin-bottom:12px;
+  }
+  input[type="password"]:focus, input[type="text"]:focus{border-color:var(--purple);}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    font-family:'Inter',sans-serif;font-weight:600;font-size:14px;
+    padding:11px 18px;border-radius:var(--radius);cursor:pointer;
+    border:1px solid transparent;transition:all .15s;white-space:nowrap;width:100%;
+  }
+  .btn-primary{background:var(--purple);color:#1f0a33;}
+  .btn-primary:hover{background:var(--purple-dark);}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-outline{border-color:#3a3a3a;color:var(--white);background:transparent;}
+  .btn-outline:hover{border-color:var(--white);}
+  .error{color:var(--red);font-size:13px;margin-top:4px;}
+  .status-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;font-size:14px;}
+  .badge{font-family:'Poppins',sans-serif;font-weight:700;font-size:13px;padding:4px 12px;border-radius:20px;background:#1c1c1c;color:var(--gray);}
+  .badge-on{background:rgba(62,207,142,0.15);color:var(--green);}
+  .badge-off{background:rgba(242,109,109,0.15);color:var(--red);}
+  .actions{display:flex;gap:10px;margin-bottom:22px;}
+  .actions .btn{flex:1;}
+  .divider{border-top:1px solid #232323;margin:22px 0;}
+  .hint{font-size:11.5px;color:var(--gray);margin-top:18px;line-height:1.5;}
+  textarea.announce-textarea{
+    width:100%;background:#0e0e0e;border:1px solid #262626;border-radius:var(--radius);
+    padding:11px 13px;color:var(--white);font-family:'Inter',sans-serif;font-size:13.5px;
+    resize:vertical;min-height:70px;outline:none;transition:border-color .15s;margin-bottom:12px;
+  }
+  textarea.announce-textarea:focus{border-color:var(--purple);}
+  .char-count{font-size:11px;color:var(--gray);text-align:right;margin:-6px 0 12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <span class="eyebrow">Admin</span>
+    <h1>Survey controls</h1>
+    <p class="lede">Enter the admin key to switch the live survey on or off, and to download the responses collected so far.</p>
+
+    <div id="gate">
+      <label for="admin-key">Admin key</label>
+      <input type="password" id="admin-key" placeholder="Enter admin key" autocomplete="off" />
+      <button type="button" class="btn btn-primary" id="unlock-btn">Unlock</button>
+      <div class="error" id="gate-error" hidden></div>
+    </div>
+
+    <div id="panel" hidden>
+      <div class="status-row">
+        <span>Survey is currently</span>
+        <span class="badge" id="state-badge">—</span>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="toggle-btn">Turn on</button>
+        <button type="button" class="btn btn-outline" id="refresh-btn">Refresh</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="status-row">
+        <span>Responses collected</span>
+        <span class="badge" id="count-badge">—</span>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="download-csv">Download CSV</button>
+        <button type="button" class="btn btn-outline" id="download-json">Download JSON</button>
+      </div>
+
+      <p class="hint">Turning the survey on makes it appear for visitors, within about 15 seconds. Click refresh to load the new survey responses.</p>
+
+      <div class="divider"></div>
+
+      <div class="status-row">
+        <span>Site announcement</span>
+        <span class="badge" id="announce-badge">—</span>
+      </div>
+      <textarea id="announce-input" class="announce-textarea" maxlength="300" placeholder="Type a message to show on the site&hellip;"></textarea>
+      <div class="char-count"><span id="announce-charcount">0</span>/300</div>
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="announce-publish">Publish</button>
+        <button type="button" class="btn btn-outline" id="announce-clear">Clear</button>
+      </div>
+      <p class="hint">Publishing shows this message in a bar at the top of the site for everyone within about 15 seconds, until you clear it or publish something else.</p>
+
+      <div class="divider"></div>
+
+      <div class="status-row">
+        <span>Hero video player</span>
+        <span class="badge" id="player-badge">—</span>
+      </div>
+      <input type="text" id="player-input" placeholder="Paste a YouTube or Clevercast link&hellip;" autocomplete="off" />
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="player-publish">Publish</button>
+        <button type="button" class="btn btn-outline" id="player-off">Turn off</button>
+      </div>
+      <p class="hint">Shows a live player to the right of the main heading for everyone within about 15 seconds. Paste any normal YouTube link (watch, youtu.be, or /live/) or a Clevercast embed link. Publishing a new link replaces the old one; Turn off removes it until you publish again.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var key = "";
+  var gate = document.getElementById("gate");
+  var panel = document.getElementById("panel");
+  var keyInput = document.getElementById("admin-key");
+  var unlockBtn = document.getElementById("unlock-btn");
+  var gateError = document.getElementById("gate-error");
+  var stateBadge = document.getElementById("state-badge");
+  var countBadge = document.getElementById("count-badge");
+  var toggleBtn = document.getElementById("toggle-btn");
+  var refreshBtn = document.getElementById("refresh-btn");
+  var downloadCsvBtn = document.getElementById("download-csv");
+  var downloadJsonBtn = document.getElementById("download-json");
+  var announceInput = document.getElementById("announce-input");
+  var announceCharcount = document.getElementById("announce-charcount");
+  var announceBadge = document.getElementById("announce-badge");
+  var announcePublishBtn = document.getElementById("announce-publish");
+  var announceClearBtn = document.getElementById("announce-clear");
+  var playerInput = document.getElementById("player-input");
+  var playerBadge = document.getElementById("player-badge");
+  var playerPublishBtn = document.getElementById("player-publish");
+  var playerOffBtn = document.getElementById("player-off");
+  var currentActive = false;
+
+  try { key = sessionStorage.getItem("qxa_admin_key") || ""; } catch (e) {}
+  if (key) { keyInput.value = key; unlock(); }
+
+  unlockBtn.addEventListener("click", function () { key = keyInput.value.trim(); unlock(); });
+  keyInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { key = keyInput.value.trim(); unlock(); }
+  });
+
+  function unlock() {
+    if (!key) return;
+    gateError.hidden = true;
+    fetch("/api/survey-export?format=json", { headers: { "x-admin-key": key }, cache: "no-store" })
+      .then(function (r) {
+        if (!r.ok) throw new Error(r.status === 401 ? "Incorrect admin key." : "Request failed (" + r.status + ").");
+        return r.json();
+      })
+      .then(function (list) {
+        try { sessionStorage.setItem("qxa_admin_key", key); } catch (e) {}
+        countBadge.textContent = list.length;
+        gate.hidden = true;
+        panel.hidden = false;
+        fetchAnnouncement();
+        fetchPlayer();
+        return fetchState();
+      })
+      .catch(function (err) {
+        gateError.textContent = err.message || "Could not verify key.";
+        gateError.hidden = false;
+      });
+  }
+
+  function fetchState() {
+    return fetch("/api/survey-state", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        currentActive = !!(data && data.active);
+        renderState();
+      });
+  }
+
+  function renderState() {
+    stateBadge.textContent = currentActive ? "ON" : "OFF";
+    stateBadge.className = "badge " + (currentActive ? "badge-on" : "badge-off");
+    toggleBtn.textContent = currentActive ? "Turn off" : "Turn on";
+  }
+
+  toggleBtn.addEventListener("click", function () {
+    toggleBtn.disabled = true;
+    fetch("/api/survey-state", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify({ active: !currentActive }),
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error("Request failed (" + r.status + ").");
+        return r.json();
+      })
+      .then(function (data) {
+        currentActive = !!(data.state && data.state.active);
+        renderState();
+      })
+      .catch(function (err) { alert(err.message); })
+      .finally(function () { toggleBtn.disabled = false; });
+  });
+
+  refreshBtn.addEventListener("click", function () { fetchState(); refreshCount(); fetchAnnouncement(); fetchPlayer(); });
+
+  function refreshCount() {
+    fetch("/api/survey-export?format=json", { headers: { "x-admin-key": key }, cache: "no-store" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("Request failed (" + r.status + ").");
+        return r.json();
+      })
+      .then(function (list) { countBadge.textContent = list.length; })
+      .catch(function () { countBadge.textContent = "—"; });
+  }
+
+  function download(format) {
+    fetch("/api/survey-export" + (format === "json" ? "?format=json" : ""), { headers: { "x-admin-key": key } })
+      .then(function (r) {
+        if (!r.ok) throw new Error("Request failed (" + r.status + ").");
+        return r.blob();
+      })
+      .then(function (blob) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = format === "json" ? "survey-responses.json" : "survey-responses.csv";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      })
+      .catch(function (err) { alert(err.message); });
+  }
+
+  downloadCsvBtn.addEventListener("click", function () { download("csv"); });
+  downloadJsonBtn.addEventListener("click", function () { download("json"); });
+
+  announceInput.addEventListener("input", function () {
+    announceCharcount.textContent = announceInput.value.length;
+  });
+
+  function fetchAnnouncement() {
+    return fetch("/api/announcement", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var text = (data && data.text) || "";
+        announceInput.value = text;
+        announceCharcount.textContent = text.length;
+        announceBadge.textContent = text ? "LIVE" : "NONE";
+        announceBadge.className = "badge " + (text ? "badge-on" : "");
+      })
+      .catch(function () {});
+  }
+
+  function publishAnnouncement(text) {
+    announcePublishBtn.disabled = true;
+    announceClearBtn.disabled = true;
+    fetch("/api/announcement", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify({ text: text }),
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error("Request failed (" + r.status + ").");
+        return r.json();
+      })
+      .then(function (data) {
+        var t = (data.state && data.state.text) || "";
+        announceInput.value = t;
+        announceCharcount.textContent = t.length;
+        announceBadge.textContent = t ? "LIVE" : "NONE";
+        announceBadge.className = "badge " + (t ? "badge-on" : "");
+      })
+      .catch(function (err) { alert(err.message); })
+      .finally(function () {
+        announcePublishBtn.disabled = false;
+        announceClearBtn.disabled = false;
+      });
+  }
+
+  announcePublishBtn.addEventListener("click", function () {
+    publishAnnouncement(announceInput.value.trim());
+  });
+  announceClearBtn.addEventListener("click", function () {
+    publishAnnouncement("");
+  });
+
+  function fetchPlayer() {
+    return fetch("/api/player", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var url = (data && data.url) || "";
+        playerInput.value = url;
+        playerBadge.textContent = url ? "LIVE" : "NONE";
+        playerBadge.className = "badge " + (url ? "badge-on" : "");
+      })
+      .catch(function () {});
+  }
+
+  function publishPlayer(url) {
+    playerPublishBtn.disabled = true;
+    playerOffBtn.disabled = true;
+    fetch("/api/player", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify({ url: url }),
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error("Request failed (" + r.status + ").");
+        return r.json();
+      })
+      .then(function (data) {
+        var u = (data.state && data.state.url) || "";
+        playerInput.value = u;
+        playerBadge.textContent = u ? "LIVE" : "NONE";
+        playerBadge.className = "badge " + (u ? "badge-on" : "");
+      })
+      .catch(function (err) { alert(err.message); })
+      .finally(function () {
+        playerPublishBtn.disabled = false;
+        playerOffBtn.disabled = false;
+      });
+  }
+
+  playerPublishBtn.addEventListener("click", function () {
+    publishPlayer(playerInput.value.trim());
+  });
+  playerOffBtn.addEventListener("click", function () {
+    publishPlayer("");
+  });
+})();
+</script>
+</body>
+</html>
