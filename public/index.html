@@ -88,6 +88,7 @@
   /* HERO */
   .hero{background:var(--black);padding:96px 0 72px;position:relative;overflow:hidden;}
   .hero-grid{display:grid;grid-template-columns:1fr;gap:56px;align-items:center;}
+  .hero-grid.has-player{grid-template-columns:1.15fr 0.85fr;}
   .hero h1{font-size:60px;font-weight:800;color:var(--white);margin:22px 0 22px;}
   .hero h1 em{font-style:normal;color:var(--purple);}
   .hero h1 .dot{color:var(--purple);}
@@ -204,6 +205,21 @@
   }
   .footer-bottom b{color:#1f0a33;}
 
+  /* HERO PLAYER */
+  .hero-panel{
+    display:none;
+    border:1px solid #2c2c2c;border-radius:var(--radius);padding:16px;
+    background:linear-gradient(155deg,#141414,#0a0a0a);
+  }
+  .hero-grid.has-player .hero-panel{display:block;}
+  .hero-panel .label{
+    font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--purple);
+    margin-bottom:12px;display:flex;align-items:center;gap:8px;
+  }
+  .hero-panel .label::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--purple);display:inline-block;}
+  .video-embed{position:relative;width:100%;padding-top:56.25%;background:#000;border-radius:var(--radius);overflow:hidden;}
+  .video-embed iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
+
   /* ANNOUNCEMENT BAR */
   .announce-bar{background:var(--purple);color:#1f0a33;}
   .announce-bar[hidden]{display:none;}
@@ -316,6 +332,12 @@
         <div class="stat"><b>5 days</b><span>6–10 July 2026</span></div>
         <div class="stat"><b>11 sessions</b><span>Live &amp; on demand</span></div>
         <div class="stat"><b>Global</b><span>Hosted on UK time</span></div>
+      </div>
+    </div>
+    <div class="hero-panel" id="hero-player-panel">
+      <div class="label">Live now</div>
+      <div class="video-embed">
+        <iframe id="hero-player-iframe" src="" title="Live stream" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>
       </div>
     </div>
   </div>
@@ -971,6 +993,67 @@
         }
         textEl.textContent = data.text;
         bar.hidden = false;
+      })
+      .catch(function () {});
+  }
+
+  check();
+  setInterval(function () { if (!document.hidden) check(); }, 15000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
+})();
+</script>
+<script>
+(function () {
+  var grid = document.querySelector(".hero-grid");
+  var panel = document.getElementById("hero-player-panel");
+  var iframe = document.getElementById("hero-player-iframe");
+  var currentRawUrl = "";
+
+  // Turns a normal YouTube watch/share/live link into its embeddable form.
+  // Anything else (Clevercast embed links, or an already-embeddable URL of
+  // any kind) is used exactly as pasted in the admin panel.
+  function toEmbedUrl(raw) {
+    try {
+      var u = new URL(raw);
+      var host = u.hostname.replace(/^www\./, "");
+      if (host === "youtu.be") {
+        var id = u.pathname.slice(1);
+        return id ? "https://www.youtube.com/embed/" + id : raw;
+      }
+      if (host === "youtube.com" || host === "m.youtube.com") {
+        if (u.pathname === "/watch") {
+          var v = u.searchParams.get("v");
+          if (v) return "https://www.youtube.com/embed/" + v;
+        }
+        if (u.pathname.indexOf("/live/") === 0) {
+          var parts = u.pathname.split("/");
+          if (parts[2]) return "https://www.youtube.com/embed/" + parts[2];
+        }
+        if (u.pathname.indexOf("/embed/") === 0) return raw;
+      }
+      return raw;
+    } catch (e) {
+      return raw;
+    }
+  }
+
+  function check() {
+    fetch("/api/player", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var url = (data && data.url) || "";
+        if (!url) {
+          if (currentRawUrl) {
+            currentRawUrl = "";
+            iframe.src = "";
+            grid.classList.remove("has-player");
+          }
+          return;
+        }
+        if (url === currentRawUrl) return;
+        currentRawUrl = url;
+        iframe.src = toEmbedUrl(url);
+        grid.classList.add("has-player");
       })
       .catch(function () {});
   }

@@ -40,12 +40,12 @@
   h1{font-size:22px;font-weight:800;margin:14px 0 8px;}
   .lede{font-size:13.5px;color:#c7c5bf;line-height:1.55;margin-bottom:22px;}
   label{display:block;font-weight:600;font-size:13px;margin-bottom:8px;}
-  input[type="password"]{
+  input[type="password"], input[type="text"]{
     width:100%;background:#0e0e0e;border:1px solid #262626;border-radius:var(--radius);
     padding:11px 13px;color:var(--white);font-family:'Inter',sans-serif;font-size:13.5px;
     outline:none;transition:border-color .15s;margin-bottom:12px;
   }
-  input[type="password"]:focus{border-color:var(--purple);}
+  input[type="password"]:focus, input[type="text"]:focus{border-color:var(--purple);}
   .btn{
     display:inline-flex;align-items:center;justify-content:center;gap:8px;
     font-family:'Inter',sans-serif;font-weight:600;font-size:14px;
@@ -125,6 +125,19 @@
         <button type="button" class="btn btn-outline" id="announce-clear">Clear</button>
       </div>
       <p class="hint">Publishing shows this message in a bar at the top of the site for everyone within about 15 seconds, until you clear it or publish something else.</p>
+
+      <div class="divider"></div>
+
+      <div class="status-row">
+        <span>Hero video player</span>
+        <span class="badge" id="player-badge">—</span>
+      </div>
+      <input type="text" id="player-input" placeholder="Paste a YouTube or Clevercast link&hellip;" autocomplete="off" />
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="player-publish">Publish</button>
+        <button type="button" class="btn btn-outline" id="player-off">Turn off</button>
+      </div>
+      <p class="hint">Shows a live player to the right of the main heading for everyone within about 15 seconds. Paste any normal YouTube link (watch, youtu.be, or /live/) or a Clevercast embed link. Publishing a new link replaces the old one; Turn off removes it until you publish again.</p>
     </div>
   </div>
 </div>
@@ -148,6 +161,10 @@
   var announceBadge = document.getElementById("announce-badge");
   var announcePublishBtn = document.getElementById("announce-publish");
   var announceClearBtn = document.getElementById("announce-clear");
+  var playerInput = document.getElementById("player-input");
+  var playerBadge = document.getElementById("player-badge");
+  var playerPublishBtn = document.getElementById("player-publish");
+  var playerOffBtn = document.getElementById("player-off");
   var currentActive = false;
 
   try { key = sessionStorage.getItem("qxa_admin_key") || ""; } catch (e) {}
@@ -172,6 +189,7 @@
         gate.hidden = true;
         panel.hidden = false;
         fetchAnnouncement();
+        fetchPlayer();
         return fetchState();
       })
       .catch(function (err) {
@@ -214,7 +232,7 @@
       .finally(function () { toggleBtn.disabled = false; });
   });
 
-  refreshBtn.addEventListener("click", function () { fetchState(); refreshCount(); fetchAnnouncement(); });
+  refreshBtn.addEventListener("click", function () { fetchState(); refreshCount(); fetchAnnouncement(); fetchPlayer(); });
 
   function refreshCount() {
     fetch("/api/survey-export?format=json", { headers: { "x-admin-key": key }, cache: "no-store" })
@@ -296,6 +314,50 @@
   });
   announceClearBtn.addEventListener("click", function () {
     publishAnnouncement("");
+  });
+
+  function fetchPlayer() {
+    return fetch("/api/player", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var url = (data && data.url) || "";
+        playerInput.value = url;
+        playerBadge.textContent = url ? "LIVE" : "NONE";
+        playerBadge.className = "badge " + (url ? "badge-on" : "");
+      })
+      .catch(function () {});
+  }
+
+  function publishPlayer(url) {
+    playerPublishBtn.disabled = true;
+    playerOffBtn.disabled = true;
+    fetch("/api/player", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify({ url: url }),
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error("Request failed (" + r.status + ").");
+        return r.json();
+      })
+      .then(function (data) {
+        var u = (data.state && data.state.url) || "";
+        playerInput.value = u;
+        playerBadge.textContent = u ? "LIVE" : "NONE";
+        playerBadge.className = "badge " + (u ? "badge-on" : "");
+      })
+      .catch(function (err) { alert(err.message); })
+      .finally(function () {
+        playerPublishBtn.disabled = false;
+        playerOffBtn.disabled = false;
+      });
+  }
+
+  playerPublishBtn.addEventListener("click", function () {
+    publishPlayer(playerInput.value.trim());
+  });
+  playerOffBtn.addEventListener("click", function () {
+    publishPlayer("");
   });
 })();
 </script>
