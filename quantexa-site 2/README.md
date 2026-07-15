@@ -15,6 +15,7 @@ netlify/functions/         → serverless functions
   survey-response.mjs        POST: create/update a response, backed by Netlify Blobs
   survey-export.mjs          GET (admin): download all responses as CSV or JSON
   announcement.mjs           GET (public): current site announcement / POST (admin): publish or clear it
+  player.mjs                  GET (public): current hero video link / POST (admin): publish or turn it off
 netlify.toml                publish = "public", functions directory
 package.json                 @netlify/blobs dependency
 ```
@@ -68,6 +69,25 @@ site whenever you want, e.g. "Lunch is now being served in the atrium."
 
 Controlled from the same `admin.html` page as the survey — see below.
 
+## Hero video player
+
+Another independent feature: a live video/stream link you control from
+`admin.html`, shown to the right of the main heading.
+
+- Paste a normal YouTube link (a `/watch?v=...` URL, a `youtu.be/...` short
+  link, or a `/live/...` link) and the page converts it to the correct
+  embeddable form automatically. Paste a Clevercast (or any other) embed
+  link and it's used exactly as given.
+- The player only takes up its column when a link is actually set — with no
+  link published, the hero goes back to a single column, nothing reserved
+  for it.
+- Publishing a new link replaces whatever was showing; **Turn off** clears
+  it for everyone within ~15 seconds. There's no separate on/off switch —
+  an empty link is "off," same as the announcement bar.
+- Backed by `player.mjs` / Netlify Blobs, same pattern as the rest of this
+  site: the current link is public (anyone can GET it), only setting or
+  clearing it needs the admin key.
+
 ## Admin: triggering the survey and getting results
 
 Open `/admin.html` on your deployed site (e.g.
@@ -91,6 +111,9 @@ downloading responses, not meant as strong security.
 5. Under **Site announcement**, type a message and click **Publish** to push
    it live, or **Clear** to take it down. The box shows whatever is
    currently live when you unlock the page.
+6. Under **Hero video player**, paste a YouTube or Clevercast link and click
+   **Publish** to show it, or **Turn off** to remove it. Same box shows
+   whatever's currently live.
 
 ## Setup
 
@@ -105,7 +128,7 @@ npm install -g netlify-cli   # if you don't have it
 netlify dev                  # run from the project root, not from inside public/
 ```
 
-This serves `public/` and runs all four functions together (with a local
+This serves `public/` and runs all five functions together (with a local
 Blobs emulator) at `http://localhost:8888`. Opening `index.html` directly as
 a file (double-click / `file://`) will never work for the survey — there's
 no server behind it in that case.
@@ -118,8 +141,8 @@ netlify link                  # or: netlify init, to create a new site
 netlify deploy --prod
 ```
 
-Confirm the deploy summary lists **4 functions** (`survey-state`,
-`survey-response`, `survey-export`, `announcement`). If it says 0, you're deploying from
+Confirm the deploy summary lists **5 functions** (`survey-state`,
+`survey-response`, `survey-export`, `announcement`, `player`). If it says 0, you're deploying from
 inside `public/` instead of the project root.
 
 Don't forget to set `ADMIN_KEY` (see above) — without it, every admin action
@@ -147,6 +170,12 @@ curl -X POST https://<site>/api/announcement -H "content-type: application/json"
 curl https://<site>/api/announcement   # should show {"text":"Test announcement",...}
 curl -X POST https://<site>/api/announcement -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"text":""}'
 curl https://<site>/api/announcement   # should show {"text":"",...}
+
+# 5. Publish a hero player link, then turn it off
+curl -X POST https://<site>/api/player -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ"}'
+curl https://<site>/api/player   # should show the same url back
+curl -X POST https://<site>/api/player -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"url":""}'
+curl https://<site>/api/player   # should show {"url":"",...}
 ```
 
 Then manually:
@@ -162,6 +191,10 @@ Then manually:
 8. Publish an announcement from `admin.html` and confirm the purple bar
    shows up at the top of the site within ~15 seconds, that the × dismisses
    it, and that **Clear** removes it for everyone.
+9. Publish a YouTube link from `admin.html` and confirm the player appears
+   to the right of the heading within ~15 seconds, that the hero switches
+   to two columns only while it's showing, and that **Turn off** removes it
+   and collapses the hero back to one column.
 
 ## Before a live event
 

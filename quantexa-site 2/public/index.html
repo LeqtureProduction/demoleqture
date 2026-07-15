@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Learning at Work Week 2026 | Quantexa</title>
-<meta name="description" content="Quantexa's Learning at Work Week, live sessions on AI, communication and wellbeing, 6–10 July 2026.">
+<title>Learning at Work Week 2026 | Demo Leqture</title>
+<meta name="description" content="Demo Leqture's Learning at Work Week, live sessions on AI, communication and wellbeing, 6–10 July 2026.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -88,6 +88,7 @@
   /* HERO */
   .hero{background:var(--black);padding:96px 0 72px;position:relative;overflow:hidden;}
   .hero-grid{display:grid;grid-template-columns:1fr;gap:56px;align-items:center;}
+  .hero-grid.has-player{grid-template-columns:1.15fr 0.85fr;}
   .hero h1{font-size:60px;font-weight:800;color:var(--white);margin:22px 0 22px;}
   .hero h1 em{font-style:normal;color:var(--purple);}
   .hero h1 .dot{color:var(--purple);}
@@ -179,10 +180,6 @@
     border:1px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;
   }
   .rec-thumb .play::after{content:"";border-left:14px solid #fff;border-top:9px solid transparent;border-bottom:9px solid transparent;margin-left:4px;}
-  .yt-thumb{cursor:pointer;}
-  .yt-thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;}
-  .yt-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.45));z-index:1;}
-  .rec-thumb iframe{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:2;}
   .avail-badge{
     position:absolute;top:14px;right:14px;background:var(--purple);color:#1f0a33;
     font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
@@ -208,6 +205,85 @@
   }
   .footer-bottom b{color:#1f0a33;}
 
+  /* HERO PLAYER */
+  .hero-panel{
+    display:none;
+    border:1px solid #2c2c2c;border-radius:var(--radius);padding:16px;
+    background:linear-gradient(155deg,#141414,#0a0a0a);
+  }
+  .hero-grid.has-player .hero-panel{display:block;}
+  .hero-panel .label{
+    font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--purple);
+    margin-bottom:12px;display:flex;align-items:center;gap:8px;
+  }
+  .hero-panel .label::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--purple);display:inline-block;}
+  .video-embed{position:relative;width:100%;padding-top:56.25%;background:#000;border-radius:var(--radius);overflow:hidden;}
+  .video-embed iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
+
+  /* ANNOUNCEMENT BAR */
+  .announce-bar{background:var(--purple);color:#1f0a33;}
+  .announce-bar[hidden]{display:none;}
+  .announce-inner{
+    position:relative;display:flex;align-items:center;justify-content:center;
+    padding:10px 44px;gap:12px;
+  }
+  .announce-text{font-size:13.5px;font-weight:600;text-align:center;line-height:1.4;}
+  .announce-close{
+    position:absolute;right:20px;top:50%;transform:translateY(-50%);
+    width:24px;height:24px;border:none;background:transparent;color:#1f0a33;
+    font-size:17px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:.7;
+  }
+  .announce-close:hover{opacity:1;}
+
+  /* SURVEY */
+  .survey-overlay{
+    position:fixed;inset:0;z-index:200;background:rgba(10,10,10,0.72);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .survey-overlay[hidden]{display:none;}
+  .survey-modal{
+    width:100%;max-width:460px;max-height:90vh;overflow-y:auto;
+    background:linear-gradient(155deg,#141414,#0a0a0a);
+    border:1px solid #2c2c2c;border-radius:var(--radius);padding:28px;
+  }
+  .survey-head{display:flex;align-items:center;justify-content:space-between;gap:16px;}
+  .survey-close{
+    width:30px;height:30px;border-radius:50%;background:transparent;border:1px solid #333;
+    color:var(--gray);font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;
+    cursor:not-allowed;opacity:.4;transition:all .15s;flex-shrink:0;
+  }
+  .survey-close.enabled{cursor:pointer;opacity:1;border-color:#3a3a3a;color:var(--white);}
+  .survey-close.enabled:hover{border-color:var(--white);}
+  .survey-title{font-family:'Poppins',sans-serif;font-weight:800;font-size:22px;margin:16px 0 8px;color:var(--white);}
+  .survey-sub{font-size:13.5px;color:#c7c5bf;line-height:1.55;margin-bottom:22px;}
+  .survey-q{margin-bottom:20px;}
+  .survey-q label{display:block;font-family:'Inter',sans-serif;font-weight:600;font-size:13.5px;color:var(--white);margin-bottom:10px;}
+  .survey-q label .req{color:var(--purple);margin-left:3px;}
+  .stars{display:flex;gap:6px;}
+  .star{
+    width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+    border:1px solid #262626;border-radius:var(--radius);background:#0e0e0e;color:#4a4a46;
+    font-size:17px;cursor:pointer;transition:all .12s;
+  }
+  .star:hover{border-color:var(--purple);}
+  .star.filled{background:var(--purple);border-color:var(--purple);color:#1f0a33;}
+  .survey-textarea{
+    width:100%;background:#0e0e0e;border:1px solid #262626;border-radius:var(--radius);
+    padding:11px 13px;color:var(--white);font-family:'Inter',sans-serif;font-size:13.5px;
+    resize:vertical;min-height:64px;outline:none;transition:border-color .15s;
+  }
+  .survey-textarea::placeholder{color:#6f6e6a;}
+  .survey-textarea:focus{border-color:var(--purple);}
+  .survey-hint{display:block;font-size:11px;color:var(--gray);margin-top:4px;margin-bottom:14px;}
+  .survey-submit{width:100%;}
+  .survey-submit:disabled{opacity:.45;cursor:not-allowed;}
+  .survey-thanks{text-align:center;padding:34px 8px 10px;}
+  .survey-thanks-icon{
+    width:52px;height:52px;border-radius:50%;margin:0 auto;
+    background:rgba(168,85,247,0.15);color:var(--purple);
+    font-size:22px;font-weight:700;display:flex;align-items:center;justify-content:center;
+  }
+
   @media (max-width:860px){
     .hero-grid{grid-template-columns:1fr;}
     .hero h1{font-size:40px;}
@@ -220,11 +296,18 @@
 </style>
 </head>
 <body>
+<div class="announce-bar" id="announce-bar" hidden>
+  <div class="wrap announce-inner">
+    <span class="announce-text" id="announce-text"></span>
+    <button type="button" class="announce-close" id="announce-close" aria-label="Dismiss announcement">&times;</button>
+  </div>
+</div>
+
 
 <header class="nav">
   <div class="nav-inner">
     <a href="#top" class="brand">
-      <span class="logo">QUANTEXA<span>.</span></span>
+      <span class="logo">DEMO LEQTURE<span>.</span></span>
       <span class="sub">Learning at Work Week</span>
     </a>
     <nav class="links">
@@ -238,9 +321,9 @@
 <section class="hero" id="top">
   <div class="wrap hero-grid">
     <div>
-      <span class="eyebrow on-dark">QUANTEXA · 6–10 JULY 2026</span>
+      <span class="eyebrow on-dark">DEMO LEQTURE · 6–10 JULY 2026</span>
       <h1>Learning at <em>Work Week</em> 2026<span class="dot">.</span></h1>
-      <p class="lede">A week of live sessions on AI, communication and wellbeing, streamed for every Quantexan, wherever you are in the world. Watch live, ask questions, and catch up on demand.</p>
+      <p class="lede">A week of live sessions on AI, communication and wellbeing, streamed for every Demo Leqture attendee, wherever you are in the world. Watch live, ask questions, and catch up on demand.</p>
       <div class="ctas">
         <a href="#sessions" class="btn btn-primary">View schedule</a>
         <a href="#recordings" class="btn btn-outline-dark">See recordings</a>
@@ -249,6 +332,12 @@
         <div class="stat"><b>5 days</b><span>6–10 July 2026</span></div>
         <div class="stat"><b>11 sessions</b><span>Live &amp; on demand</span></div>
         <div class="stat"><b>Global</b><span>Hosted on UK time</span></div>
+      </div>
+    </div>
+    <div class="hero-panel" id="hero-player-panel">
+      <div class="label">Live now</div>
+      <div class="video-embed">
+        <iframe id="hero-player-iframe" src="" title="Live stream" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>
       </div>
     </div>
   </div>
@@ -277,11 +366,11 @@
         <div class="prog-body">
           <div>
             <div class="col-label">About the session</div>
-            <div class="headline">Kicking off the week with where Quantexa's AI story stands today.</div>
+            <div class="headline">Kicking off the week with where Demo Leqture's AI story stands today.</div>
             <p class="desc">Kicking-off Learning at Work Week with an overview from Siobhan &amp; Ian, taking us through what's happening at Q over the week and framing our position as an AI-native company in progress.</p>
             <div class="col-label">What you'll take away</div>
             <ul class="takeaways">
-              <li><span class="num">1</span>Where Quantexa's AI-native positioning stands today, and what's changed.</li>
+              <li><span class="num">1</span>Where Demo Leqture's AI-native positioning stands today, and what's changed.</li>
               <li><span class="num">2</span>What's happening across the AI Hub this week and how it connects to your role.</li>
               <li><span class="num">3</span>How to get the most from Learning at Work Week, and where to ask questions.</li>
             </ul>
@@ -380,7 +469,7 @@
           <div class="speakers-col">
             <div class="col-label">About the speaker</div>
             <div class="speaker"><div class="avatar">DP</div><div><div class="s-name">Dan Pryer</div><div class="s-role">Senior Engineer, Applications</div></div></div>
-            <p class="bio">Dan has been at Quantexa for 4.5 years, starting in the Academy team as an ATL for the first two years before transitioning into RnD where he currently works as a back-end Engineer. Dan works in the Decision Systems team, which provides an out-of-the-box, config-driven scoring solution for our customers. He's also really interested in the development and adoption of AI within RnD, building agents, skills and workflows to help speed up development and free engineers for higher-level problems.</p>
+            <p class="bio">Dan has been at Demo Leqture for 4.5 years, starting in the Academy team as an ATL for the first two years before transitioning into RnD where he currently works as a back-end Engineer. Dan works in the Decision Systems team, which provides an out-of-the-box, config-driven scoring solution for our customers. He's also really interested in the development and adoption of AI within RnD, building agents, skills and workflows to help speed up development and free engineers for higher-level problems.</p>
           </div>
         </div>
       </details>
@@ -399,7 +488,7 @@
           <div>
             <div class="col-label">About the session</div>
             <div class="headline">Seeking updates on Delivery's latest AI initiative?</div>
-            <p class="desc">Join Rosie for a walkthrough of Quantexa's new AI tooling: what's available now, how delivery can be adopted internally and with clients, and what's coming next. We'll share practical recommendations for getting the most out of these tools and our roadmap for the quarter ahead.</p>
+            <p class="desc">Join Rosie for a walkthrough of Demo Leqture's new AI tooling: what's available now, how delivery can be adopted internally and with clients, and what's coming next. We'll share practical recommendations for getting the most out of these tools and our roadmap for the quarter ahead.</p>
             <div class="col-label">What you'll take away</div>
             <ul class="takeaways">
               <li><span class="num">1</span>A clear map of the AI tools currently available to delivery teams and clients.</li>
@@ -413,7 +502,7 @@
           <div class="speakers-col">
             <div class="col-label">About the speaker</div>
             <div class="speaker"><div class="avatar">RL</div><div><div class="s-name">Rosie Lang</div><div class="s-role">Senior Principal Data Engineer, Engineering</div></div></div>
-            <p class="bio">Rosie has spent 7+ years at Quantexa leading technical delivery across UK and international projects, partnering with product and R&amp;D to solve complex challenges for clients. She now leads AI adoption across the delivery organisation, bringing hands-on experience in translating emerging technology into operational impact.</p>
+            <p class="bio">Rosie has spent 7+ years at Demo Leqture leading technical delivery across UK and international projects, partnering with product and R&amp;D to solve complex challenges for clients. She now leads AI adoption across the delivery organisation, bringing hands-on experience in translating emerging technology into operational impact.</p>
           </div>
         </div>
       </details>
@@ -462,10 +551,10 @@
           <div>
             <div class="col-label">About the session</div>
             <div class="headline">Want to create internal communications that people actually read and act on?</div>
-            <p class="desc">Join us for a practical session covering the essentials of internal communications at Quantexa. You'll learn how to create engaging content, choose the right channels, make the most of Q-Net, and measure the impact of your communications, with a live demo to bring it all together. Whether you write often or just now and then, if you're creating content on Q-Net, you're part of our internal comms ecosystem, and this session is for you.<br><br>This session also runs Tuesday 7 July at 6:30am UK for APAC, without Madeline.</p>
+            <p class="desc">Join us for a practical session covering the essentials of internal communications at Demo Leqture. You'll learn how to create engaging content, choose the right channels, make the most of Q-Net, and measure the impact of your communications, with a live demo to bring it all together. Whether you write often or just now and then, if you're creating content on Q-Net, you're part of our internal comms ecosystem, and this session is for you.<br><br>This session also runs Tuesday 7 July at 6:30am UK for APAC, without Madeline.</p>
             <div class="col-label">What you'll take away</div>
             <ul class="takeaways">
-              <li><span class="num">1</span>How Quantexa keeps a global workforce informed, engaged and connected.</li>
+              <li><span class="num">1</span>How Demo Leqture keeps a global workforce informed, engaged and connected.</li>
               <li><span class="num">2</span>What makes internal channels and an intranet genuinely useful, not just another inbox.</li>
               <li><span class="num">3</span>How to turn feedback into communications and experiences people value.</li>
             </ul>
@@ -527,10 +616,10 @@
           <div>
             <div class="col-label">About the session</div>
             <div class="headline">Striving to build brand-worthy collateral, dashboards and more?</div>
-            <p class="desc">In this live workshop, we look under the hood at how Quantexa's brand team set up their skill for collateral production, how to help it hone in on your own needs through additional training, and ways to apply the same principles across other AI tools. This demo features real-time Claude Co-Work, Microsoft Co-Pilot and Google Gemini demos, so bring your laptop and your favourite new project, the majority of the time is focused on Claude Skills, with the latter third demoing similar outcomes in other tools.</p>
+            <p class="desc">In this live workshop, we look under the hood at how Demo Leqture's brand team set up their skill for collateral production, how to help it hone in on your own needs through additional training, and ways to apply the same principles across other AI tools. This demo features real-time Claude Co-Work, Microsoft Co-Pilot and Google Gemini demos, so bring your laptop and your favourite new project, the majority of the time is focused on Claude Skills, with the latter third demoing similar outcomes in other tools.</p>
             <div class="col-label">What you'll take away</div>
             <ul class="takeaways">
-              <li><span class="num">1</span>How Quantexa's brand team built and trained their own Claude Skill.</li>
+              <li><span class="num">1</span>How Demo Leqture's brand team built and trained their own Claude Skill.</li>
               <li><span class="num">2</span>Ways to hone a skill so it fits your own team's needs, not just a generic use case.</li>
               <li><span class="num">3</span>How similar outcomes translate across Claude, Co-Pilot and Gemini.</li>
             </ul>
@@ -540,7 +629,7 @@
           <div class="speakers-col">
             <div class="col-label">About the speaker</div>
             <div class="speaker"><div class="avatar">ES</div><div><div class="s-name">Erik Spooner</div><div class="s-role">Global Head of Brand &amp; Creative, Corporate Marketing</div></div></div>
-            <p class="bio">Erik Spooner recently joined Quantexa as the Global Head of Brand &amp; Creative in the Corporate Marketing team. With professional roots in journalism and design, he brings editorial authority, strategic vision and hands-on craft to enterprise brand work that delivers measurable business impact. He also maintains a position on the faculty of Pratt Institute, teaching undergraduates in Branding &amp; Messaging, Typography, Graphic Design and Creative Strategy.</p>
+            <p class="bio">Erik Spooner recently joined Demo Leqture as the Global Head of Brand &amp; Creative in the Corporate Marketing team. With professional roots in journalism and design, he brings editorial authority, strategic vision and hands-on craft to enterprise brand work that delivers measurable business impact. He also maintains a position on the faculty of Pratt Institute, teaching undergraduates in Branding &amp; Messaging, Typography, Graphic Design and Creative Strategy.</p>
           </div>
         </div>
       </details>
@@ -628,10 +717,8 @@
         </div>
       </a>
       <div class="rec-card">
-        <div class="rec-thumb yt-thumb" onclick="playRecording(this,'aavMoVJvuQ4')">
-          <img class="yt-thumb-img" src="https://img.youtube.com/vi/aavMoVJvuQ4/maxresdefault.jpg" alt="Critical Thinking and AI thumbnail" onerror="this.onerror=null;this.src='https://img.youtube.com/vi/aavMoVJvuQ4/hqdefault.jpg';">
-          <div class="yt-shade"></div>
-          <span class="avail-badge">Available now</span><div class="play"></div>
+        <div class="video-embed">
+          <iframe src="https://www.youtube.com/embed/aavMoVJvuQ4" title="Critical Thinking and AI — Michelle Schechter" loading="lazy" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>
         </div>
         <div class="rec-info">
           <div class="meta">Michelle Schechter · Thu 9 Jul</div>
@@ -646,30 +733,337 @@
   <div class="wrap">
     <div class="footer-grid">
       <div>
-        <div class="f-logo">QUANTEXA.</div>
+        <div class="f-logo">DEMO LEQTURE.</div>
         <h3>Learning at Work Week 2026.</h3>
-        <p class="desc">A week of live sessions for every Quantexan, on AI, communication and wellbeing. Watch live, ask questions, and catch up whenever suits you.</p>
+        <p class="desc">A week of live sessions for every Demo Leqture attendee, on AI, communication and wellbeing. Watch live, ask questions, and catch up whenever suits you.</p>
       </div>
       <div>
         <div class="contact-head">Questions about the week?</div>
         <p class="contact-body">Get in touch with the Learning &amp; Development team and we'll be happy to help.</p>
-        <a class="email" href="mailto:learning@quantexa.com">learning@quantexa.com</a>
+        <a class="email" href="mailto:learning@demoleqture.com">learning@demoleqture.com</a>
       </div>
     </div>
     <div class="footer-bottom">
-      <div>© 2026 <b>Quantexa</b>. Learning at Work Week is an internal event.</div>
+      <div>© 2026 <b>Demo Leqture</b>. Learning at Work Week is an internal event.</div>
       <div>Streaming &amp; production by <b>Leqture</b></div>
     </div>
   </div>
 </footer>
 
-<script>
-function playRecording(el, id){
-  el.onclick = null;
-  el.style.cursor = 'default';
-  el.innerHTML = '<iframe src="https://www.youtube.com/embed/' + id + '?autoplay=1&rel=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
-}
-</script>
 
+<div class="survey-overlay" id="survey-overlay" hidden>
+  <div class="survey-modal" role="dialog" aria-modal="true" aria-labelledby="survey-title">
+    <div class="survey-head">
+      <span class="eyebrow on-dark">Quick survey</span>
+      <button type="button" class="survey-close" id="survey-close" aria-label="Close survey" disabled>&times;</button>
+    </div>
+
+    <div id="survey-form">
+      <h3 class="survey-title" id="survey-title">We would really appreciate your feedback on today's event.</h3>
+      <p class="survey-sub">The survey is completely anonymous.</p>
+
+      <div class="survey-q">
+        <label>How would you rate the session?<span class="req">*</span></label>
+        <div class="stars" data-q="q1" role="radiogroup" aria-label="Rating"><button type="button" class="star" data-value="1" aria-label="1 star">★</button><button type="button" class="star" data-value="2" aria-label="2 stars">★</button><button type="button" class="star" data-value="3" aria-label="3 stars">★</button><button type="button" class="star" data-value="4" aria-label="4 stars">★</button><button type="button" class="star" data-value="5" aria-label="5 stars">★</button></div>
+      </div>
+      <div class="survey-q">
+        <label>How would you rate the speaker?<span class="req">*</span></label>
+        <div class="stars" data-q="q2" role="radiogroup" aria-label="Rating"><button type="button" class="star" data-value="1" aria-label="1 star">★</button><button type="button" class="star" data-value="2" aria-label="2 stars">★</button><button type="button" class="star" data-value="3" aria-label="3 stars">★</button><button type="button" class="star" data-value="4" aria-label="4 stars">★</button><button type="button" class="star" data-value="5" aria-label="5 stars">★</button></div>
+      </div>
+      <div class="survey-q">
+        <label>What did you enjoy most?</label>
+        <textarea class="survey-textarea" id="survey-q3" maxlength="2000" placeholder="Optional — share what stood out&hellip;"></textarea>
+      </div>
+      <div class="survey-q">
+        <label>What have you learned?</label>
+        <textarea class="survey-textarea" id="survey-q4" maxlength="2000" placeholder="Optional — share a key takeaway&hellip;"></textarea>
+      </div>
+      <div class="survey-q">
+        <label>What could we improve?</label>
+        <textarea class="survey-textarea" id="survey-q5" maxlength="2000" placeholder="Optional — be as honest as you like&hellip;"></textarea>
+      </div>
+
+      <span class="survey-hint" id="survey-hint">Rate both above to unlock closing — you can leave any time after that.</span>
+      <button type="button" class="btn btn-primary survey-submit" id="survey-submit" disabled>Rate both to continue</button>
+    </div>
+
+    <div class="survey-thanks" id="survey-thanks" hidden>
+      <div class="survey-thanks-icon">&#10003;</div>
+      <h3 class="survey-title" style="margin-top:14px;">Thanks for your feedback!</h3>
+      <p class="survey-sub" style="margin-bottom:0;">Your answers have been saved.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var overlay = document.getElementById("survey-overlay");
+  var closeBtn = document.getElementById("survey-close");
+  var submitBtn = document.getElementById("survey-submit");
+  var hint = document.getElementById("survey-hint");
+  var formWrap = document.getElementById("survey-form");
+  var thanksWrap = document.getElementById("survey-thanks");
+  var textareaIds = ["survey-q3", "survey-q4", "survey-q5"];
+
+  var ratings = { q1: 0, q2: 0 };
+  var responseId = null;
+  var savedMandatory = false;
+  var finished = false;
+  var currentRoundId = null;
+  var DISMISS_KEY = "qxa_survey_done_round";
+  var storedRound = null;
+  try { storedRound = localStorage.getItem(DISMISS_KEY); } catch (e) {}
+
+  function paintStars(group) {
+    var q = group.getAttribute("data-q");
+    var val = ratings[q];
+    group.querySelectorAll(".star").forEach(function (btn) {
+      var v = parseInt(btn.getAttribute("data-value"), 10);
+      btn.classList.toggle("filled", v <= val);
+    });
+  }
+
+  document.querySelectorAll(".stars").forEach(function (group) {
+    group.addEventListener("click", function (e) {
+      var btn = e.target.closest(".star");
+      if (!btn) return;
+      var q = group.getAttribute("data-q");
+      ratings[q] = parseInt(btn.getAttribute("data-value"), 10);
+      paintStars(group);
+      maybeUnlock();
+    });
+  });
+
+  function maybeUnlock() {
+    if (ratings.q1 && ratings.q2 && !savedMandatory) {
+      savedMandatory = true;
+      closeBtn.disabled = false;
+      closeBtn.classList.add("enabled");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit feedback";
+      hint.textContent = "Saved — you're free to close this or add more below.";
+      saveResponse(false);
+    }
+  }
+
+  function currentPayload(complete) {
+    return {
+      id: responseId || undefined,
+      q1_rating: ratings.q1 || undefined,
+      q2_rating: ratings.q2 || undefined,
+      q3_text: document.getElementById("survey-q3").value,
+      q4_text: document.getElementById("survey-q4").value,
+      q5_text: document.getElementById("survey-q5").value,
+      complete: !!complete,
+    };
+  }
+
+  function saveResponse(complete, useBeacon) {
+    var payload = currentPayload(complete);
+    var body = JSON.stringify(payload);
+    if (useBeacon && navigator.sendBeacon) {
+      navigator.sendBeacon("/api/survey-response", new Blob([body], { type: "application/json" }));
+      return;
+    }
+    fetch("/api/survey-response", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: body,
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) { if (data && data.id) responseId = data.id; })
+      .catch(function () {});
+  }
+
+  // Wipes the form back to a blank state, ready for the next time the
+  // survey is triggered — used both right after a visitor finishes and
+  // defensively before showing it again.
+  function resetForm() {
+    ratings = { q1: 0, q2: 0 };
+    responseId = null;
+    savedMandatory = false;
+    finished = false;
+    document.querySelectorAll(".stars").forEach(paintStars);
+    textareaIds.forEach(function (id) { document.getElementById(id).value = ""; });
+    closeBtn.disabled = true;
+    closeBtn.classList.remove("enabled");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Rate both to continue";
+    hint.textContent = "Rate both above to unlock closing — you can leave any time after that.";
+    thanksWrap.hidden = true;
+    formWrap.hidden = false;
+  }
+
+  function markRoundDismissed() {
+    if (!currentRoundId) return;
+    storedRound = currentRoundId;
+    try { localStorage.setItem(DISMISS_KEY, currentRoundId); } catch (e) {}
+  }
+
+  // Shared by both the close (×) button and the final Submit button —
+  // either way, once someone has answered the mandatory questions and
+  // leaves, show a thank-you, close the popup, and don't show it again
+  // until the admin triggers a new round.
+  function finishAndClose(complete) {
+    finished = true;
+    saveResponse(complete);
+    formWrap.hidden = true;
+    thanksWrap.hidden = false;
+    setTimeout(function () {
+      overlay.hidden = true;
+      markRoundDismissed();
+      resetForm();
+    }, 1400);
+  }
+
+  closeBtn.addEventListener("click", function () {
+    if (closeBtn.disabled) return;
+    finishAndClose(false);
+  });
+
+  submitBtn.addEventListener("click", function () {
+    if (submitBtn.disabled) return;
+    finishAndClose(true);
+  });
+
+  textareaIds.forEach(function (id) {
+    document.getElementById(id).addEventListener("blur", function () {
+      if (savedMandatory) saveResponse(false);
+    });
+  });
+
+  function flush() {
+    if (savedMandatory && !finished) saveResponse(false, true);
+  }
+  document.addEventListener("visibilitychange", function () { if (document.hidden) flush(); });
+  window.addEventListener("pagehide", flush);
+
+  // Poll the admin-controlled survey state. Each time it's switched on,
+  // its "updated_at" changes, so that timestamp doubles as a round id —
+  // a visitor who already dismissed round A will still see round B once
+  // the admin triggers the survey again, with a blank form.
+  function checkState() {
+    if (overlay.hidden === false) return;
+    fetch("/api/survey-state", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data || !data.active) return;
+        var roundId = String(data.updated_at);
+        if (roundId === storedRound) return;
+        currentRoundId = roundId;
+        resetForm();
+        overlay.hidden = false;
+      })
+      .catch(function () {});
+  }
+
+  checkState();
+  setInterval(function () { if (!document.hidden) checkState(); }, 15000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) checkState(); });
+})();
+</script>
+<script>
+(function () {
+  var bar = document.getElementById("announce-bar");
+  var textEl = document.getElementById("announce-text");
+  var closeBtn = document.getElementById("announce-close");
+  var DISMISS_KEY = "qxa_announce_dismissed";
+  var dismissedId = null;
+  try { dismissedId = localStorage.getItem(DISMISS_KEY); } catch (e) {}
+  var currentId = null;
+
+  closeBtn.addEventListener("click", function () {
+    bar.hidden = true;
+    if (currentId) {
+      dismissedId = currentId;
+      try { localStorage.setItem(DISMISS_KEY, currentId); } catch (e) {}
+    }
+  });
+
+  function check() {
+    fetch("/api/announcement", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data || !data.text) {
+          bar.hidden = true;
+          return;
+        }
+        currentId = String(data.updated_at);
+        if (currentId === dismissedId) {
+          bar.hidden = true;
+          return;
+        }
+        textEl.textContent = data.text;
+        bar.hidden = false;
+      })
+      .catch(function () {});
+  }
+
+  check();
+  setInterval(function () { if (!document.hidden) check(); }, 15000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
+})();
+</script>
+<script>
+(function () {
+  var grid = document.querySelector(".hero-grid");
+  var panel = document.getElementById("hero-player-panel");
+  var iframe = document.getElementById("hero-player-iframe");
+  var currentRawUrl = "";
+
+  // Turns a normal YouTube watch/share/live link into its embeddable form.
+  // Anything else (Clevercast embed links, or an already-embeddable URL of
+  // any kind) is used exactly as pasted in the admin panel.
+  function toEmbedUrl(raw) {
+    try {
+      var u = new URL(raw);
+      var host = u.hostname.replace(/^www\./, "");
+      if (host === "youtu.be") {
+        var id = u.pathname.slice(1);
+        return id ? "https://www.youtube.com/embed/" + id : raw;
+      }
+      if (host === "youtube.com" || host === "m.youtube.com") {
+        if (u.pathname === "/watch") {
+          var v = u.searchParams.get("v");
+          if (v) return "https://www.youtube.com/embed/" + v;
+        }
+        if (u.pathname.indexOf("/live/") === 0) {
+          var parts = u.pathname.split("/");
+          if (parts[2]) return "https://www.youtube.com/embed/" + parts[2];
+        }
+        if (u.pathname.indexOf("/embed/") === 0) return raw;
+      }
+      return raw;
+    } catch (e) {
+      return raw;
+    }
+  }
+
+  function check() {
+    fetch("/api/player", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var url = (data && data.url) || "";
+        if (!url) {
+          if (currentRawUrl) {
+            currentRawUrl = "";
+            iframe.src = "";
+            grid.classList.remove("has-player");
+          }
+          return;
+        }
+        if (url === currentRawUrl) return;
+        currentRawUrl = url;
+        iframe.src = toEmbedUrl(url);
+        grid.classList.add("has-player");
+      })
+      .catch(function () {});
+  }
+
+  check();
+  setInterval(function () { if (!document.hidden) check(); }, 15000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
+})();
+</script>
 </body>
 </html>
