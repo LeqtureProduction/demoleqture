@@ -188,6 +188,25 @@
   .rec-info .meta{font-size:12.5px;color:var(--gray);margin-bottom:6px;}
   .rec-info .title{font-family:'Poppins',sans-serif;font-weight:600;font-size:16px;color:var(--white);}
 
+  /* VIDEO MODAL */
+  .video-modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(6,3,8,0.86);
+    z-index:1000;align-items:center;justify-content:center;padding:24px;
+  }
+  .video-modal-overlay.open{display:flex;}
+  .video-modal-box{
+    position:relative;width:100%;max-width:960px;background:#0e0e0e;
+    border:1px solid #232323;border-radius:var(--radius);overflow:hidden;
+  }
+  .video-modal-frame{position:relative;width:100%;padding-top:56.25%;}
+  .video-modal-frame iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0;}
+  .video-modal-close{
+    position:absolute;top:-44px;right:0;width:36px;height:36px;border-radius:50%;
+    background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.4);
+    color:#fff;font-size:22px;line-height:1;cursor:pointer;
+  }
+  .video-modal-close:hover{background:var(--purple);color:#1f0a33;}
+
   /* FOOTER */
   footer{background:var(--purple);color:#1f0a33;padding:72px 0 28px;}
   .footer-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:48px;align-items:start;}
@@ -623,8 +642,8 @@
           <div class="title">Reframing AI: exploring radically different ways of working</div>
         </div>
       </a>
-      <div class="rec-card">
-        <div class="rec-thumb"><span class="avail-badge">Available soon</span><div class="play"></div></div>
+      <div class="rec-card" role="button" tabindex="0" aria-label="Play recording: Critical Thinking and AI, Michelle Schechter" onclick="openVideoModal('aavMoVJvuQ4')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openVideoModal('aavMoVJvuQ4')}" style="cursor:pointer;">
+        <div class="rec-thumb"><span class="avail-badge">Available now</span><div class="play"></div></div>
         <div class="rec-info">
           <div class="meta">Michelle Schechter · Thu 9 Jul</div>
           <div class="title">Critical Thinking and AI</div>
@@ -633,6 +652,13 @@
     </div>
   </div>
 </section>
+
+<div class="video-modal-overlay" id="video-modal" onclick="if(event.target===this){closeVideoModal()}">
+  <div class="video-modal-box">
+    <button class="video-modal-close" type="button" aria-label="Close video" onclick="closeVideoModal()">&times;</button>
+    <div class="video-modal-frame" id="video-modal-frame"></div>
+  </div>
+</div>
 
 <footer>
   <div class="wrap">
@@ -654,6 +680,26 @@
     </div>
   </div>
 </footer>
+
+<script>
+  function openVideoModal(videoId){
+    var overlay = document.getElementById('video-modal');
+    var frame = document.getElementById('video-modal-frame');
+    frame.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&rel=0" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeVideoModal(){
+    var overlay = document.getElementById('video-modal');
+    var frame = document.getElementById('video-modal-frame');
+    overlay.classList.remove('open');
+    frame.innerHTML = '';
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){ closeVideoModal(); }
+  });
+</script>
 
 </body>
 </html>
