@@ -1,6 +1,8 @@
 {
-  "name": "quantexa-site",
+  "name": "quantexa-learning-at-work-week",
   "private": true,
+  "version": "1.0.0",
+  "description": "Quantexa Learning at Work Week 2026 site (Netlify static site + functions)",
   "dependencies": {
     "@netlify/blobs": "^8.1.0"
   }
