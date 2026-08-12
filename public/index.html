@@ -197,13 +197,17 @@
   .link-title{font-family:'Poppins',sans-serif;font-weight:600;font-size:15.5px;color:var(--black);margin-bottom:6px;}
   .link-body{font-size:13.5px;line-height:1.5;color:var(--gray-dark);}
 
-  /* TEXT + IMAGE FEATURE SECTION — image is a big centered square, up to
-     900x900px, with the text centered underneath (not side-by-side, so the
-     image actually has room to reach that size on wide screens). */
-  .feature-grid{display:flex;flex-direction:column;align-items:center;gap:36px;text-align:center;}
-  .feature-media{width:100%;max-width:900px;aspect-ratio:1/1;border-radius:var(--radius);overflow:hidden;background:#e4e1d8;position:relative;}
+  /* TEXT + IMAGE FEATURE SECTION — text on the left, a square image on
+     the right, sized to fit neatly alongside the text rather than forced
+     to a fixed pixel size. Collapses to a single centered column when
+     there's no image, or no text. */
+  .feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;}
+  .feature-grid.single{grid-template-columns:1fr;max-width:640px;margin-left:auto;margin-right:auto;text-align:center;}
+  .feature-media{width:100%;max-width:480px;aspect-ratio:1/1;border-radius:var(--radius);overflow:hidden;background:#e4e1d8;position:relative;margin:0 0 0 auto;}
+  .feature-grid.single .feature-media{margin:0 auto;}
   .feature-media img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}
-  .feature-copy{max-width:680px;}
+  .feature-copy{max-width:560px;}
+  .feature-grid.single .feature-copy{max-width:640px;margin:0 auto;}
   .feature-copy h2{margin:0 0 16px;}
   .feature-copy p{font-size:16px;line-height:1.65;color:var(--gray-dark);}
 
@@ -236,7 +240,7 @@
   .video-embed{position:relative;width:100%;padding-top:56.25%;background:#000;border-radius:var(--radius);overflow:hidden;}
   .video-embed iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
   .video-embed img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}
-  #hero-image-panel .video-embed{padding-top:100%;}
+  #hero-image-panel .video-embed{padding-top:0;aspect-ratio:1/1;width:min(100%, 440px);margin-left:auto;}
 
   /* ANNOUNCEMENT BAR */
   .announce-bar{background:var(--purple);color:#1f0a33;}
@@ -755,12 +759,12 @@
 
 <section class="section-light" id="feature" hidden>
   <div class="wrap feature-grid" id="feature-grid">
-    <div class="feature-media" id="feature-media" hidden>
-      <img id="feature-image-el" src="" alt="">
-    </div>
     <div class="feature-copy">
       <h2 id="feature-title-el" hidden>Title<span class="dot">.</span></h2>
       <p id="feature-body-el" hidden></p>
+    </div>
+    <div class="feature-media" id="feature-media" hidden>
+      <img id="feature-image-el" src="" alt="">
     </div>
   </div>
 </section>
@@ -1350,6 +1354,7 @@
 <script>
 (function () {
   var section = document.getElementById("feature");
+  var grid = document.getElementById("feature-grid");
   var media = document.getElementById("feature-media");
   var imageEl = document.getElementById("feature-image-el");
   var titleEl = document.getElementById("feature-title-el");
@@ -1404,6 +1409,8 @@
       imageEl.removeAttribute("src");
       media.hidden = true;
     }
+
+    grid.classList.toggle("single", !hasImage || (!hasTitle && !hasBody));
 
     section.hidden = false;
   }

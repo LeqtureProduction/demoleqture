@@ -91,13 +91,15 @@ subheading, and (to the right, once something is published) a video player
 or a static image.
 
 - **Heading and subheading are editable** from either admin panel, under
-  **Site theme → Hero** (see below) — this is the same place the section's
-  colors live. Leave both blank to keep the original copy ("Learning at
-  *Work Week* 2026." with "Work Week" highlighted in purple). Typing a
-  custom heading replaces the whole line with plain text plus the
-  decorative purple "." — a custom heading can't keep that one-word
-  highlight, since there's no way to know which word in arbitrary text
-  should be emphasized.
+  the **Hero** block — the same block the hero image lives in, so the text
+  and image controls sit together instead of in separate places. Leave
+  both blank to keep the original copy ("Learning at *Work Week* 2026."
+  with "Work Week" highlighted in purple). Typing a custom heading
+  replaces the whole line with plain text plus the decorative purple "." —
+  a custom heading can't keep that one-word highlight, since there's no
+  way to know which word in arbitrary text should be emphasized. Click
+  **Save hero text** to publish it (the Hero background/text *colors* are
+  still set separately, under **Site theme → Hero**).
 - The original stat row ("5 days / 11 sessions / Global") and the **View
   schedule** / **See recordings** buttons that used to sit under the
   heading have been removed — the hero is just the eyebrow, heading, and
@@ -112,10 +114,10 @@ or a static image.
   (`admin.html`).
 - **Hero image** — a static image shown in the same spot whenever there's
   no video link published. Controlled from *either* admin panel (with one
-  restriction on Customer Admin — see below). The image panel is bigger
-  than before: it now gets more than half the hero's width (was slightly
-  less than half), and displays as a square rather than a 16:9 letterbox,
-  so it reads as a large, prominent photo rather than a thumbnail. The
+  restriction on Customer Admin — see below). It displays as a square
+  rather than a 16:9 letterbox, scaled to fit neatly next to the heading
+  text (capped at 440px so it doesn't overwhelm the layout on wide
+  screens) rather than stretched or cropped to the full column width. The
   video player keeps its normal 16:9 shape, since it has to match the
   embedded player.
 - **The video always wins.** If a link is published, the image is hidden
@@ -125,9 +127,10 @@ or a static image.
 - The panel only takes up its column when something is actually showing
   (video or image) — with neither set, the hero goes back to a single
   column.
-- Backed by `player.mjs` and `hero-image.mjs` / Netlify Blobs. The current
-  link/image is public (anyone visiting the site can fetch it); only
-  setting, uploading, or removing needs an admin key.
+- Backed by `player.mjs`, `hero-image.mjs`, and `theme.mjs` (for the
+  heading/subheading) / Netlify Blobs. The current link/image/text is
+  public (anyone visiting the site can fetch it); only setting, uploading,
+  editing, or removing needs an admin key.
 
 ## Site theme
 
@@ -148,10 +151,12 @@ Either admin panel can change, live, for every visitor:
   section's own background and its heading/intro copy — the cards and
   accordions inside a section keep their own built-in styling so contrast
   stays readable regardless of what colors are chosen.
-- **Heading and subheading text for Hero and Recordings** — each of those
-  two sections also has a heading and subheading field right above its
-  colors. Leave either blank to keep the original wording. (Sessions and
-  Footer don't have text fields yet — only their colors are editable.)
+- **Heading and subheading text for Hero and Recordings** — Recordings has
+  a heading and subheading field right above its colors, in this same
+  block. Hero's heading/subheading live instead in the **Hero** block
+  (next to the hero image controls) — see "Hero section" above. Leave
+  either blank to keep the original wording. (Sessions and Footer don't
+  have text fields yet — only their colors are editable.)
 - Changes apply for every visitor within about 15 seconds, the same
   polling pattern as the announcement bar and hero player. Backed by
   `theme.mjs` / Netlify Blobs (`demoleqture-theme`).
@@ -216,10 +221,12 @@ image link cards, this is a single block, not a repeatable list.
   (asks for confirmation first).
 - The section is hidden entirely on the site whenever title, body, and
   image are all empty — there's nothing to accidentally leave half-visible.
-- **Layout**: the image sits centered above the text (not side-by-side),
-  shown as a large square up to 900×900 pixels — big enough to be a real
-  photo, not a thumbnail. Any image you upload is cropped to fit that
-  square (center-cropped, like the hero image).
+- **Layout**: text on the left, a square image on the right (capped at
+  480px so it scales to fit neatly alongside the text rather than
+  overflowing on wide screens). Any image you upload is center-cropped to
+  fit that square, same as the hero image. With no image, the text centers
+  itself in a single column; with no text, the image centers itself
+  instead.
 - **Move the whole section up or down** with the two **Move section**
   buttons, using the same three slots as the image link cards: before
   Sessions, between Sessions and Recordings, or after Recordings (the
@@ -280,8 +287,8 @@ client/customer contact.
 ### Using Super Admin (`admin.html`)
 
 1. Enter the `ADMIN_KEY`, click **Unlock**. Use the pill bar at the top
-   (Survey, Announcement, Hero video, Hero image, Theme, Link cards,
-   Text & image) to jump straight to any feature instead of scrolling.
+   (Survey, Announcement, Hero, Theme, Link cards, Text & image) to jump
+   straight to any feature instead of scrolling.
 2. **Turn on** to start showing the survey to visitors, **Turn off** to stop
    showing it to new visitors (anyone already looking at it keeps their
    in-progress popup).
@@ -289,34 +296,41 @@ client/customer contact.
    collected so far.
 4. Under **Site announcement**, type a message and click **Publish** to push
    it live, or **Clear** to take it down.
-5. Under **Hero video player**, paste a YouTube or Clevercast link and click
-   **Publish** to show it, or **Turn off** to remove it.
-6. Under **Hero image**, choose a file and click **Upload**, or **Remove**
-   to take the current one down. A note reminds you it won't be visible
-   while the video player is live, but you can still change it — it'll show
-   as soon as the player is off.
-7. Under **Site theme**, type a Google Fonts name and/or set background/text
-   colors per section, then **Save theme**. **Reset all** clears everything
-   back to the default look.
-8. Under **Image link cards**, fill in the title/body/link/image form and
+5. Under **Hero**, type a heading and/or subheading and click **Save hero
+   text** (leave both blank to keep the original wording). In the same
+   block, paste a YouTube or Clevercast link and click **Publish** to show
+   a live player, or **Turn off** to remove it; or choose a file and click
+   **Upload** for a static image, or **Remove** to take it down. A note
+   reminds you the image won't be visible while the video player is live,
+   but you can still change it — it'll show as soon as the player is off.
+6. Under **Site theme**, type a Google Fonts name, an accent color, and/or
+   set background/text colors and the Recordings heading/subheading, then
+   **Save theme**. **Reset all** clears everything back to the default
+   look (Hero's heading/subheading are saved separately, from the Hero
+   block above).
+7. Under **Image link cards**, fill in the title/body/link/image form and
    click **Add card**; use **Edit** to change one, ↑/↓ to reorder, and
    **Delete** to remove one.
-9. Under **Text & image section**, fill in a title, body text, and/or an
+8. Under **Text & image section**, fill in a title, body text, and/or an
    image, then **Save**. **Remove image** clears just the image;
-   **Clear whole section** wipes all three back to empty.
+   **Clear whole section** wipes all three back to empty; **Move section
+   up**/**down** repositions it on the page.
 
 ### Using Customer Admin (`customer-admin.html`)
 
 1. Enter the `CUSTOMER_ADMIN_KEY`, click **Unlock**. The pill bar at the top
-   only lists what this key has access to (no Announcement or Hero video
-   pill, since those are Super Admin only).
+   only lists what this key has access to (no Announcement pill, since
+   that's Super Admin only).
 2. See whether the survey is on, how many responses have come in, and
    **Download CSV** / **Download JSON** — no ability to turn the survey
    itself on or off.
-3. Under **Hero image**, choose a file and click **Upload**, or **Remove**.
-   If the hero video player is currently live, these controls are disabled
-   and a note explains why — ask a Super Admin to turn the player off
-   first.
+3. Under **Hero**, type a heading and/or subheading and click **Save hero
+   text** — this works the same as Super Admin. Choose a file and click
+   **Upload**, or **Remove**, for the hero image. If the hero video player
+   is currently live, the image controls are disabled and a note explains
+   why — ask a Super Admin to turn the player off first (there's no video
+   player control here at all — publishing a video link is Super Admin
+   only).
 4. Under **Site theme**, **Image link cards**, and **Text & image section**,
    the controls work exactly as in Super Admin — both panels have full
    access to these three features.
@@ -438,9 +452,11 @@ Then manually:
     to two columns only while it's showing, and that **Turn off** removes it
     and collapses the hero back to one column.
 15. Upload a hero image from either admin page while the player is off —
-    confirm it appears to the right of the heading within ~15 seconds.
-    Publish a player link and confirm the image is replaced by the video;
-    turn the player off and confirm the image reappears automatically.
+    confirm it appears to the right of the heading within ~15 seconds as a
+    square, sized to sit neatly next to the text rather than stretching to
+    fill the whole column. Publish a player link and confirm the image is
+    replaced by the video; turn the player off and confirm the image
+    reappears automatically.
 16. While the player is live, open `customer-admin.html` and confirm the
     hero image upload/remove controls are disabled with an explanatory
     notice. Open `admin.html` with `ADMIN_KEY` at the same time and confirm
@@ -520,10 +536,10 @@ Then manually:
 
 23. Under **Text & image section** in either admin panel, save a title and
     body with no image — confirm the site shows just the centered text
-    within ~15 seconds. Add an image — confirm a large square image
-    appears centered above the text. **Remove image** and confirm it goes
-    back to text-only. **Clear whole section** and confirm the section
-    disappears from the site entirely.
+    within ~15 seconds. Add an image — confirm a square image appears to
+    the right of the text, sized to fit next to it. **Remove image** and
+    confirm it goes back to centered text-only. **Clear whole section**
+    and confirm the section disappears from the site entirely.
 
 ```bash
 # 12. Hero and Recordings heading/subheading text
