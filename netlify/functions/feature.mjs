@@ -13,13 +13,20 @@ const TITLE_MAX = 80;
 const BODY_MAX = 600;
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB
 
+// position: 0 = before Sessions, 1 = between Sessions and Recordings,
+// 2 = after Recordings, before the footer (the section's original,
+// fixed spot — kept as the default so existing content doesn't move).
 function defaultInfo() {
-  return { title: "", body: "", hasImage: false, contentType: "", updated_at: 0 };
+  return { title: "", body: "", hasImage: false, contentType: "", position: 2, updated_at: 0 };
 }
 
 async function readInfo(store) {
   const info = await store.get(INFO_KEY, { type: "json" });
   return info && typeof info === "object" ? { ...defaultInfo(), ...info } : defaultInfo();
+}
+
+function publicInfo(info) {
+  return { title: info.title, body: info.body, hasImage: info.hasImage, position: info.position, updated_at: info.updated_at };
 }
 
 export default async (req) => {
@@ -37,10 +44,10 @@ export default async (req) => {
     });
   }
 
-  // Public: metadata (title/body/hasImage/updated_at), no image bytes.
+  // Public: metadata (title/body/hasImage/position/updated_at), no image bytes.
   if (req.method === "GET") {
     const info = await readInfo(store);
-    return Response.json({ title: info.title, body: info.body, hasImage: info.hasImage, updated_at: info.updated_at });
+    return Response.json(publicInfo(info));
   }
 
   // Everything below mutates — requires either admin role.
@@ -61,20 +68,41 @@ export default async (req) => {
       await store.delete(BYTES_KEY);
       const next = { ...current, hasImage: false, contentType: "", updated_at: Date.now() };
       await store.setJSON(INFO_KEY, next);
-      return Response.json({ ok: true, info: { title: next.title, body: next.body, hasImage: next.hasImage, updated_at: next.updated_at } });
+      return Response.json({ ok: true, info: publicInfo(next) });
     }
-    // part === "all": clear everything back to empty.
+    // part === "all": clear the title/body/image back to empty, but keep
+    // wherever the section was positioned.
     await store.delete(BYTES_KEY);
-    const next = defaultInfo();
-    next.updated_at = Date.now();
+    const next = { ...defaultInfo(), position: current.position, updated_at: Date.now() };
     await store.setJSON(INFO_KEY, next);
-    return Response.json({ ok: true, info: { title: next.title, body: next.body, hasImage: next.hasImage, updated_at: next.updated_at } });
+    return Response.json({ ok: true, info: publicInfo(next) });
   }
 
   if (req.method === "POST") {
+    const contentType = req.headers.get("content-type") || "";
+
+    // JSON body = move the section: {action:"position", position:0|1|2}
+    if (contentType.includes("application/json")) {
+      let body;
+      try { body = await req.json(); }
+      catch { return Response.json({ error: "invalid JSON body" }, { status: 400 }); }
+      if (body.action !== "position") {
+        return Response.json({ error: "expected {action:\"position\", position:0|1|2}" }, { status: 400 });
+      }
+      const p = Number(body.position);
+      if (!Number.isInteger(p) || p < 0 || p > 2) {
+        return Response.json({ error: "position must be 0, 1, or 2" }, { status: 400 });
+      }
+      const current = await readInfo(store);
+      const next = { ...current, position: p, updated_at: Date.now() };
+      await store.setJSON(INFO_KEY, next);
+      return Response.json({ ok: true, info: publicInfo(next) });
+    }
+
+    // Otherwise: multipart/form-data = edit the title/body/image.
     let form;
     try { form = await req.formData(); }
-    catch { return Response.json({ error: "expected multipart/form-data" }, { status: 400 }); }
+    catch { return Response.json({ error: "expected multipart/form-data or application/json" }, { status: 400 }); }
 
     const title = String(form.get("title") || "").trim();
     const body = String(form.get("body") || "").trim();
@@ -95,7 +123,7 @@ export default async (req) => {
     }
 
     await store.setJSON(INFO_KEY, next);
-    return Response.json({ ok: true, info: { title: next.title, body: next.body, hasImage: next.hasImage, updated_at: next.updated_at } });
+    return Response.json({ ok: true, info: publicInfo(next) });
   }
 
   return new Response("Method not allowed", { status: 405 });

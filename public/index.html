@@ -90,15 +90,11 @@
   /* HERO */
   .hero{background:var(--black);padding:96px 0 72px;position:relative;overflow:hidden;}
   .hero-grid{display:grid;grid-template-columns:1fr;gap:56px;align-items:center;}
-  .hero-grid.has-side{grid-template-columns:1.15fr 0.85fr;}
+  .hero-grid.has-side{grid-template-columns:0.9fr 1.1fr;}
   .hero h1{font-size:60px;font-weight:800;color:var(--white);margin:22px 0 22px;}
   .hero h1 em{font-style:normal;color:var(--purple);}
   .hero h1 .dot{color:var(--purple);}
-  .hero p.lede{font-size:17.5px;line-height:1.65;color:#c7c5bf;max-width:540px;margin-bottom:34px;}
-  .hero .ctas{display:flex;gap:14px;margin-bottom:52px;flex-wrap:wrap;}
-  .stats{display:flex;gap:44px;flex-wrap:wrap;}
-  .stat b{display:block;font-family:'Poppins',sans-serif;font-weight:700;font-size:20px;color:var(--white);}
-  .stat span{display:block;font-size:13px;color:var(--gray);margin-top:4px;}
+  .hero p.lede{font-size:17.5px;line-height:1.65;color:#c7c5bf;max-width:540px;margin-bottom:0;}
 
   /* SECTION GENERIC */
   section{padding:96px 0;}
@@ -201,11 +197,13 @@
   .link-title{font-family:'Poppins',sans-serif;font-weight:600;font-size:15.5px;color:var(--black);margin-bottom:6px;}
   .link-body{font-size:13.5px;line-height:1.5;color:var(--gray-dark);}
 
-  /* TEXT + IMAGE FEATURE SECTION */
-  .feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;}
-  .feature-grid.single{grid-template-columns:1fr;max-width:640px;}
-  .feature-media{border-radius:var(--radius);overflow:hidden;background:#e4e1d8;position:relative;aspect-ratio:4/3;}
+  /* TEXT + IMAGE FEATURE SECTION — image is a big centered square, up to
+     900x900px, with the text centered underneath (not side-by-side, so the
+     image actually has room to reach that size on wide screens). */
+  .feature-grid{display:flex;flex-direction:column;align-items:center;gap:36px;text-align:center;}
+  .feature-media{width:100%;max-width:900px;aspect-ratio:1/1;border-radius:var(--radius);overflow:hidden;background:#e4e1d8;position:relative;}
   .feature-media img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}
+  .feature-copy{max-width:680px;}
   .feature-copy h2{margin:0 0 16px;}
   .feature-copy p{font-size:16px;line-height:1.65;color:var(--gray-dark);}
 
@@ -238,6 +236,7 @@
   .video-embed{position:relative;width:100%;padding-top:56.25%;background:#000;border-radius:var(--radius);overflow:hidden;}
   .video-embed iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
   .video-embed img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}
+  #hero-image-panel .video-embed{padding-top:100%;}
 
   /* ANNOUNCEMENT BAR */
   .announce-bar{background:var(--purple);color:#1f0a33;}
@@ -342,17 +341,8 @@
   <div class="wrap hero-grid">
     <div>
       <span class="eyebrow on-dark">DEMO LEQTURE · 6–10 JULY 2026</span>
-      <h1>Learning at <em>Work Week</em> 2026<span class="dot">.</span></h1>
-      <p class="lede">A week of live sessions on AI, communication and wellbeing, streamed for every Demo Leqture attendee, wherever you are in the world. Watch live, ask questions, and catch up on demand.</p>
-      <div class="ctas">
-        <a href="#sessions" class="btn btn-primary">View schedule</a>
-        <a href="#recordings" class="btn btn-outline-dark">See recordings</a>
-      </div>
-      <div class="stats">
-        <div class="stat"><b>5 days</b><span>6–10 July 2026</span></div>
-        <div class="stat"><b>11 sessions</b><span>Live &amp; on demand</span></div>
-        <div class="stat"><b>Global</b><span>Hosted on UK time</span></div>
-      </div>
+      <h1 id="hero-title-el">Learning at <em>Work Week</em> 2026<span class="dot">.</span></h1>
+      <p class="lede" id="hero-subtitle-el">A week of live sessions on AI, communication and wellbeing, streamed for every Demo Leqture attendee, wherever you are in the world. Watch live, ask questions, and catch up on demand.</p>
     </div>
     <div class="hero-panel" id="hero-player-panel" hidden>
       <div class="label">Live now</div>
@@ -741,8 +731,8 @@
   <div class="wrap">
     <div class="section-head">
       <span class="eyebrow on-dark">Catch up any time</span>
-      <h2>Session recordings<span class="dot">.</span></h2>
-      <p>Missed a session, or in an awkward timezone? Every session is recorded and lands here within 24 hours, so you can watch back whenever suits you.</p>
+      <h2 id="recordings-title-el">Session recordings<span class="dot">.</span></h2>
+      <p id="recordings-subtitle-el">Missed a session, or in an awkward timezone? Every session is recorded and lands here within 24 hours, so you can watch back whenever suits you.</p>
     </div>
     <div class="rec-grid">
       <a class="rec-card" href="https://youtu.be/8qpad45mnCM" target="_blank" rel="noopener">
@@ -769,7 +759,6 @@
       <img id="feature-image-el" src="" alt="">
     </div>
     <div class="feature-copy">
-      <span class="eyebrow">Spotlight</span>
       <h2 id="feature-title-el" hidden>Title<span class="dot">.</span></h2>
       <p id="feature-body-el" hidden></p>
     </div>
@@ -1158,6 +1147,32 @@
   var styleEl = document.getElementById("theme-style");
   var lastFont = "";
 
+  var heroTitleEl = document.getElementById("hero-title-el");
+  var heroSubtitleEl = document.getElementById("hero-subtitle-el");
+  var recordingsTitleEl = document.getElementById("recordings-title-el");
+  var recordingsSubtitleEl = document.getElementById("recordings-subtitle-el");
+  var heroTitleDefaultHTML = heroTitleEl.innerHTML;
+  var heroSubtitleDefaultText = heroSubtitleEl.textContent;
+  var recordingsTitleDefaultHTML = recordingsTitleEl.innerHTML;
+  var recordingsSubtitleDefaultText = recordingsSubtitleEl.textContent;
+
+  function setTitleHTML(el, defaultHTML, customText) {
+    if (customText) {
+      el.textContent = customText;
+      var dot = document.createElement("span");
+      dot.className = "dot";
+      dot.textContent = ".";
+      el.appendChild(dot);
+    } else if (el.innerHTML !== defaultHTML) {
+      el.innerHTML = defaultHTML;
+    }
+  }
+
+  function setBodyText(el, defaultText, customText) {
+    var next = customText || defaultText;
+    if (el.textContent !== next) el.textContent = next;
+  }
+
   function escSel(v) { return v; } // hex codes / known keys only, nothing user-typed reaches a selector
 
   // Darkens a #rrggbb / #rgb hex color by the given amount (0-1), for the
@@ -1202,7 +1217,7 @@
 
     var sections = theme.sections || {};
     var map = {
-      hero: { bgSel: "#top", textSel: ["#top h1", "#top .lede", "#top .stat b", "#top .stat span"] },
+      hero: { bgSel: "#top", textSel: ["#top h1", "#top .lede"] },
       sessions: { bgSel: "#sessions", textSel: ["#sessions .section-head h2", "#sessions .section-head p"] },
       recordings: { bgSel: "#recordings", textSel: ["#recordings .section-head h2", "#recordings .section-head p"] },
       footer: { bgSel: "footer", textSel: ["footer", "footer .footer-bottom", "footer .footer-bottom b"] }
@@ -1221,6 +1236,20 @@
     });
 
     styleEl.textContent = rules.join("\n");
+
+    // Admin-editable heading/subheading text for Hero and Recordings.
+    // Hero's default heading has a purple-highlighted "Work Week" — a
+    // custom heading can't preserve that mid-sentence highlight, so a
+    // custom title replaces the whole heading with plain text + the
+    // decorative dot; leaving it blank restores the original markup
+    // exactly (highlight included).
+    var heroSec = sections.hero || {};
+    setTitleHTML(heroTitleEl, heroTitleDefaultHTML, (heroSec.title || "").trim());
+    setBodyText(heroSubtitleEl, heroSubtitleDefaultText, (heroSec.subtitle || "").trim());
+
+    var recSec = sections.recordings || {};
+    setTitleHTML(recordingsTitleEl, recordingsTitleDefaultHTML, (recSec.title || "").trim());
+    setBodyText(recordingsSubtitleEl, recordingsSubtitleDefaultText, (recSec.subtitle || "").trim());
   }
 
   function check() {
@@ -1321,18 +1350,38 @@
 <script>
 (function () {
   var section = document.getElementById("feature");
-  var grid = document.getElementById("feature-grid");
   var media = document.getElementById("feature-media");
   var imageEl = document.getElementById("feature-image-el");
   var titleEl = document.getElementById("feature-title-el");
   var bodyEl = document.getElementById("feature-body-el");
+  var sessionsEl = document.getElementById("sessions");
+  var recordingsEl = document.getElementById("recordings");
   var lastSignature = "";
+  var lastPosition = null;
+
+  // Same three slots as the "Useful links" section: 0 = before Sessions,
+  // 1 = between Sessions and Recordings, 2 = after Recordings (the
+  // original fixed spot, and still the default).
+  function applyPosition(position) {
+    if (position === lastPosition) return;
+    lastPosition = position;
+    var parent = section.parentNode;
+    if (position <= 0) {
+      parent.insertBefore(section, sessionsEl);
+    } else if (position >= 2) {
+      parent.insertBefore(section, recordingsEl.nextSibling);
+    } else {
+      parent.insertBefore(section, recordingsEl);
+    }
+  }
 
   function render(info) {
-    info = info || { title: "", body: "", hasImage: false, updated_at: 0 };
+    info = info || { title: "", body: "", hasImage: false, position: 2, updated_at: 0 };
     var signature = JSON.stringify(info);
     if (signature === lastSignature) return;
     lastSignature = signature;
+
+    applyPosition(typeof info.position === "number" ? info.position : 2);
 
     var hasTitle = !!info.title;
     var hasBody = !!info.body;
@@ -1356,7 +1405,6 @@
       media.hidden = true;
     }
 
-    grid.classList.toggle("single", !hasImage || (!hasTitle && !hasBody));
     section.hidden = false;
   }
 

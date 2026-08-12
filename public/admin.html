@@ -243,7 +243,7 @@
           <span class="feature-icon">&#127912;</span>
           <div>
             <div class="feature-name">Site theme</div>
-            <div class="feature-desc">Font, accent color, and background/text color per section.</div>
+            <div class="feature-desc">Font, accent color, heading/subheading text, and colors per section.</div>
           </div>
         </div>
         <div class="status-row">
@@ -261,6 +261,8 @@
 
         <div class="theme-field-row">
           <div class="theme-field-name">Hero</div>
+          <input type="text" id="theme-hero-title" maxlength="80" placeholder="Heading (default: Learning at Work Week 2026)" autocomplete="off" style="margin-bottom:8px;">
+          <textarea id="theme-hero-subtitle" class="textarea-field" maxlength="240" placeholder="Subheading (default: A week of live sessions...)" style="min-height:44px;"></textarea>
           <div class="theme-field-inputs">
             <input type="text" id="theme-hero-bg" placeholder="Background #hex" maxlength="7">
             <input type="color" data-target="theme-hero-bg" value="#0a0a0a">
@@ -279,6 +281,8 @@
         </div>
         <div class="theme-field-row">
           <div class="theme-field-name">Recordings</div>
+          <input type="text" id="theme-recordings-title" maxlength="80" placeholder="Heading (default: Session recordings)" autocomplete="off" style="margin-bottom:8px;">
+          <textarea id="theme-recordings-subtitle" class="textarea-field" maxlength="240" placeholder="Subheading (default: Missed a session...)" style="min-height:44px;"></textarea>
           <div class="theme-field-inputs">
             <input type="text" id="theme-recordings-bg" placeholder="Background #hex" maxlength="7">
             <input type="color" data-target="theme-recordings-bg" value="#0a0a0a">
@@ -299,7 +303,7 @@
           <button type="button" class="btn btn-primary" id="theme-save">Save theme</button>
           <button type="button" class="btn btn-outline" id="theme-reset">Reset all</button>
         </div>
-        <p class="hint">Sets the font and background/text colors for everyone within about 15 seconds. Leave a color field blank to keep that section's default look.</p>
+        <p class="hint">Sets the font, accent color, headings, and background/text colors for everyone within about 15 seconds. Leave a heading/subheading or color field blank to keep that section's default text/look.</p>
       </div>
 
       <div class="divider"></div>
@@ -351,12 +355,16 @@
           <span class="feature-icon">&#128221;</span>
           <div>
             <div class="feature-name">Text &amp; image section</div>
-            <div class="feature-desc">One content block (title, body text, image) shown after Recordings.</div>
+            <div class="feature-desc">One content block (title, body text, image) you can reposition.</div>
           </div>
         </div>
         <div class="status-row">
           <span>Text &amp; image section</span>
           <span class="badge" id="feature-badge">—</span>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn btn-outline" id="feature-move-up">&uarr; Move section up</button>
+          <button type="button" class="btn btn-outline" id="feature-move-down">&darr; Move section down</button>
         </div>
         <div class="image-preview" id="feature-image-preview"><span class="empty">No image uploaded</span></div>
         <input type="file" id="feature-image-file" accept="image/*" />
@@ -371,7 +379,7 @@
         <div class="actions">
           <button type="button" class="btn btn-outline" id="feature-clear-all">Clear whole section</button>
         </div>
-        <p class="hint">Shown as its own section between Recordings and the footer, only while it has a title, body text, or image — leaving everything blank hides it. You can save title/body without an image, or add an image with no text.</p>
+        <p class="hint">Shown as its own section, only while it has a title, body text, or image — leaving everything blank hides it. You can save title/body without an image, or add an image with no text. Use the buttons above to move it: before Sessions, between Sessions and Recordings, or after Recordings (the default).</p>
       </div>
     </div>
   </div>
@@ -735,9 +743,13 @@
       var sec = (theme.sections && theme.sections[s]) || {};
       var bgEl = themeFieldEl(s, "bg");
       var textEl = themeFieldEl(s, "text");
+      var titleEl = themeFieldEl(s, "title");
+      var subtitleEl = themeFieldEl(s, "subtitle");
       if (document.activeElement !== bgEl) bgEl.value = sec.bg || "";
       if (document.activeElement !== textEl) textEl.value = sec.text || "";
-      if (sec.bg || sec.text) custom = true;
+      if (titleEl && document.activeElement !== titleEl) titleEl.value = sec.title || "";
+      if (subtitleEl && document.activeElement !== subtitleEl) subtitleEl.value = sec.subtitle || "";
+      if (sec.bg || sec.text || sec.title || sec.subtitle) custom = true;
     });
     themeBadge.textContent = custom ? "CUSTOM" : "DEFAULT";
     themeBadge.className = "badge " + (custom ? "badge-on" : "");
@@ -747,7 +759,14 @@
   function collectTheme() {
     var sections = {};
     THEME_SECTIONS.forEach(function (s) {
-      sections[s] = { bg: themeFieldEl(s, "bg").value.trim(), text: themeFieldEl(s, "text").value.trim() };
+      var titleEl = themeFieldEl(s, "title");
+      var subtitleEl = themeFieldEl(s, "subtitle");
+      sections[s] = {
+        bg: themeFieldEl(s, "bg").value.trim(),
+        text: themeFieldEl(s, "text").value.trim(),
+        title: titleEl ? titleEl.value.trim() : "",
+        subtitle: subtitleEl ? subtitleEl.value.trim() : ""
+      };
     });
     return { font: themeFont.value.trim(), accent: themeAccent.value.trim(), sections: sections };
   }
@@ -775,7 +794,7 @@
   themeSaveBtn.addEventListener("click", function () { saveTheme(collectTheme()); });
   themeResetBtn.addEventListener("click", function () {
     var empty = { font: "", accent: "", sections: {} };
-    THEME_SECTIONS.forEach(function (s) { empty.sections[s] = { bg: "", text: "" }; });
+    THEME_SECTIONS.forEach(function (s) { empty.sections[s] = { bg: "", text: "", title: "", subtitle: "" }; });
     saveTheme(empty);
   });
 
@@ -997,9 +1016,12 @@
   var featureSaveBtn = document.getElementById("feature-save");
   var featureRemoveImageBtn = document.getElementById("feature-remove-image");
   var featureClearAllBtn = document.getElementById("feature-clear-all");
+  var featureMoveUpBtn = document.getElementById("feature-move-up");
+  var featureMoveDownBtn = document.getElementById("feature-move-down");
+  var currentFeaturePosition = 2;
 
   function renderFeature(info) {
-    info = info || { title: "", body: "", hasImage: false, updated_at: 0 };
+    info = info || { title: "", body: "", hasImage: false, position: 2, updated_at: 0 };
     var active = !!(info.title || info.body || info.hasImage);
     featureBadge.textContent = active ? "LIVE" : "EMPTY";
     featureBadge.className = "badge " + (active ? "badge-on" : "");
@@ -1010,6 +1032,9 @@
     } else {
       featureImagePreview.innerHTML = '<span class="empty">No image uploaded</span>';
     }
+    currentFeaturePosition = typeof info.position === "number" ? info.position : 2;
+    featureMoveUpBtn.disabled = currentFeaturePosition <= 0;
+    featureMoveDownBtn.disabled = currentFeaturePosition >= 2;
   }
 
   function fetchFeature() {
@@ -1018,6 +1043,30 @@
       .then(renderFeature)
       .catch(function () {});
   }
+
+  function moveFeature(delta) {
+    var next = Math.max(0, Math.min(2, currentFeaturePosition + delta));
+    featureMoveUpBtn.disabled = true;
+    featureMoveDownBtn.disabled = true;
+    fetch("/api/feature", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify({ action: "position", position: next }),
+    })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(function (data) { renderFeature(data.info); })
+      .catch(function (err) {
+        alert(err.message);
+        featureMoveUpBtn.disabled = currentFeaturePosition <= 0;
+        featureMoveDownBtn.disabled = currentFeaturePosition >= 2;
+      });
+  }
+
+  featureMoveUpBtn.addEventListener("click", function () { moveFeature(-1); });
+  featureMoveDownBtn.addEventListener("click", function () { moveFeature(1); });
 
   featureSaveBtn.addEventListener("click", function () {
     var form = new FormData();

@@ -2,14 +2,15 @@
 
 Static site for Demo Leqture's Learning at Work Week 2026, with a live anonymous
 Q&A-style feedback survey, a site announcement bar, a hero video player/image,
-a site-wide theme (font, accent color, and per-section colors), a
-repositionable, renameable grid of admin-managed image link cards, and a
-single admin-editable text + image content block — all switched on and off
-from two separate admin panels. Styled in Demo Leqture's black/purple brand
-(Poppins/Inter, 2px corner radius, purple accent) by default, but the look
-can be changed live from either admin panel, and both panels stay in sync
-with each other. Each admin panel opens with a "jump to" pill bar and
-clearly labeled sections so it's obvious at a glance what can be changed.
+a site-wide theme (font, accent color, per-section colors, and editable
+Hero/Recordings headings), a repositionable, renameable grid of
+admin-managed image link cards, and a repositionable admin-editable text +
+image content block — all switched on and off from two separate admin
+panels. Styled in Demo Leqture's black/purple brand (Poppins/Inter, 2px
+corner radius, purple accent) by default, but the look and copy can be
+changed live from either admin panel, and both panels stay in sync with
+each other. Each admin panel opens with a "jump to" pill bar and clearly
+labeled sections so it's obvious at a glance what can be changed.
 
 ## Project structure
 
@@ -83,11 +84,24 @@ site whenever you want, e.g. "Lunch is now being served in the atrium."
 
 Controlled from the same `admin.html` page as the survey — see below.
 
-## Hero video player and hero image
+## Hero section
 
-Two features that share one spot: a bordered panel to the right of the main
-heading.
+The top of the page is intentionally simple: an eyebrow tag, a heading, a
+subheading, and (to the right, once something is published) a video player
+or a static image.
 
+- **Heading and subheading are editable** from either admin panel, under
+  **Site theme → Hero** (see below) — this is the same place the section's
+  colors live. Leave both blank to keep the original copy ("Learning at
+  *Work Week* 2026." with "Work Week" highlighted in purple). Typing a
+  custom heading replaces the whole line with plain text plus the
+  decorative purple "." — a custom heading can't keep that one-word
+  highlight, since there's no way to know which word in arbitrary text
+  should be emphasized.
+- The original stat row ("5 days / 11 sessions / Global") and the **View
+  schedule** / **See recordings** buttons that used to sit under the
+  heading have been removed — the hero is just the eyebrow, heading, and
+  subheading now (the same links still exist in the top nav bar).
 - **Video player** — paste a normal YouTube link (`/watch?v=...`,
   `youtu.be/...`, or `/live/...`) and the page converts it to the correct
   embeddable form automatically. Paste a Clevercast (or any other) embed
@@ -98,7 +112,12 @@ heading.
   (`admin.html`).
 - **Hero image** — a static image shown in the same spot whenever there's
   no video link published. Controlled from *either* admin panel (with one
-  restriction on Customer Admin — see below).
+  restriction on Customer Admin — see below). The image panel is bigger
+  than before: it now gets more than half the hero's width (was slightly
+  less than half), and displays as a square rather than a 16:9 letterbox,
+  so it reads as a large, prominent photo rather than a thumbnail. The
+  video player keeps its normal 16:9 shape, since it has to match the
+  embedded player.
 - **The video always wins.** If a link is published, the image is hidden
   even if one is uploaded — it comes back automatically the moment the
   link is turned off. Nothing is deleted when this happens; the image is
@@ -129,6 +148,10 @@ Either admin panel can change, live, for every visitor:
   section's own background and its heading/intro copy — the cards and
   accordions inside a section keep their own built-in styling so contrast
   stays readable regardless of what colors are chosen.
+- **Heading and subheading text for Hero and Recordings** — each of those
+  two sections also has a heading and subheading field right above its
+  colors. Leave either blank to keep the original wording. (Sessions and
+  Footer don't have text fields yet — only their colors are editable.)
 - Changes apply for every visitor within about 15 seconds, the same
   polling pattern as the announcement bar and hero player. Backed by
   `theme.mjs` / Netlify Blobs (`demoleqture-theme`).
@@ -182,8 +205,8 @@ resources, sign-up forms, related sites, and so on.
 ## Text and image section
 
 Either admin panel can edit one content block — a title, a paragraph of
-body text, and an image — shown as its own section on the site, fixed in
-position right after Recordings and before the footer.
+body text, and an image — shown as its own section on the site. Unlike the
+image link cards, this is a single block, not a repeatable list.
 
 - Fill in the title, body text, and/or upload an image, then **Save**.
   None of the three are required on their own — you can save just text
@@ -193,11 +216,20 @@ position right after Recordings and before the footer.
   (asks for confirmation first).
 - The section is hidden entirely on the site whenever title, body, and
   image are all empty — there's nothing to accidentally leave half-visible.
-- Unlike the image link cards, this is a single block, not a repeatable
-  list, and its position on the page isn't adjustable (it always sits
-  between Recordings and the footer).
+- **Layout**: the image sits centered above the text (not side-by-side),
+  shown as a large square up to 900×900 pixels — big enough to be a real
+  photo, not a thumbnail. Any image you upload is cropped to fit that
+  square (center-cropped, like the hero image).
+- **Move the whole section up or down** with the two **Move section**
+  buttons, using the same three slots as the image link cards: before
+  Sessions, between Sessions and Recordings, or after Recordings (the
+  original, and still the default, spot). The buttons disable themselves
+  at either end. If this section and the image link cards end up in the
+  same slot, they just stack — whichever was moved there more recently
+  ends up closer to the following section.
 - Backed by `feature.mjs` / Netlify Blobs (`demoleqture-feature`). Content
-  and the image are public; only editing or clearing needs an admin key.
+  and the image are public; only editing, moving, or clearing needs an
+  admin key.
 - Also polled every 15 seconds by both admin panels while unlocked, same
   as the theme and image link cards, so edits stay in sync between panels.
 
@@ -487,11 +519,41 @@ curl https://<site>/api/feature   # {"title":"","body":"","hasImage":false,...}
 Then manually:
 
 23. Under **Text & image section** in either admin panel, save a title and
-    body with no image — confirm the site shows a single, wider column of
-    text between Recordings and the footer within ~15 seconds. Add an
-    image — confirm it switches to a two-column layout. **Remove image**
-    and confirm it goes back to text-only. **Clear whole section** and
-    confirm the section disappears from the site entirely.
+    body with no image — confirm the site shows just the centered text
+    within ~15 seconds. Add an image — confirm a large square image
+    appears centered above the text. **Remove image** and confirm it goes
+    back to text-only. **Clear whole section** and confirm the section
+    disappears from the site entirely.
+
+```bash
+# 12. Hero and Recordings heading/subheading text
+curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <ckey>" -d '{"font":"","accent":"","sections":{"hero":{"bg":"","text":"","title":"Custom Hero Heading","subtitle":"Custom hero subheading."},"sessions":{"bg":"","text":"","title":"","subtitle":""},"recordings":{"bg":"","text":"","title":"Custom Recordings Heading","subtitle":"Custom recordings subheading."},"footer":{"bg":"","text":"","title":"","subtitle":""}}}'
+curl https://<site>/api/theme   # both sets of title/subtitle come back
+curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"font":"","accent":"","sections":{"hero":{"bg":"","text":"","title":"","subtitle":""},"sessions":{"bg":"","text":"","title":"","subtitle":""},"recordings":{"bg":"","text":"","title":"","subtitle":""},"footer":{"bg":"","text":"","title":"","subtitle":""}}}'
+curl https://<site>/api/theme   # back to blank (site shows original wording)
+
+# 13. Text & image section position
+curl -X POST https://<site>/api/feature -H "content-type: application/json" -H "x-admin-key: <ckey>" -d '{"action":"position","position":0}'
+curl https://<site>/api/feature   # position: 0
+curl -X POST https://<site>/api/feature -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"action":"position","position":2}'   # put it back
+```
+
+Then manually:
+
+24. Under **Site theme**, type a custom heading and subheading for **Hero**
+    and confirm the site's H1/lede update within ~15 seconds — note the
+    purple "Work Week" highlight disappears once you set a custom heading
+    (expected, since a custom heading is plain text). Clear both fields
+    and confirm the original heading, with its highlight, comes back
+    exactly as it was. Repeat for **Recordings**.
+25. Confirm the hero no longer shows the "5 days / 11 sessions / Global"
+    stat row or the "View schedule" / "See recordings" buttons under the
+    heading — the hero should now be just the eyebrow, heading, and
+    subheading (plus the video/image panel, if one is published).
+26. Under **Text & image section**, use **Move section up**/**Move section
+    down** and confirm the section moves on the site within ~15 seconds,
+    same three slots as the image link cards. Confirm the buttons disable
+    themselves at either end.
 
 ## Before a live event
 

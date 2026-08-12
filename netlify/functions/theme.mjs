@@ -9,10 +9,12 @@ import { getRole } from "./lib/auth.mjs";
 const SECTION_KEYS = ["hero", "sessions", "recordings", "footer"];
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 const FONT_RE = /^[A-Za-z0-9 '-]{0,60}$/;
+const TITLE_MAX = 80;
+const SUBTITLE_MAX = 240;
 
 function emptyTheme() {
   const sections = {};
-  for (const k of SECTION_KEYS) sections[k] = { bg: "", text: "" };
+  for (const k of SECTION_KEYS) sections[k] = { bg: "", text: "", title: "", subtitle: "" };
   return { font: "", accent: "", sections, updated_at: 0 };
 }
 
@@ -21,6 +23,13 @@ function sanitizeColor(v) {
   const t = v.trim();
   if (t === "") return "";
   return HEX_RE.test(t) ? t : null; // null = invalid
+}
+
+function sanitizeText(v, max) {
+  if (typeof v !== "string") return "";
+  const t = v.trim();
+  if (t.length > max) return null; // null = invalid (too long)
+  return t;
 }
 
 export default async (req) => {
@@ -63,7 +72,15 @@ export default async (req) => {
       if (bg === null || text === null) {
         return Response.json({ error: `invalid color for section "${k}" — use hex like #a855f7 or leave blank` }, { status: 400 });
       }
-      sections[k] = { bg, text };
+      const title = sanitizeText(src.title, TITLE_MAX);
+      if (title === null) {
+        return Response.json({ error: `title for section "${k}" must be under ${TITLE_MAX} characters` }, { status: 400 });
+      }
+      const subtitle = sanitizeText(src.subtitle, SUBTITLE_MAX);
+      if (subtitle === null) {
+        return Response.json({ error: `subtitle for section "${k}" must be under ${SUBTITLE_MAX} characters` }, { status: 400 });
+      }
+      sections[k] = { bg, text, title, subtitle };
     }
 
     const theme = { font, accent, sections, updated_at: Date.now() };
