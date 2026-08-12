@@ -80,6 +80,27 @@
   }
   .image-preview img{width:100%;height:100%;object-fit:cover;display:block;}
   .image-preview .empty{font-size:12px;color:var(--gray);}
+  .theme-field-row{margin-bottom:12px;}
+  .theme-field-name{font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;}
+  .theme-field-inputs{display:grid;grid-template-columns:1fr 34px 1fr 34px;gap:6px;align-items:center;}
+  .theme-field-inputs input[type="text"]{margin-bottom:0;}
+  .theme-field-inputs input[type="color"]{width:34px;height:38px;padding:2px;border:1px solid #262626;border-radius:var(--radius);background:#0e0e0e;cursor:pointer;}
+  textarea.textarea-field{
+    width:100%;background:#0e0e0e;border:1px solid #262626;border-radius:var(--radius);
+    padding:11px 13px;color:var(--white);font-family:'Inter',sans-serif;font-size:13.5px;
+    resize:vertical;min-height:60px;outline:none;transition:border-color .15s;margin-bottom:12px;
+  }
+  textarea.textarea-field:focus{border-color:var(--purple);}
+  .card-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #232323;}
+  .card-item-thumb{width:44px;height:44px;object-fit:cover;border-radius:var(--radius);flex-shrink:0;background:#0e0e0e;}
+  .card-item-info{flex:1;min-width:0;}
+  .card-item-title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .card-item-link{font-size:11px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .card-item-actions{display:flex;gap:4px;flex-shrink:0;}
+  .card-item-actions button{background:transparent;border:1px solid #3a3a3a;color:var(--white);border-radius:var(--radius);padding:4px 7px;font-size:11px;cursor:pointer;}
+  .card-item-actions button:hover:not(:disabled){border-color:var(--purple);}
+  .card-item-actions button:disabled{opacity:.35;cursor:not-allowed;}
+  .card-empty{font-size:12px;color:var(--gray);padding:6px 0 14px;}
 </style>
 </head>
 <body>
@@ -87,7 +108,7 @@
   <div class="card">
     <span class="eyebrow">Super Admin</span>
     <h1>Site controls</h1>
-    <p class="lede">Enter the admin key to control the survey, the announcement bar, the hero video player, and the hero image.</p>
+    <p class="lede">Enter the admin key to control the survey, the announcement bar, the hero video player, the hero image, the site theme, and the image link cards.</p>
 
     <div id="gate">
       <label for="admin-key">Admin key</label>
@@ -159,6 +180,78 @@
         <button type="button" class="btn btn-outline" id="image-remove">Remove</button>
       </div>
       <p class="hint">Shown to the right of the main heading whenever there's no hero video player link published. Max 5MB. Note: while the hero video player is live, this image won't be shown until you turn the player off.</p>
+
+      <div class="divider"></div>
+
+      <div class="status-row">
+        <span>Site theme</span>
+        <span class="badge" id="theme-badge">—</span>
+      </div>
+      <label for="theme-font">Font (type any Google Fonts name)</label>
+      <input type="text" id="theme-font" placeholder="e.g. Poppins, Sora, Playfair Display" autocomplete="off" />
+
+      <div class="theme-field-row">
+        <div class="theme-field-name">Hero</div>
+        <div class="theme-field-inputs">
+          <input type="text" id="theme-hero-bg" placeholder="Background #hex" maxlength="7">
+          <input type="color" data-target="theme-hero-bg" value="#0a0a0a">
+          <input type="text" id="theme-hero-text" placeholder="Text #hex" maxlength="7">
+          <input type="color" data-target="theme-hero-text" value="#ffffff">
+        </div>
+      </div>
+      <div class="theme-field-row">
+        <div class="theme-field-name">Sessions</div>
+        <div class="theme-field-inputs">
+          <input type="text" id="theme-sessions-bg" placeholder="Background #hex" maxlength="7">
+          <input type="color" data-target="theme-sessions-bg" value="#eeece6">
+          <input type="text" id="theme-sessions-text" placeholder="Text #hex" maxlength="7">
+          <input type="color" data-target="theme-sessions-text" value="#0a0a0a">
+        </div>
+      </div>
+      <div class="theme-field-row">
+        <div class="theme-field-name">Recordings</div>
+        <div class="theme-field-inputs">
+          <input type="text" id="theme-recordings-bg" placeholder="Background #hex" maxlength="7">
+          <input type="color" data-target="theme-recordings-bg" value="#0a0a0a">
+          <input type="text" id="theme-recordings-text" placeholder="Text #hex" maxlength="7">
+          <input type="color" data-target="theme-recordings-text" value="#ffffff">
+        </div>
+      </div>
+      <div class="theme-field-row">
+        <div class="theme-field-name">Footer</div>
+        <div class="theme-field-inputs">
+          <input type="text" id="theme-footer-bg" placeholder="Background #hex" maxlength="7">
+          <input type="color" data-target="theme-footer-bg" value="#a855f7">
+          <input type="text" id="theme-footer-text" placeholder="Text #hex" maxlength="7">
+          <input type="color" data-target="theme-footer-text" value="#1f0a33">
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="theme-save">Save theme</button>
+        <button type="button" class="btn btn-outline" id="theme-reset">Reset all</button>
+      </div>
+      <p class="hint">Sets the font and background/text colors for everyone within about 15 seconds. Leave a color field blank to keep that section's default look.</p>
+
+      <div class="divider"></div>
+
+      <div class="status-row">
+        <span>Image link cards</span>
+        <span class="badge" id="cards-badge">—</span>
+      </div>
+      <div id="cards-list"></div>
+      <label for="card-title" style="margin-top:14px;">Title</label>
+      <input type="text" id="card-title" maxlength="60" placeholder="Card title" autocomplete="off" />
+      <label for="card-body">Body text</label>
+      <textarea id="card-body" class="textarea-field" maxlength="220" placeholder="A short line of description"></textarea>
+      <label for="card-link">External link</label>
+      <input type="text" id="card-link" placeholder="https://..." autocomplete="off" />
+      <label for="card-image">Image</label>
+      <input type="file" id="card-image" accept="image/*" />
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="card-save">Add card</button>
+        <button type="button" class="btn btn-outline" id="card-cancel" hidden>Cancel edit</button>
+      </div>
+      <p class="hint">Shown as a grid of clickable cards between the programme and recordings sections on the site. Each needs an image, title, short body text, and a link. Max 24 cards, images up to 5MB. Use the arrows to reorder.</p>
     </div>
   </div>
 </div>
@@ -218,6 +311,8 @@
         fetchAnnouncement();
         fetchPlayer();
         fetchHeroImage();
+        fetchTheme();
+        fetchCards();
         return fetchState();
       })
       .catch(function (err) {
@@ -266,6 +361,8 @@
     fetchAnnouncement();
     fetchPlayer();
     fetchHeroImage();
+    fetchTheme();
+    fetchCards();
   });
 
   function refreshCount() {
@@ -458,6 +555,222 @@
         imageRemoveBtn.disabled = false;
       });
   });
+
+  // ---- Site theme (font + per-section colors) ----
+  var themeFont = document.getElementById("theme-font");
+  var themeBadge = document.getElementById("theme-badge");
+  var themeSaveBtn = document.getElementById("theme-save");
+  var themeResetBtn = document.getElementById("theme-reset");
+  var THEME_SECTIONS = ["hero", "sessions", "recordings", "footer"];
+
+  Array.prototype.forEach.call(document.querySelectorAll(".theme-field-inputs input[type=color]"), function (swatch) {
+    swatch.addEventListener("input", function () {
+      var target = document.getElementById(swatch.getAttribute("data-target"));
+      if (target) target.value = swatch.value;
+    });
+  });
+
+  function themeFieldEl(section, kind) {
+    return document.getElementById("theme-" + section + "-" + kind);
+  }
+
+  function fetchTheme() {
+    return fetch("/api/theme", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(renderTheme)
+      .catch(function () {});
+  }
+
+  function renderTheme(theme) {
+    theme = theme || { font: "", sections: {} };
+    themeFont.value = theme.font || "";
+    var custom = !!theme.font;
+    THEME_SECTIONS.forEach(function (s) {
+      var sec = (theme.sections && theme.sections[s]) || {};
+      themeFieldEl(s, "bg").value = sec.bg || "";
+      themeFieldEl(s, "text").value = sec.text || "";
+      if (sec.bg || sec.text) custom = true;
+    });
+    themeBadge.textContent = custom ? "CUSTOM" : "DEFAULT";
+    themeBadge.className = "badge " + (custom ? "badge-on" : "");
+  }
+
+  function collectTheme() {
+    var sections = {};
+    THEME_SECTIONS.forEach(function (s) {
+      sections[s] = { bg: themeFieldEl(s, "bg").value.trim(), text: themeFieldEl(s, "text").value.trim() };
+    });
+    return { font: themeFont.value.trim(), sections: sections };
+  }
+
+  function saveTheme(theme) {
+    themeSaveBtn.disabled = true;
+    themeResetBtn.disabled = true;
+    fetch("/api/theme", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify(theme),
+    })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(renderTheme)
+      .catch(function (err) { alert(err.message); })
+      .finally(function () {
+        themeSaveBtn.disabled = false;
+        themeResetBtn.disabled = false;
+      });
+  }
+
+  themeSaveBtn.addEventListener("click", function () { saveTheme(collectTheme()); });
+  themeResetBtn.addEventListener("click", function () {
+    var empty = { font: "", sections: {} };
+    THEME_SECTIONS.forEach(function (s) { empty.sections[s] = { bg: "", text: "" }; });
+    saveTheme(empty);
+  });
+
+  // ---- Image link cards ----
+  var cardsList = document.getElementById("cards-list");
+  var cardsBadge = document.getElementById("cards-badge");
+  var cardTitle = document.getElementById("card-title");
+  var cardBody = document.getElementById("card-body");
+  var cardLink = document.getElementById("card-link");
+  var cardImage = document.getElementById("card-image");
+  var cardSaveBtn = document.getElementById("card-save");
+  var cardCancelBtn = document.getElementById("card-cancel");
+  var currentCards = [];
+  var editingCardId = null;
+
+  function fetchCards() {
+    return fetch("/api/cards", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) { currentCards = (data && data.cards) || []; renderCards(); })
+      .catch(function () {});
+  }
+
+  function renderCards() {
+    cardsBadge.textContent = String(currentCards.length);
+    if (!currentCards.length) {
+      cardsList.innerHTML = '<div class="card-empty">No cards yet — add one below.</div>';
+      return;
+    }
+    var esc = document.createElement("div");
+    cardsList.innerHTML = currentCards.map(function (c, i) {
+      esc.textContent = c.title || "";
+      var safeTitle = esc.innerHTML;
+      esc.textContent = c.link || "";
+      var safeLink = esc.innerHTML;
+      return (
+        '<div class="card-item" data-id="' + c.id + '">' +
+          '<img class="card-item-thumb" src="/api/cards?image=' + encodeURIComponent(c.id) + '&t=' + encodeURIComponent(c.updated_at || 0) + '" alt="">' +
+          '<div class="card-item-info">' +
+            '<div class="card-item-title">' + safeTitle + '</div>' +
+            '<div class="card-item-link">' + safeLink + '</div>' +
+          '</div>' +
+          '<div class="card-item-actions">' +
+            '<button type="button" data-action="up"' + (i === 0 ? " disabled" : "") + '>&uarr;</button>' +
+            '<button type="button" data-action="down"' + (i === currentCards.length - 1 ? " disabled" : "") + '>&darr;</button>' +
+            '<button type="button" data-action="edit">Edit</button>' +
+            '<button type="button" data-action="delete">Delete</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join("");
+  }
+
+  cardsList.addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    var item = btn.closest(".card-item");
+    var id = item.getAttribute("data-id");
+    var action = btn.getAttribute("data-action");
+    if (action === "edit") { startEditCard(id); }
+    else if (action === "delete") { deleteCard(id); }
+    else if (action === "up" || action === "down") { moveCard(id, action); }
+  });
+
+  function startEditCard(id) {
+    var c = currentCards.filter(function (x) { return x.id === id; })[0];
+    if (!c) return;
+    editingCardId = id;
+    cardTitle.value = c.title || "";
+    cardBody.value = c.body || "";
+    cardLink.value = c.link || "";
+    cardImage.value = "";
+    cardSaveBtn.textContent = "Save changes";
+    cardCancelBtn.hidden = false;
+    cardTitle.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  function resetCardForm() {
+    editingCardId = null;
+    cardTitle.value = "";
+    cardBody.value = "";
+    cardLink.value = "";
+    cardImage.value = "";
+    cardSaveBtn.textContent = "Add card";
+    cardCancelBtn.hidden = true;
+  }
+
+  cardCancelBtn.addEventListener("click", resetCardForm);
+
+  cardSaveBtn.addEventListener("click", function () {
+    var title = cardTitle.value.trim();
+    var link = cardLink.value.trim();
+    var file = cardImage.files && cardImage.files[0];
+    if (!title) { alert("Title is required."); return; }
+    if (link.indexOf("http://") !== 0 && link.indexOf("https://") !== 0) { alert("Link must start with http:// or https://"); return; }
+    if (!editingCardId && !file) { alert("An image is required for a new card."); return; }
+
+    var form = new FormData();
+    if (editingCardId) form.append("id", editingCardId);
+    form.append("title", title);
+    form.append("body", cardBody.value.trim());
+    form.append("link", link);
+    if (file) form.append("image", file);
+
+    cardSaveBtn.disabled = true;
+    fetch("/api/cards", { method: "POST", headers: { "x-admin-key": key }, body: form })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(function () { resetCardForm(); return fetchCards(); })
+      .catch(function (err) { alert(err.message); })
+      .finally(function () { cardSaveBtn.disabled = false; });
+  });
+
+  function deleteCard(id) {
+    if (!confirm("Remove this card?")) return;
+    fetch("/api/cards?id=" + encodeURIComponent(id), { method: "DELETE", headers: { "x-admin-key": key } })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(function () { if (editingCardId === id) resetCardForm(); return fetchCards(); })
+      .catch(function (err) { alert(err.message); });
+  }
+
+  function moveCard(id, direction) {
+    var ids = currentCards.map(function (c) { return c.id; });
+    var idx = ids.indexOf(id);
+    if (idx === -1) return;
+    var swapWith = direction === "up" ? idx - 1 : idx + 1;
+    if (swapWith < 0 || swapWith >= ids.length) return;
+    var tmp = ids[idx]; ids[idx] = ids[swapWith]; ids[swapWith] = tmp;
+    fetch("/api/cards", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify({ action: "reorder", order: ids }),
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error("Request failed (" + r.status + ").");
+        return r.json();
+      })
+      .then(function (data) { currentCards = (data && data.cards) || currentCards; renderCards(); })
+      .catch(function (err) { alert(err.message); });
+  }
 })();
 </script>
 </body>

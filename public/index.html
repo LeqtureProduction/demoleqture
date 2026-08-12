@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link id="theme-font-link" rel="stylesheet" href="" disabled>
+<style id="theme-style"></style>
 <style>
   :root{
     --black:#0a0a0a;
@@ -188,6 +190,16 @@
   .rec-info{padding:18px 20px;}
   .rec-info .meta{font-size:12.5px;color:var(--gray);margin-bottom:6px;}
   .rec-info .title{font-family:'Poppins',sans-serif;font-weight:600;font-size:16px;color:var(--white);}
+
+  /* LINK CARDS */
+  .link-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:24px;margin-top:44px;}
+  a.link-card{display:block;border:1px solid var(--cream-line);border-radius:var(--radius);overflow:hidden;background:#fff;transition:border-color .15s,transform .15s;}
+  a.link-card:hover{border-color:var(--purple);transform:translateY(-2px);}
+  .link-thumb{width:100%;padding-top:64%;position:relative;background:#e4e1d8;overflow:hidden;}
+  .link-thumb img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}
+  .link-info{padding:16px 18px;}
+  .link-title{font-family:'Poppins',sans-serif;font-weight:600;font-size:15.5px;color:var(--black);margin-bottom:6px;}
+  .link-body{font-size:13.5px;line-height:1.5;color:var(--gray-dark);}
 
   /* FOOTER */
   footer{background:var(--purple);color:#1f0a33;padding:72px 0 28px;}
@@ -705,6 +717,17 @@
   </div>
 </section>
 
+<section class="section-light" id="links" hidden>
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">More to explore</span>
+      <h2>Useful links<span class="dot">.</span></h2>
+      <p>A few extra resources worth a look.</p>
+    </div>
+    <div class="link-grid" id="link-grid"></div>
+  </div>
+</section>
+
 <section class="section-dark" id="recordings">
   <div class="wrap">
     <div class="section-head">
@@ -1104,6 +1127,123 @@
   checkAll();
   setInterval(function () { if (!document.hidden) checkAll(); }, 15000);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) checkAll(); });
+})();
+</script>
+
+<script>
+(function () {
+  var fontLink = document.getElementById("theme-font-link");
+  var styleEl = document.getElementById("theme-style");
+  var lastFont = "";
+
+  function escSel(v) { return v; } // hex codes / known keys only, nothing user-typed reaches a selector
+
+  function apply(theme) {
+    if (!theme) return;
+
+    var font = (theme.font || "").trim();
+    if (font !== lastFont) {
+      lastFont = font;
+      if (font) {
+        fontLink.href = "https://fonts.googleapis.com/css2?family=" + encodeURIComponent(font).replace(/%20/g, "+") + ":wght@400;500;600;700;800&display=swap";
+        fontLink.disabled = false;
+      } else {
+        fontLink.disabled = true;
+        fontLink.href = "";
+      }
+    }
+
+    var rules = [];
+    if (font) {
+      rules.push("body, body *{font-family:'" + font.replace(/'/g, "") + "', 'Inter', 'Poppins', Arial, Helvetica, sans-serif !important;}");
+    }
+
+    var sections = theme.sections || {};
+    var map = {
+      hero: { bgSel: "#top", textSel: ["#top h1", "#top .lede", "#top .stat b", "#top .stat span"] },
+      sessions: { bgSel: "#sessions", textSel: ["#sessions .section-head h2", "#sessions .section-head p"] },
+      recordings: { bgSel: "#recordings", textSel: ["#recordings .section-head h2", "#recordings .section-head p"] },
+      footer: { bgSel: "footer", textSel: ["footer", "footer .footer-bottom", "footer .footer-bottom b"] }
+    };
+
+    Object.keys(map).forEach(function (key) {
+      var s = sections[key];
+      if (!s) return;
+      var cfg = map[key];
+      if (s.bg) rules.push(cfg.bgSel + "{background:" + s.bg + " !important;}");
+      if (s.text) {
+        cfg.textSel.forEach(function (sel) {
+          rules.push(sel + "{color:" + s.text + " !important;}");
+        });
+      }
+    });
+
+    styleEl.textContent = rules.join("\n");
+  }
+
+  function check() {
+    return fetch("/api/theme", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(apply)
+      .catch(function () {});
+  }
+
+  check();
+  setInterval(function () { if (!document.hidden) check(); }, 15000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
+})();
+</script>
+
+<script>
+(function () {
+  var section = document.getElementById("links");
+  var grid = document.getElementById("link-grid");
+  var lastSignature = "";
+
+  function render(cards) {
+    var signature = JSON.stringify(cards);
+    if (signature === lastSignature) return;
+    lastSignature = signature;
+
+    if (!cards || !cards.length) {
+      section.hidden = true;
+      grid.innerHTML = "";
+      return;
+    }
+
+    grid.innerHTML = cards.map(function (c) {
+      var title = String(c.title || "");
+      var body = String(c.body || "");
+      var link = String(c.link || "#");
+      var img = "/api/cards?image=" + encodeURIComponent(c.id) + "&t=" + encodeURIComponent(c.updated_at || 0);
+      var div = document.createElement("div");
+      div.textContent = title;
+      var safeTitle = div.innerHTML;
+      div.textContent = body;
+      var safeBody = div.innerHTML;
+      return (
+        '<a class="link-card" href="' + link.replace(/"/g, "&quot;") + '" target="_blank" rel="noopener">' +
+          '<div class="link-thumb"><img src="' + img + '" alt="" loading="lazy"></div>' +
+          '<div class="link-info">' +
+            '<div class="link-title">' + safeTitle + '</div>' +
+            '<div class="link-body">' + safeBody + '</div>' +
+          '</div>' +
+        '</a>'
+      );
+    }).join("");
+    section.hidden = false;
+  }
+
+  function check() {
+    return fetch("/api/cards", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) { render(data && data.cards); })
+      .catch(function () {});
+  }
+
+  check();
+  setInterval(function () { if (!document.hidden) check(); }, 15000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
 })();
 </script>
 </body>

@@ -1,17 +1,19 @@
 # Demo Leqture — Learning at Work Week 2026
 
 Static site for Demo Leqture's Learning at Work Week 2026, with a live anonymous
-Q&A-style feedback survey, a site announcement bar, and a hero video
-player/image — all switched on and off from two separate admin panels.
-Styled in Demo Leqture's black/purple brand (Poppins/Inter, 2px corner radius).
+Q&A-style feedback survey, a site announcement bar, a hero video player/image,
+a site-wide theme (font + per-section colors), and a grid of admin-managed
+image link cards — all switched on and off from two separate admin panels.
+Styled in Demo Leqture's black/purple brand (Poppins/Inter, 2px corner radius)
+by default, but the look can be changed live from either admin panel.
 
 ## Project structure
 
 ```
 public/                     → published static site
-  index.html                  the site itself, incl. survey popup, announcement bar, hero player/image
+  index.html                  the site itself, incl. survey popup, announcement bar, hero player/image, link cards
   admin.html                   Super Admin: everything
-  customer-admin.html          Customer Admin: survey responses (view only) + hero image
+  customer-admin.html          Customer Admin: survey responses (view only) + hero image + theme + link cards
 netlify/functions/          → serverless functions
   lib/auth.mjs                 shared role check (not a function itself, just imported by the others)
   whoami.mjs                   GET: validates a key, returns its role ("super" / "customer")
@@ -21,6 +23,8 @@ netlify/functions/          → serverless functions
   announcement.mjs             GET (public): current site announcement / POST (super only): publish or clear it
   player.mjs                   GET (public): current hero video link / POST (super only): publish or turn it off
   hero-image.mjs                GET (public): the hero image / POST, DELETE (super or customer): upload or remove it
+  theme.mjs                    GET (public): font + per-section colors / POST (super or customer): change them
+  cards.mjs                    GET (public): the link cards list/images / POST, DELETE (super or customer): manage them
 netlify.toml                 publish = "public", functions directory
 package.json                  @netlify/blobs dependency
 ```
@@ -101,6 +105,48 @@ heading.
   link/image is public (anyone visiting the site can fetch it); only
   setting, uploading, or removing needs an admin key.
 
+## Site theme
+
+Either admin panel can change, live, for every visitor:
+
+- **Font** — type any Google Fonts family name (e.g. `Sora`, `Playfair
+  Display`). The site loads that font from Google Fonts and applies it
+  everywhere, overriding the default Poppins/Inter pairing. Leave it blank
+  to keep the default.
+- **Background and text color per section** — Hero, Sessions (the
+  programme), Recordings, and Footer each have their own optional
+  background color and text color (hex, e.g. `#a855f7`). Leave either
+  field blank to keep that section's default look. Colors apply to the
+  section's own background and its heading/intro copy — the cards and
+  accordions inside a section keep their own built-in styling so contrast
+  stays readable regardless of what colors are chosen.
+- Changes apply for every visitor within about 15 seconds, the same
+  polling pattern as the announcement bar and hero player. Backed by
+  `theme.mjs` / Netlify Blobs (`demoleqture-theme`).
+
+## Image link cards
+
+Either admin panel can maintain a small grid of clickable cards, shown
+between the programme (Sessions) and Recordings sections on the site.
+Each card has an image, a title, a short line of body text, and an
+external link — clicking anywhere on the card opens that link in a new
+tab. Useful for pointing visitors at resources, sign-up forms, related
+sites, and so on.
+
+- Add a card with the image/title/body/link form at the bottom of the
+  **Image link cards** section in either admin panel (image is required
+  for a new card; max 5MB).
+- Edit a card via its **Edit** button — this loads it back into the form;
+  you can change the image or leave it as-is.
+- Reorder cards with the ↑ / ↓ buttons; the site always shows them in the
+  order set in admin.
+- Remove a card with **Delete**.
+- Up to 24 cards. The section on the site is hidden entirely whenever
+  there are zero cards.
+- Backed by `cards.mjs` / Netlify Blobs (`demoleqture-cards`). Card
+  metadata and images are public (anyone visiting the site can see them);
+  only adding, editing, reordering, or removing needs an admin key.
+
 ## Two admin panels
 
 There are two separate, separately-keyed admin pages — not one page with
@@ -113,6 +159,8 @@ two logins, two entirely different shared secrets:
 | Site announcement | Yes | No |
 | Hero video player | Yes | No |
 | Hero image | Yes | Yes — **disabled while the hero video player is live** (there's nothing to preview, so changing it would just be confusing; the fields grey out with an explanation until a Super Admin turns the player off) |
+| Site theme (font + section colors) | Yes | Yes |
+| Image link cards | Yes | Yes |
 
 Both are plain, unlisted pages — not linked from the site nav — gated by a
 shared secret each, not a full login system. Enough to keep random visitors
@@ -150,6 +198,12 @@ client/customer contact.
    to take the current one down. A note reminds you it won't be visible
    while the video player is live, but you can still change it — it'll show
    as soon as the player is off.
+7. Under **Site theme**, type a Google Fonts name and/or set background/text
+   colors per section, then **Save theme**. **Reset all** clears everything
+   back to the default look.
+8. Under **Image link cards**, fill in the title/body/link/image form and
+   click **Add card**; use **Edit** to change one, ↑/↓ to reorder, and
+   **Delete** to remove one.
 
 ### Using Customer Admin (`customer-admin.html`)
 
@@ -161,6 +215,8 @@ client/customer contact.
    If the hero video player is currently live, these controls are disabled
    and a note explains why — ask a Super Admin to turn the player off
    first.
+4. Under **Site theme** and **Image link cards**, the controls work exactly
+   as in Super Admin — both panels have full access to these two features.
 
 ## Setup
 
@@ -175,7 +231,7 @@ npm install -g netlify-cli   # if you don't have it
 netlify dev                  # run from the project root, not from inside public/
 ```
 
-This serves `public/` and runs all seven functions together (with a local
+This serves `public/` and runs all nine functions together (with a local
 Blobs emulator) at `http://localhost:8888`. Opening `index.html` directly as
 a file (double-click / `file://`) will never work for the survey — there's
 no server behind it in that case.
@@ -188,10 +244,10 @@ netlify link                  # or: netlify init, to create a new site
 netlify deploy --prod
 ```
 
-Confirm the deploy summary lists **7 functions** (`survey-state`,
+Confirm the deploy summary lists **9 functions** (`survey-state`,
 `survey-response`, `survey-export`, `announcement`, `player`, `whoami`,
-`hero-image`). If it says 0, you're deploying from inside `public/` instead
-of the project root.
+`hero-image`, `theme`, `cards`). If it says 0, you're deploying from inside
+`public/` instead of the project root.
 
 Don't forget to set both `ADMIN_KEY` and `CUSTOMER_ADMIN_KEY` (see above) —
 without them, every admin action returns a clear error instead of quietly
@@ -288,6 +344,36 @@ Then manually:
     Super Admin can still upload/change the image even while the player is
     live.
 
+```bash
+# 8. Site theme — set a font and section colors as customer, confirm public GET
+curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <ckey>" -d '{"font":"Sora","sections":{"hero":{"bg":"#111111","text":"#ffffff"},"sessions":{"bg":"","text":""},"recordings":{"bg":"","text":""},"footer":{"bg":"","text":""}}}'
+curl https://<site>/api/theme   # should echo it back, no key needed
+curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"font":"","sections":{"hero":{"bg":"","text":""},"sessions":{"bg":"","text":""},"recordings":{"bg":"","text":""},"footer":{"bg":"","text":""}}}'
+curl https://<site>/api/theme   # back to default
+
+# 9. Image link cards — add, list, fetch image, reorder, delete
+curl -X POST https://<site>/api/cards -H "x-admin-key: <key>" -F "title=Test card" -F "body=Short description" -F "link=https://example.com" -F "image=@/path/to/test.jpg"
+curl https://<site>/api/cards   # {"cards":[{"id":"...","title":"Test card",...}]}
+curl https://<site>/api/cards?image=<id-from-above>   # raw image bytes
+curl -X DELETE "https://<site>/api/cards?id=<id-from-above>" -H "x-admin-key: <ckey>"
+curl https://<site>/api/cards   # {"cards":[]}
+```
+
+Then manually:
+
+17. Open `admin.html` or `customer-admin.html`, type a Google Fonts name
+    under **Site theme**, and confirm the whole site switches font within
+    ~15 seconds. Set a background/text color for one section (e.g. Hero)
+    and confirm just that section changes. **Reset all** and confirm the
+    site returns to its default look.
+18. Add two or three cards under **Image link cards** with different
+    images/titles/links. Confirm a new "Useful links" section appears on
+    the site between the programme and recordings, that each card opens
+    its link in a new tab, and that the section disappears again if you
+    delete every card. Use ↑/↓ to reorder and confirm the site reflects
+    the new order within ~15 seconds. Confirm both admin panels show and
+    can manage the same set of cards.
+
 ## Before a live event
 
 Turn the survey off (or leave it off) until you actually want it live —
@@ -297,7 +383,14 @@ Turn the survey off (or leave it off) until you actually want it live —
 netlify blobs:delete quantexa-survey responses --force
 netlify blobs:delete demoleqture-hero-image bytes --force
 netlify blobs:delete demoleqture-hero-image info --force
+netlify blobs:delete demoleqture-theme theme --force
+netlify blobs:delete demoleqture-cards list --force
 ```
+
+The theme and image link cards are cosmetic/content, not test data, so
+there's usually no need to wipe `demoleqture-theme` or `demoleqture-cards`
+before a live event — only do this if you specifically want to clear
+whatever a Customer Admin left configured during testing.
 
 ## Moderation / privacy note
 
@@ -305,8 +398,11 @@ Open text answers are free-form and unmoderated — anything a visitor types
 goes straight into the downloadable export, visible to whoever has either
 `ADMIN_KEY` or `CUSTOMER_ADMIN_KEY`. There's no way for other visitors to
 see survey answers (unlike the Q&A feature) — only ratings/text exported by
-an admin. Uploaded hero images are public by design (served to every
-visitor), so don't upload anything sensitive.
+an admin. Uploaded hero images and image link cards are public by design
+(served to every visitor, and card links open wherever the admin pointed
+them), so don't upload anything sensitive and only link to trusted
+destinations — both admin keys have equal ability to add cards and change
+the theme, there's no review/approval step before something goes live.
 
 ## Deploy from GitHub Pages instead?
 
