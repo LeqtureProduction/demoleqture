@@ -2,10 +2,12 @@
 
 Static site for Demo Leqture's Learning at Work Week 2026, with a live anonymous
 Q&A-style feedback survey, a site announcement bar, a hero video player/image,
-a site-wide theme (font + per-section colors), and a grid of admin-managed
-image link cards — all switched on and off from two separate admin panels.
-Styled in Demo Leqture's black/purple brand (Poppins/Inter, 2px corner radius)
-by default, but the look can be changed live from either admin panel.
+a site-wide theme (font, accent color, and per-section colors), and a
+repositionable, renameable grid of admin-managed image link cards — all
+switched on and off from two separate admin panels. Styled in Demo Leqture's
+black/purple brand (Poppins/Inter, 2px corner radius, purple accent) by
+default, but the look can be changed live from either admin panel, and both
+panels stay in sync with each other.
 
 ## Project structure
 
@@ -113,6 +115,10 @@ Either admin panel can change, live, for every visitor:
   Display`). The site loads that font from Google Fonts and applies it
   everywhere, overriding the default Poppins/Inter pairing. Leave it blank
   to keep the default.
+- **Accent color** — one hex color (default `#a855f7`, purple) used for
+  buttons, badges, tags, and highlights across the whole site. A slightly
+  darker shade for hover states is computed automatically — there's only
+  one field to set. Leave it blank to keep the default purple.
 - **Background and text color per section** — Hero, Sessions (the
   programme), Recordings, and Footer each have their own optional
   background color and text color (hex, e.g. `#a855f7`). Leave either
@@ -123,15 +129,21 @@ Either admin panel can change, live, for every visitor:
 - Changes apply for every visitor within about 15 seconds, the same
   polling pattern as the announcement bar and hero player. Backed by
   `theme.mjs` / Netlify Blobs (`demoleqture-theme`).
+- **Both admin panels stay in sync.** Since either role can change the
+  theme, both `admin.html` and `customer-admin.html` also poll `/api/theme`
+  every 15 seconds while unlocked, so a change made in one panel shows up
+  in the other without a manual refresh. Whatever field you're actively
+  typing in is left alone by the poll so it never overwrites your
+  in-progress edit — only fields you're not currently focused in get
+  updated.
 
 ## Image link cards
 
-Either admin panel can maintain a small grid of clickable cards, shown
-between the programme (Sessions) and Recordings sections on the site.
-Each card has an image, a title, a short line of body text, and an
-external link — clicking anywhere on the card opens that link in a new
-tab. Useful for pointing visitors at resources, sign-up forms, related
-sites, and so on.
+Either admin panel can maintain a small grid of clickable cards, shown in
+a "Useful links" section on the site. Each card has an image, a title, a
+short line of body text, and an external link — clicking anywhere on the
+card opens that link in a new tab. Useful for pointing visitors at
+resources, sign-up forms, related sites, and so on.
 
 - Add a card with the image/title/body/link form at the bottom of the
   **Image link cards** section in either admin panel (image is required
@@ -143,9 +155,21 @@ sites, and so on.
 - Remove a card with **Delete**.
 - Up to 24 cards. The section on the site is hidden entirely whenever
   there are zero cards.
-- Backed by `cards.mjs` / Netlify Blobs (`demoleqture-cards`). Card
-  metadata and images are public (anyone visiting the site can see them);
-  only adding, editing, reordering, or removing needs an admin key.
+- **Section title and subtitle** are editable text — change "Useful links"
+  and its subtitle line to whatever fits, then **Save section text**.
+- **Move the whole section up or down** with the two **Move section**
+  buttons. There are three possible slots: before Sessions (right after
+  the hero), between Sessions and Recordings (the default), or after
+  Recordings (right before the footer). The buttons disable themselves at
+  either end.
+- Backed by `cards.mjs` / Netlify Blobs (`demoleqture-cards`, storing both
+  the card list and this section's title/subtitle/position). Card
+  metadata, images, and section text are public (anyone visiting the site
+  can see them); only adding, editing, reordering, moving, or removing
+  needs an admin key.
+- Like the theme, both admin panels poll for card/section changes every 15
+  seconds while unlocked, so edits made in one panel appear in the other
+  without a manual refresh.
 
 ## Two admin panels
 
@@ -345,27 +369,35 @@ Then manually:
     live.
 
 ```bash
-# 8. Site theme — set a font and section colors as customer, confirm public GET
-curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <ckey>" -d '{"font":"Sora","sections":{"hero":{"bg":"#111111","text":"#ffffff"},"sessions":{"bg":"","text":""},"recordings":{"bg":"","text":""},"footer":{"bg":"","text":""}}}'
+# 8. Site theme — set a font, accent color, and section colors as customer, confirm public GET
+curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <ckey>" -d '{"font":"Sora","accent":"#22c55e","sections":{"hero":{"bg":"#111111","text":"#ffffff"},"sessions":{"bg":"","text":""},"recordings":{"bg":"","text":""},"footer":{"bg":"","text":""}}}'
 curl https://<site>/api/theme   # should echo it back, no key needed
-curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"font":"","sections":{"hero":{"bg":"","text":""},"sessions":{"bg":"","text":""},"recordings":{"bg":"","text":""},"footer":{"bg":"","text":""}}}'
-curl https://<site>/api/theme   # back to default
+curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"font":"","accent":"","sections":{"hero":{"bg":"","text":""},"sessions":{"bg":"","text":""},"recordings":{"bg":"","text":""},"footer":{"bg":"","text":""}}}'
+curl https://<site>/api/theme   # back to default (accent back to purple)
 
 # 9. Image link cards — add, list, fetch image, reorder, delete
 curl -X POST https://<site>/api/cards -H "x-admin-key: <key>" -F "title=Test card" -F "body=Short description" -F "link=https://example.com" -F "image=@/path/to/test.jpg"
-curl https://<site>/api/cards   # {"cards":[{"id":"...","title":"Test card",...}]}
+curl https://<site>/api/cards   # {"cards":[{"id":"...","title":"Test card",...}],"meta":{...}}
 curl https://<site>/api/cards?image=<id-from-above>   # raw image bytes
 curl -X DELETE "https://<site>/api/cards?id=<id-from-above>" -H "x-admin-key: <ckey>"
-curl https://<site>/api/cards   # {"cards":[]}
+curl https://<site>/api/cards   # {"cards":[],"meta":{...}}
+
+# 10. Useful links section — rename title/subtitle and move its position
+curl -X POST https://<site>/api/cards -H "content-type: application/json" -H "x-admin-key: <ckey>" -d '{"action":"meta","title":"Extra resources","subtitle":"Worth a look."}'
+curl -X POST https://<site>/api/cards -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"action":"meta","position":0}'
+curl https://<site>/api/cards   # meta.title/subtitle/position reflect both changes
+curl -X POST https://<site>/api/cards -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"action":"meta","position":1}'   # put it back
 ```
 
 Then manually:
 
 17. Open `admin.html` or `customer-admin.html`, type a Google Fonts name
     under **Site theme**, and confirm the whole site switches font within
-    ~15 seconds. Set a background/text color for one section (e.g. Hero)
-    and confirm just that section changes. **Reset all** and confirm the
-    site returns to its default look.
+    ~15 seconds. Set an **accent color** and confirm buttons/badges/tags
+    across the site pick it up. Set a background/text color for one
+    section (e.g. Hero) and confirm just that section changes. **Reset
+    all** and confirm the site returns to its default look (including
+    purple accent).
 18. Add two or three cards under **Image link cards** with different
     images/titles/links. Confirm a new "Useful links" section appears on
     the site between the programme and recordings, that each card opens
@@ -373,6 +405,17 @@ Then manually:
     delete every card. Use ↑/↓ to reorder and confirm the site reflects
     the new order within ~15 seconds. Confirm both admin panels show and
     can manage the same set of cards.
+19. Rename the section title/subtitle under **Image link cards** and
+    confirm the site's "Useful links" heading and its subtitle text update
+    within ~15 seconds. Use **Move section up** twice to put it right
+    after the hero, confirm it moves on the site, then **Move section
+    down** it back — check the buttons disable themselves at each end.
+20. Open both `admin.html` and `customer-admin.html` at once (e.g. two
+    browser tabs), unlocked with their respective keys. Change the font or
+    an accent color in one, and confirm it appears in the other within
+    ~15 seconds without clicking Refresh — while doing this, confirm that
+    if you're actively typing in a field in the *other* tab at that
+    moment, your typing isn't overwritten.
 
 ## Before a live event
 

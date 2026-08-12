@@ -13,7 +13,7 @@ const FONT_RE = /^[A-Za-z0-9 '-]{0,60}$/;
 function emptyTheme() {
   const sections = {};
   for (const k of SECTION_KEYS) sections[k] = { bg: "", text: "" };
-  return { font: "", sections, updated_at: 0 };
+  return { font: "", accent: "", sections, updated_at: 0 };
 }
 
 function sanitizeColor(v) {
@@ -49,6 +49,11 @@ export default async (req) => {
       return Response.json({ error: "font name must be letters, numbers, spaces or hyphens, under 60 characters" }, { status: 400 });
     }
 
+    const accent = sanitizeColor(body.accent);
+    if (accent === null) {
+      return Response.json({ error: "invalid accent color — use hex like #a855f7 or leave blank" }, { status: 400 });
+    }
+
     const sections = {};
     const incoming = body.sections && typeof body.sections === "object" ? body.sections : {};
     for (const k of SECTION_KEYS) {
@@ -61,7 +66,7 @@ export default async (req) => {
       sections[k] = { bg, text };
     }
 
-    const theme = { font, sections, updated_at: Date.now() };
+    const theme = { font, accent, sections, updated_at: Date.now() };
     await store.setJSON("theme", theme);
     return Response.json(theme);
   }

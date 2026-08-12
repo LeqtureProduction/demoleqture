@@ -81,6 +81,7 @@
   .theme-field-row{margin-bottom:12px;}
   .theme-field-name{font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;}
   .theme-field-inputs{display:grid;grid-template-columns:1fr 34px 1fr 34px;gap:6px;align-items:center;}
+  .theme-field-inputs.single{grid-template-columns:1fr 34px;}
   .theme-field-inputs input[type="text"]{margin-bottom:0;}
   .theme-field-inputs input[type="color"]{width:34px;height:38px;padding:2px;border:1px solid #262626;border-radius:var(--radius);background:#0e0e0e;cursor:pointer;}
   textarea.textarea-field{
@@ -158,6 +159,12 @@
       <label for="theme-font">Font (type any Google Fonts name)</label>
       <input type="text" id="theme-font" placeholder="e.g. Poppins, Sora, Playfair Display" autocomplete="off" />
 
+      <label for="theme-accent">Accent color (buttons, highlights &mdash; default purple)</label>
+      <div class="theme-field-inputs single" style="margin-bottom:12px;">
+        <input type="text" id="theme-accent" placeholder="#a855f7" maxlength="7">
+        <input type="color" data-target="theme-accent" value="#a855f7">
+      </div>
+
       <div class="theme-field-row">
         <div class="theme-field-name">Hero</div>
         <div class="theme-field-inputs">
@@ -206,6 +213,18 @@
         <span>Image link cards</span>
         <span class="badge" id="cards-badge">—</span>
       </div>
+      <div class="actions">
+        <button type="button" class="btn btn-outline" id="links-move-up">&uarr; Move section up</button>
+        <button type="button" class="btn btn-outline" id="links-move-down">&darr; Move section down</button>
+      </div>
+      <label for="links-title">Section title</label>
+      <input type="text" id="links-title" maxlength="60" placeholder="Useful links" autocomplete="off" />
+      <label for="links-subtitle">Section subtitle</label>
+      <input type="text" id="links-subtitle" maxlength="160" placeholder="A few extra resources worth a look." autocomplete="off" />
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="links-save-text">Save section text</button>
+      </div>
+      <div class="divider" style="margin:14px 0;"></div>
       <div id="cards-list"></div>
       <label for="card-title" style="margin-top:14px;">Title</label>
       <input type="text" id="card-title" maxlength="60" placeholder="Card title" autocomplete="off" />
@@ -403,6 +422,7 @@
 
   // ---- Site theme (font + per-section colors) ----
   var themeFont = document.getElementById("theme-font");
+  var themeAccent = document.getElementById("theme-accent");
   var themeBadge = document.getElementById("theme-badge");
   var themeSaveBtn = document.getElementById("theme-save");
   var themeResetBtn = document.getElementById("theme-reset");
@@ -426,14 +446,20 @@
       .catch(function () {});
   }
 
+  // Skips overwriting any field the admin currently has focus in, so a
+  // poll tick (or the other admin panel saving) never clobbers in-progress
+  // typing here.
   function renderTheme(theme) {
-    theme = theme || { font: "", sections: {} };
-    themeFont.value = theme.font || "";
-    var custom = !!theme.font;
+    theme = theme || { font: "", accent: "", sections: {} };
+    if (document.activeElement !== themeFont) themeFont.value = theme.font || "";
+    if (document.activeElement !== themeAccent) themeAccent.value = theme.accent || "";
+    var custom = !!theme.font || !!theme.accent;
     THEME_SECTIONS.forEach(function (s) {
       var sec = (theme.sections && theme.sections[s]) || {};
-      themeFieldEl(s, "bg").value = sec.bg || "";
-      themeFieldEl(s, "text").value = sec.text || "";
+      var bgEl = themeFieldEl(s, "bg");
+      var textEl = themeFieldEl(s, "text");
+      if (document.activeElement !== bgEl) bgEl.value = sec.bg || "";
+      if (document.activeElement !== textEl) textEl.value = sec.text || "";
       if (sec.bg || sec.text) custom = true;
     });
     themeBadge.textContent = custom ? "CUSTOM" : "DEFAULT";
@@ -445,7 +471,7 @@
     THEME_SECTIONS.forEach(function (s) {
       sections[s] = { bg: themeFieldEl(s, "bg").value.trim(), text: themeFieldEl(s, "text").value.trim() };
     });
-    return { font: themeFont.value.trim(), sections: sections };
+    return { font: themeFont.value.trim(), accent: themeAccent.value.trim(), sections: sections };
   }
 
   function saveTheme(theme) {
@@ -470,7 +496,7 @@
 
   themeSaveBtn.addEventListener("click", function () { saveTheme(collectTheme()); });
   themeResetBtn.addEventListener("click", function () {
-    var empty = { font: "", sections: {} };
+    var empty = { font: "", accent: "", sections: {} };
     THEME_SECTIONS.forEach(function (s) { empty.sections[s] = { bg: "", text: "" }; });
     saveTheme(empty);
   });
@@ -487,10 +513,57 @@
   var currentCards = [];
   var editingCardId = null;
 
+  // ---- Useful links section: title/subtitle + position ----
+  var linksMoveUpBtn = document.getElementById("links-move-up");
+  var linksMoveDownBtn = document.getElementById("links-move-down");
+  var linksTitleInput = document.getElementById("links-title");
+  var linksSubtitleInput = document.getElementById("links-subtitle");
+  var linksSaveTextBtn = document.getElementById("links-save-text");
+  var currentLinksMeta = { title: "Useful links", subtitle: "A few extra resources worth a look.", position: 1 };
+
+  function renderLinksMeta(meta) {
+    if (!meta) return;
+    currentLinksMeta = meta;
+    if (document.activeElement !== linksTitleInput) linksTitleInput.value = meta.title || "";
+    if (document.activeElement !== linksSubtitleInput) linksSubtitleInput.value = meta.subtitle || "";
+    linksMoveUpBtn.disabled = meta.position <= 0;
+    linksMoveDownBtn.disabled = meta.position >= 2;
+  }
+
+  function saveLinksMeta(patch) {
+    fetch("/api/cards", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify(Object.assign({ action: "meta" }, patch)),
+    })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(function (data) { renderLinksMeta(data.meta); })
+      .catch(function (err) { alert(err.message); });
+  }
+
+  linksMoveUpBtn.addEventListener("click", function () {
+    saveLinksMeta({ position: Math.max(0, currentLinksMeta.position - 1) });
+  });
+  linksMoveDownBtn.addEventListener("click", function () {
+    saveLinksMeta({ position: Math.min(2, currentLinksMeta.position + 1) });
+  });
+  linksSaveTextBtn.addEventListener("click", function () {
+    var title = linksTitleInput.value.trim();
+    if (!title) { alert("Section title is required."); return; }
+    saveLinksMeta({ title: title, subtitle: linksSubtitleInput.value.trim() });
+  });
+
   function fetchCards() {
     return fetch("/api/cards", { cache: "no-store" })
       .then(function (r) { return r.json(); })
-      .then(function (data) { currentCards = (data && data.cards) || []; renderCards(); })
+      .then(function (data) {
+        currentCards = (data && data.cards) || [];
+        renderCards();
+        renderLinksMeta(data && data.meta);
+      })
       .catch(function () {});
   }
 
@@ -616,6 +689,24 @@
       .then(function (data) { currentCards = (data && data.cards) || currentCards; renderCards(); })
       .catch(function (err) { alert(err.message); });
   }
+
+  // Site theme and image link cards can also be changed from Super Admin,
+  // so poll for changes while this panel is open and unlocked — otherwise
+  // a change made there wouldn't show up here without a manual refresh.
+  // Fields the admin is actively typing in are left alone (see the
+  // activeElement guards in renderTheme / renderLinksMeta above).
+  setInterval(function () {
+    if (!document.hidden && !panel.hidden) {
+      fetchTheme();
+      fetchCards();
+    }
+  }, 15000);
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && !panel.hidden) {
+      fetchTheme();
+      fetchCards();
+    }
+  });
 })();
 </script>
 </body>

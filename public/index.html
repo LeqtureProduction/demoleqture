@@ -721,8 +721,8 @@
   <div class="wrap">
     <div class="section-head">
       <span class="eyebrow">More to explore</span>
-      <h2>Useful links<span class="dot">.</span></h2>
-      <p>A few extra resources worth a look.</p>
+      <h2 id="links-title">Useful links<span class="dot">.</span></h2>
+      <p id="links-subtitle">A few extra resources worth a look.</p>
     </div>
     <div class="link-grid" id="link-grid"></div>
   </div>
@@ -1138,6 +1138,21 @@
 
   function escSel(v) { return v; } // hex codes / known keys only, nothing user-typed reaches a selector
 
+  // Darkens a #rrggbb / #rgb hex color by the given amount (0-1), for the
+  // button-hover shade that's normally --purple-dark.
+  function darkenHex(hex, amount) {
+    var m = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.exec(hex);
+    if (!m) return hex;
+    var h = m[1];
+    if (h.length === 3) h = h.split("").map(function (c) { return c + c; }).join("");
+    var num = parseInt(h, 16);
+    var r = Math.max(0, Math.round(((num >> 16) & 255) * (1 - amount)));
+    var g = Math.max(0, Math.round(((num >> 8) & 255) * (1 - amount)));
+    var b = Math.max(0, Math.round((num & 255) * (1 - amount)));
+    function hx(c) { var s = c.toString(16); return s.length === 1 ? "0" + s : s; }
+    return "#" + hx(r) + hx(g) + hx(b);
+  }
+
   function apply(theme) {
     if (!theme) return;
 
@@ -1156,6 +1171,11 @@
     var rules = [];
     if (font) {
       rules.push("body, body *{font-family:'" + font.replace(/'/g, "") + "', 'Inter', 'Poppins', Arial, Helvetica, sans-serif !important;}");
+    }
+
+    var accent = (theme.accent || "").trim();
+    if (accent) {
+      rules.push(":root{--purple:" + accent + " !important;--purple-dark:" + darkenHex(accent, 0.15) + " !important;}");
     }
 
     var sections = theme.sections || {};
@@ -1198,9 +1218,14 @@
 (function () {
   var section = document.getElementById("links");
   var grid = document.getElementById("link-grid");
+  var titleEl = document.getElementById("links-title");
+  var subtitleEl = document.getElementById("links-subtitle");
+  var sessionsEl = document.getElementById("sessions");
+  var recordingsEl = document.getElementById("recordings");
   var lastSignature = "";
+  var lastPosition = null;
 
-  function render(cards) {
+  function renderCards(cards) {
     var signature = JSON.stringify(cards);
     if (signature === lastSignature) return;
     lastSignature = signature;
@@ -1234,10 +1259,34 @@
     section.hidden = false;
   }
 
+  // Section title/subtitle are admin-editable. titleEl's first child is the
+  // text node holding the words before the purple "." span — update just
+  // that text node so the decorative dot stays intact.
+  function renderMeta(meta) {
+    if (!meta) return;
+    if (titleEl.firstChild) titleEl.firstChild.nodeValue = meta.title || "Useful links";
+    subtitleEl.textContent = meta.subtitle || "A few extra resources worth a look.";
+
+    var position = typeof meta.position === "number" ? meta.position : 1;
+    if (position === lastPosition) return;
+    lastPosition = position;
+    var parent = section.parentNode;
+    if (position <= 0) {
+      parent.insertBefore(section, sessionsEl);
+    } else if (position >= 2) {
+      parent.insertBefore(section, recordingsEl.nextSibling);
+    } else {
+      parent.insertBefore(section, recordingsEl);
+    }
+  }
+
   function check() {
     return fetch("/api/cards", { cache: "no-store" })
       .then(function (r) { return r.json(); })
-      .then(function (data) { render(data && data.cards); })
+      .then(function (data) {
+        renderCards(data && data.cards);
+        renderMeta(data && data.meta);
+      })
       .catch(function () {});
   }
 

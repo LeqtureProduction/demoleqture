@@ -11,11 +11,14 @@ import { getRole } from "./lib/auth.mjs";
 // and reorders are one strongly-consistent read-modify-write.
 
 const LIST_KEY = "list";
+const META_KEY = "meta";
 const MAX_CARDS = 24;
 const TITLE_MAX = 60;
 const BODY_MAX = 220;
 const LINK_MAX = 500;
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB
+const META_TITLE_MAX = 60;
+const META_SUBTITLE_MAX = 160;
 
 function isHttpUrl(v) {
   if (typeof v !== "string") return false;
@@ -25,6 +28,15 @@ function isHttpUrl(v) {
 async function readList(store) {
   const list = await store.get(LIST_KEY, { type: "json" });
   return Array.isArray(list) ? list : [];
+}
+
+function defaultMeta() {
+  return { title: "Useful links", subtitle: "A few extra resources worth a look.", position: 1, updated_at: 0 };
+}
+
+async function readMeta(store) {
+  const meta = await store.get(META_KEY, { type: "json" });
+  return meta && typeof meta === "object" ? { ...defaultMeta(), ...meta } : defaultMeta();
 }
 
 export default async (req) => {
@@ -44,11 +56,12 @@ export default async (req) => {
     });
   }
 
-  // Public: list card metadata (no image bytes).
+  // Public: list card metadata (no image bytes) + the section's title/subtitle/position.
   if (req.method === "GET") {
     const list = await readList(store);
     const cards = list.map((c) => ({ id: c.id, title: c.title, body: c.body, link: c.link, updated_at: c.updated_at }));
-    return Response.json({ cards });
+    const meta = await readMeta(store);
+    return Response.json({ cards, meta });
   }
 
   // Everything below mutates — requires either admin role.
@@ -76,27 +89,55 @@ export default async (req) => {
   if (req.method === "POST") {
     const contentType = req.headers.get("content-type") || "";
 
-    // JSON body = reorder request: {action:"reorder", order:["id1","id2",...]}
+    // JSON body = reorder request or a section-text/position ("meta") update.
     if (contentType.includes("application/json")) {
       let body;
       try { body = await req.json(); }
       catch { return Response.json({ error: "invalid JSON body" }, { status: 400 }); }
-      if (body.action !== "reorder" || !Array.isArray(body.order)) {
-        return Response.json({ error: "expected {action:\"reorder\", order:[ids]}" }, { status: 400 });
-      }
-      const list = await readList(store);
-      const byId = new Map(list.map((c) => [c.id, c]));
-      const ordered = [];
-      for (const id of body.order) {
-        if (byId.has(id)) {
-          ordered.push(byId.get(id));
-          byId.delete(id);
+
+      if (body.action === "reorder") {
+        if (!Array.isArray(body.order)) {
+          return Response.json({ error: "expected {action:\"reorder\", order:[ids]}" }, { status: 400 });
         }
+        const list = await readList(store);
+        const byId = new Map(list.map((c) => [c.id, c]));
+        const ordered = [];
+        for (const id of body.order) {
+          if (byId.has(id)) {
+            ordered.push(byId.get(id));
+            byId.delete(id);
+          }
+        }
+        // Any cards not mentioned in the requested order are kept, appended at the end.
+        for (const leftover of byId.values()) ordered.push(leftover);
+        await store.setJSON(LIST_KEY, ordered);
+        return Response.json({ ok: true, cards: ordered.map((c) => ({ id: c.id, title: c.title, body: c.body, link: c.link, updated_at: c.updated_at })) });
       }
-      // Any cards not mentioned in the requested order are kept, appended at the end.
-      for (const leftover of byId.values()) ordered.push(leftover);
-      await store.setJSON(LIST_KEY, ordered);
-      return Response.json({ ok: true, cards: ordered.map((c) => ({ id: c.id, title: c.title, body: c.body, link: c.link, updated_at: c.updated_at })) });
+
+      if (body.action === "meta") {
+        const current = await readMeta(store);
+        const next = { ...current };
+        if (typeof body.title === "string") {
+          const t = body.title.trim();
+          if (!t || t.length > META_TITLE_MAX) return Response.json({ error: `section title is required, max ${META_TITLE_MAX} characters` }, { status: 400 });
+          next.title = t;
+        }
+        if (typeof body.subtitle === "string") {
+          const s = body.subtitle.trim();
+          if (s.length > META_SUBTITLE_MAX) return Response.json({ error: `section subtitle must be under ${META_SUBTITLE_MAX} characters` }, { status: 400 });
+          next.subtitle = s;
+        }
+        if (body.position !== undefined) {
+          const p = Number(body.position);
+          if (!Number.isInteger(p) || p < 0 || p > 2) return Response.json({ error: "position must be 0, 1, or 2" }, { status: 400 });
+          next.position = p;
+        }
+        next.updated_at = Date.now();
+        await store.setJSON(META_KEY, next);
+        return Response.json({ ok: true, meta: next });
+      }
+
+      return Response.json({ error: "expected {action:\"reorder\", order:[ids]} or {action:\"meta\", ...}" }, { status: 400 });
     }
 
     // Otherwise: multipart/form-data = add or edit a card.
