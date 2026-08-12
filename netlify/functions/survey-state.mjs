@@ -1,12 +1,7 @@
 import { getStore } from "@netlify/blobs";
+import { getRole } from "./lib/auth.mjs";
 
 const KEY = "state";
-
-function isAdmin(req) {
-  const key = process.env.ADMIN_KEY;
-  if (!key) return false;
-  return req.headers.get("x-admin-key") === key;
-}
 
 export default async (req) => {
   // Strong consistency so a toggle by the admin is visible to every visitor's
@@ -20,7 +15,7 @@ export default async (req) => {
         { status: 500 }
       );
     }
-    if (!isAdmin(req)) {
+    if (getRole(req) !== "super") {
       return Response.json({ error: "unauthorized" }, { status: 401 });
     }
     let body = {};

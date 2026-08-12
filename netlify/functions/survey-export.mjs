@@ -1,12 +1,7 @@
 import { getStore } from "@netlify/blobs";
+import { getRole } from "./lib/auth.mjs";
 
 const KEY = "responses";
-
-function isAdmin(req) {
-  const key = process.env.ADMIN_KEY;
-  if (!key) return false;
-  return req.headers.get("x-admin-key") === key;
-}
 
 function csvCell(v) {
   const s = (v === undefined || v === null) ? "" : v.toString();
@@ -48,13 +43,15 @@ function toCsv(rows) {
 }
 
 export default async (req) => {
-  if (!process.env.ADMIN_KEY) {
+  if (!process.env.ADMIN_KEY && !process.env.CUSTOMER_ADMIN_KEY) {
     return Response.json(
-      { error: "ADMIN_KEY is not configured on this site. Set it in Netlify env vars." },
+      { error: "Neither ADMIN_KEY nor CUSTOMER_ADMIN_KEY is configured on this site." },
       { status: 500 }
     );
   }
-  if (!isAdmin(req)) {
+  // Both Super Admin and Customer Admin are allowed to view/download
+  // responses — only starting/stopping the survey itself is super-only.
+  if (!getRole(req)) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
 
