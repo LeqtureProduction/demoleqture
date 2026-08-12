@@ -102,6 +102,21 @@
   .card-item-actions button:hover:not(:disabled){border-color:var(--purple);}
   .card-item-actions button:disabled{opacity:.35;cursor:not-allowed;}
   .card-empty{font-size:12px;color:var(--gray);padding:6px 0 14px;}
+  .session-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #232323;}
+  .session-item-info{flex:1;min-width:0;}
+  .session-item-title{font-size:13px;font-weight:600;}
+  .session-item-meta{font-size:11px;color:var(--gray);margin-top:3px;}
+  .session-item-actions{display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;}
+  .session-item-actions button{background:transparent;border:1px solid #3a3a3a;color:var(--white);border-radius:var(--radius);padding:4px 7px;font-size:11px;cursor:pointer;}
+  .session-item-actions button:hover:not(:disabled){border-color:var(--purple);}
+  .session-item-actions button:disabled{opacity:.35;cursor:not-allowed;}
+  .time-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  input[type="date"], input[type="time"]{
+    width:100%;background:#0e0e0e;border:1px solid #262626;border-radius:var(--radius);
+    padding:10px 13px;color:var(--white);font-family:'Inter',sans-serif;font-size:13.5px;
+    outline:none;transition:border-color .15s;margin-bottom:12px;
+  }
+  input[type="date"]:focus, input[type="time"]:focus{border-color:var(--purple);}
   .quick-nav{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #232323;}
   .quick-nav-pill{font-size:11.5px;font-weight:600;color:var(--gray);background:#161616;border:1px solid #262626;border-radius:20px;padding:6px 12px;text-decoration:none;white-space:nowrap;transition:all .15s;}
   .quick-nav-pill:hover{color:var(--white);border-color:var(--purple);}
@@ -117,7 +132,7 @@
   <div class="card">
     <span class="eyebrow">Super Admin</span>
     <h1>Site controls</h1>
-    <p class="lede">Enter the admin key to control the survey, the announcement bar, the hero video player, the hero image, the site theme, the image link cards, and the text &amp; image section. Use the pills below to jump to any of them.</p>
+    <p class="lede">Enter the admin key to control the survey, the announcement bar, the hero video player, the hero image, the programme, the site theme, the image link cards, and the text &amp; image section. Use the pills below to jump to any of them.</p>
 
     <div id="gate">
       <label for="admin-key">Admin key</label>
@@ -132,6 +147,7 @@
         <a href="#block-announcement" class="quick-nav-pill">&#128227; Announcement</a>
         <a href="#block-player" class="quick-nav-pill">&#127909; Hero video</a>
         <a href="#block-hero-image" class="quick-nav-pill">&#128444; Hero</a>
+        <a href="#block-programme" class="quick-nav-pill">&#128197; Programme</a>
         <a href="#block-theme" class="quick-nav-pill">&#127912; Theme</a>
         <a href="#block-cards" class="quick-nav-pill">&#128279; Link cards</a>
         <a href="#block-feature" class="quick-nav-pill">&#128221; Text &amp; image</a>
@@ -230,7 +246,7 @@
         <label for="theme-hero-title">Heading</label>
         <input type="text" id="theme-hero-title" maxlength="80" placeholder="Learning at Work Week 2026" autocomplete="off">
         <label for="theme-hero-subtitle">Subheading</label>
-        <textarea id="theme-hero-subtitle" class="textarea-field" maxlength="240" placeholder="A week of live sessions on AI, communication and wellbeing..."></textarea>
+        <textarea id="theme-hero-subtitle" class="textarea-field" maxlength="2500" placeholder="A week of live sessions on AI, communication and wellbeing..." style="min-height:120px;"></textarea>
         <div class="actions">
           <button type="button" class="btn btn-primary" id="hero-text-save">Save hero text</button>
         </div>
@@ -249,6 +265,64 @@
           <button type="button" class="btn btn-outline" id="image-remove">Remove</button>
         </div>
         <p class="hint">Shown to the right of the main heading whenever there's no hero video player link published. Max 5MB. Note: while the hero video player is live, this image won't be shown until you turn the player off.</p>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="feature-block" id="block-programme">
+        <div class="feature-header">
+          <span class="feature-icon">&#128197;</span>
+          <div>
+            <div class="feature-name">Programme</div>
+            <div class="feature-desc">The list of scheduled sessions, each with an Add to calendar button.</div>
+          </div>
+        </div>
+        <div class="status-row">
+          <span>Programme heading &amp; subheading</span>
+          <span class="badge" id="programme-text-badge">—</span>
+        </div>
+        <label for="theme-sessions-title">Heading</label>
+        <input type="text" id="theme-sessions-title" maxlength="80" placeholder="Live sessions across the day" autocomplete="off">
+        <label for="theme-sessions-subtitle">Subheading</label>
+        <textarea id="theme-sessions-subtitle" class="textarea-field" maxlength="2500" placeholder="Click any session to read the full description, meet the speaker, and add it to your calendar." style="min-height:80px;"></textarea>
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="programme-text-save">Save section text</button>
+        </div>
+        <p class="hint">Leave both blank to keep the default wording.</p>
+
+        <div class="divider" style="margin:14px 0;"></div>
+
+        <div class="status-row">
+          <span>Sessions</span>
+          <span class="badge" id="sessions-badge">—</span>
+        </div>
+        <div id="sessions-admin-list"></div>
+
+        <label for="session-date" style="margin-top:14px;">Date</label>
+        <input type="date" id="session-date">
+        <div class="time-row">
+          <div>
+            <label for="session-start">Start time</label>
+            <input type="time" id="session-start">
+          </div>
+          <div>
+            <label for="session-end">End time</label>
+            <input type="time" id="session-end">
+          </div>
+        </div>
+        <label for="session-speaker-name">Speaker name</label>
+        <input type="text" id="session-speaker-name" maxlength="100" placeholder="Full name" autocomplete="off">
+        <label for="session-speaker-bio">Speaker bio</label>
+        <textarea id="session-speaker-bio" class="textarea-field" maxlength="3000" placeholder="A few sentences about the speaker" style="min-height:80px;"></textarea>
+        <label for="session-title">Session title</label>
+        <input type="text" id="session-title" maxlength="150" placeholder="Session title" autocomplete="off">
+        <label for="session-description">Description</label>
+        <textarea id="session-description" class="textarea-field" maxlength="4000" placeholder="What the session covers" style="min-height:100px;"></textarea>
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="session-save">Add session</button>
+          <button type="button" class="btn btn-outline" id="session-cancel" hidden>Cancel edit</button>
+        </div>
+        <p class="hint">Only Super Admin can add, edit, delete, or reorder sessions. Start and end time are entered and stored as Central European Time (CET) — the site converts them for each visitor's chosen timezone automatically, and generates their "Add to calendar" links from the same instant. Use the arrows to reorder; sessions show on the site in this order.</p>
       </div>
 
       <div class="divider"></div>
@@ -316,7 +390,7 @@
           <button type="button" class="btn btn-primary" id="theme-save">Save theme</button>
           <button type="button" class="btn btn-outline" id="theme-reset">Reset all</button>
         </div>
-        <p class="hint">Sets the font, accent color, and background/text colors for everyone within about 15 seconds — plus the Recordings heading/subheading (the Hero heading/subheading is set in the Hero section above instead). Leave a field blank to keep that section's default text/look.</p>
+        <p class="hint">Sets the font, accent color, and background/text colors for everyone within about 15 seconds — plus the Recordings heading/subheading (the Hero and Programme heading/subheading are set in their own sections instead). Leave a field blank to keep that section's default text/look.</p>
       </div>
 
       <div class="divider"></div>
@@ -384,7 +458,7 @@
         <label for="feature-title-input" style="margin-top:12px;">Title</label>
         <input type="text" id="feature-title-input" maxlength="80" placeholder="Section title" autocomplete="off" />
         <label for="feature-body-input">Body text</label>
-        <textarea id="feature-body-input" class="textarea-field" maxlength="600" placeholder="A paragraph of body text"></textarea>
+        <textarea id="feature-body-input" class="textarea-field" maxlength="2500" placeholder="A paragraph of body text" style="min-height:120px;"></textarea>
         <div class="actions">
           <button type="button" class="btn btn-primary" id="feature-save">Save</button>
           <button type="button" class="btn btn-outline" id="feature-remove-image">Remove image</button>
@@ -456,6 +530,7 @@
         fetchTheme();
         fetchCards();
         fetchFeature();
+        fetchSessionsAdmin();
         return fetchState();
       })
       .catch(function (err) {
@@ -708,6 +783,8 @@
   var themeResetBtn = document.getElementById("theme-reset");
   var heroTextBadge = document.getElementById("hero-text-badge");
   var heroTextSaveBtn = document.getElementById("hero-text-save");
+  var programmeTextBadge = document.getElementById("programme-text-badge");
+  var programmeTextSaveBtn = document.getElementById("programme-text-save");
   var THEME_SECTIONS = ["hero", "sessions", "recordings", "footer"];
 
   Array.prototype.forEach.call(document.querySelectorAll(".theme-field-inputs input[type=color]"), function (swatch) {
@@ -772,6 +849,10 @@
     var heroTextCustom = !!(heroSec.title || heroSec.subtitle);
     heroTextBadge.textContent = heroTextCustom ? "CUSTOM" : "DEFAULT";
     heroTextBadge.className = "badge " + (heroTextCustom ? "badge-on" : "");
+    var programmeSec = (theme.sections && theme.sections.sessions) || {};
+    var programmeTextCustom = !!(programmeSec.title || programmeSec.subtitle);
+    programmeTextBadge.textContent = programmeTextCustom ? "CUSTOM" : "DEFAULT";
+    programmeTextBadge.className = "badge " + (programmeTextCustom ? "badge-on" : "");
     syncSwatches();
   }
 
@@ -794,6 +875,7 @@
     themeSaveBtn.disabled = true;
     themeResetBtn.disabled = true;
     heroTextSaveBtn.disabled = true;
+    programmeTextSaveBtn.disabled = true;
     fetch("/api/theme", {
       method: "POST",
       headers: { "content-type": "application/json", "x-admin-key": key },
@@ -809,11 +891,13 @@
         themeSaveBtn.disabled = false;
         themeResetBtn.disabled = false;
         heroTextSaveBtn.disabled = false;
+        programmeTextSaveBtn.disabled = false;
       });
   }
 
   themeSaveBtn.addEventListener("click", function () { saveTheme(collectTheme()); });
   heroTextSaveBtn.addEventListener("click", function () { saveTheme(collectTheme()); });
+  programmeTextSaveBtn.addEventListener("click", function () { saveTheme(collectTheme()); });
   themeResetBtn.addEventListener("click", function () {
     var empty = { font: "", accent: "", sections: {} };
     THEME_SECTIONS.forEach(function (s) { empty.sections[s] = { bg: "", text: "", title: "", subtitle: "" }; });
@@ -1019,6 +1103,7 @@
       fetchTheme();
       fetchCards();
       fetchFeature();
+      fetchSessionsAdmin();
     }
   }, 15000);
   document.addEventListener("visibilitychange", function () {
@@ -1026,6 +1111,7 @@
       fetchTheme();
       fetchCards();
       fetchFeature();
+      fetchSessionsAdmin();
     }
   });
 
@@ -1131,6 +1217,169 @@
       .catch(function (err) { alert(err.message); })
       .finally(function () { featureClearAllBtn.disabled = false; });
   });
+
+  // ---- Programme sessions (Super Admin only) ----
+  var sessionsBadge = document.getElementById("sessions-badge");
+  var sessionsAdminList = document.getElementById("sessions-admin-list");
+  var sessionDate = document.getElementById("session-date");
+  var sessionStart = document.getElementById("session-start");
+  var sessionEnd = document.getElementById("session-end");
+  var sessionSpeakerName = document.getElementById("session-speaker-name");
+  var sessionSpeakerBio = document.getElementById("session-speaker-bio");
+  var sessionTitleInput = document.getElementById("session-title");
+  var sessionDescription = document.getElementById("session-description");
+  var sessionSaveBtn = document.getElementById("session-save");
+  var sessionCancelBtn = document.getElementById("session-cancel");
+  var currentSessionsAdmin = [];
+  var editingSessionId = null;
+
+  function fetchSessionsAdmin() {
+    return fetch("/api/sessions", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        currentSessionsAdmin = (data && data.sessions) || [];
+        renderSessionsAdmin();
+      })
+      .catch(function () {});
+  }
+
+  function renderSessionsAdmin() {
+    sessionsBadge.textContent = String(currentSessionsAdmin.length);
+    if (!currentSessionsAdmin.length) {
+      sessionsAdminList.innerHTML = '<div class="card-empty">No sessions yet — add one below.</div>';
+      return;
+    }
+    var esc = document.createElement("div");
+    sessionsAdminList.innerHTML = currentSessionsAdmin.map(function (s, i) {
+      esc.textContent = s.title || "";
+      var safeTitle = esc.innerHTML;
+      esc.textContent = s.speakerName || "";
+      var safeSpeaker = esc.innerHTML;
+      return (
+        '<div class="session-item" data-id="' + s.id + '">' +
+          '<div class="session-item-info">' +
+            '<div class="session-item-title">' + safeTitle + '</div>' +
+            '<div class="session-item-meta">' + (s.date || "") + ' &middot; ' + (s.startTime || "") + '&ndash;' + (s.endTime || "") + ' CET &middot; ' + safeSpeaker + '</div>' +
+          '</div>' +
+          '<div class="session-item-actions">' +
+            '<button type="button" data-action="up"' + (i === 0 ? " disabled" : "") + '>&uarr;</button>' +
+            '<button type="button" data-action="down"' + (i === currentSessionsAdmin.length - 1 ? " disabled" : "") + '>&darr;</button>' +
+            '<button type="button" data-action="edit">Edit</button>' +
+            '<button type="button" data-action="delete">Delete</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join("");
+  }
+
+  sessionsAdminList.addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    var item = btn.closest(".session-item");
+    var id = item.getAttribute("data-id");
+    var action = btn.getAttribute("data-action");
+    if (action === "edit") { startEditSession(id); }
+    else if (action === "delete") { deleteSession(id); }
+    else if (action === "up" || action === "down") { moveSession(id, action); }
+  });
+
+  function startEditSession(id) {
+    var s = currentSessionsAdmin.filter(function (x) { return x.id === id; })[0];
+    if (!s) return;
+    editingSessionId = id;
+    sessionDate.value = s.date || "";
+    sessionStart.value = s.startTime || "";
+    sessionEnd.value = s.endTime || "";
+    sessionSpeakerName.value = s.speakerName || "";
+    sessionSpeakerBio.value = s.speakerBio || "";
+    sessionTitleInput.value = s.title || "";
+    sessionDescription.value = s.description || "";
+    sessionSaveBtn.textContent = "Save changes";
+    sessionCancelBtn.hidden = false;
+    sessionDate.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  function resetSessionForm() {
+    editingSessionId = null;
+    sessionDate.value = "";
+    sessionStart.value = "";
+    sessionEnd.value = "";
+    sessionSpeakerName.value = "";
+    sessionSpeakerBio.value = "";
+    sessionTitleInput.value = "";
+    sessionDescription.value = "";
+    sessionSaveBtn.textContent = "Add session";
+    sessionCancelBtn.hidden = true;
+  }
+
+  sessionCancelBtn.addEventListener("click", resetSessionForm);
+
+  sessionSaveBtn.addEventListener("click", function () {
+    var payload = {
+      date: sessionDate.value.trim(),
+      startTime: sessionStart.value.trim(),
+      endTime: sessionEnd.value.trim(),
+      speakerName: sessionSpeakerName.value.trim(),
+      speakerBio: sessionSpeakerBio.value.trim(),
+      title: sessionTitleInput.value.trim(),
+      description: sessionDescription.value.trim()
+    };
+    if (!payload.date || !payload.startTime || !payload.endTime) { alert("Date, start time, and end time are required."); return; }
+    if (!payload.title) { alert("Session title is required."); return; }
+    if (!payload.speakerName) { alert("Speaker name is required."); return; }
+
+    var reqBody = { action: editingSessionId ? "edit" : "add", session: payload };
+    if (editingSessionId) reqBody.id = editingSessionId;
+
+    sessionSaveBtn.disabled = true;
+    fetch("/api/sessions", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify(reqBody),
+    })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(function () { resetSessionForm(); return fetchSessionsAdmin(); })
+      .catch(function (err) { alert(err.message); })
+      .finally(function () { sessionSaveBtn.disabled = false; });
+  });
+
+  function deleteSession(id) {
+    if (!confirm("Remove this session?")) return;
+    fetch("/api/sessions", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify({ action: "delete", id: id }),
+    })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(function () { if (editingSessionId === id) resetSessionForm(); return fetchSessionsAdmin(); })
+      .catch(function (err) { alert(err.message); });
+  }
+
+  function moveSession(id, direction) {
+    var ids = currentSessionsAdmin.map(function (s) { return s.id; });
+    var idx = ids.indexOf(id);
+    if (idx === -1) return;
+    var swapWith = direction === "up" ? idx - 1 : idx + 1;
+    if (swapWith < 0 || swapWith >= ids.length) return;
+    var tmp = ids[idx]; ids[idx] = ids[swapWith]; ids[swapWith] = tmp;
+    fetch("/api/sessions", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify({ action: "reorder", order: ids }),
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error("Request failed (" + r.status + ").");
+        return r.json();
+      })
+      .then(function (data) { currentSessionsAdmin = (data && data.sessions) || currentSessionsAdmin; renderSessionsAdmin(); })
+      .catch(function (err) { alert(err.message); });
+  }
 })();
 </script>
 </body>

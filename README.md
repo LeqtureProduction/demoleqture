@@ -16,9 +16,9 @@ labeled sections so it's obvious at a glance what can be changed.
 
 ```
 public/                     → published static site
-  index.html                  the site itself, incl. survey popup, announcement bar, hero player/image, link cards, text+image section
+  index.html                  the site itself, incl. survey popup, announcement bar, hero player/image, programme, link cards, text+image section
   admin.html                   Super Admin: everything
-  customer-admin.html          Customer Admin: survey responses (view only) + hero image + theme + link cards + text/image section
+  customer-admin.html          Customer Admin: survey responses (view only) + hero image + programme heading (view-only session list) + theme + link cards + text/image section
 netlify/functions/          → serverless functions
   lib/auth.mjs                 shared role check (not a function itself, just imported by the others)
   whoami.mjs                   GET: validates a key, returns its role ("super" / "customer")
@@ -28,6 +28,7 @@ netlify/functions/          → serverless functions
   announcement.mjs             GET (public): current site announcement / POST (super only): publish or clear it
   player.mjs                   GET (public): current hero video link / POST (super only): publish or turn it off
   hero-image.mjs                GET (public): the hero image / POST, DELETE (super or customer): upload or remove it
+  sessions.mjs                 GET (public): the programme (session list) / POST (super only): add, edit, delete, reorder
   theme.mjs                    GET (public): font, accent + per-section colors / POST (super or customer): change them
   cards.mjs                    GET (public): the link cards list/images/section text / POST, DELETE (super or customer): manage them
   feature.mjs                  GET (public): the text+image block / POST, DELETE (super or customer): edit or clear it
@@ -99,7 +100,9 @@ or a static image.
   a custom heading can't keep that one-word highlight, since there's no
   way to know which word in arbitrary text should be emphasized. Click
   **Save hero text** to publish it (the Hero background/text *colors* are
-  still set separately, under **Site theme → Hero**).
+  still set separately, under **Site theme → Hero**). The subheading
+  accepts up to 2,500 characters, so it can hold more than a one-line
+  tagline if needed.
 - The original stat row ("5 days / 11 sessions / Global") and the **View
   schedule** / **See recordings** buttons that used to sit under the
   heading have been removed — the hero is just the eyebrow, heading, and
@@ -114,12 +117,12 @@ or a static image.
   (`admin.html`).
 - **Hero image** — a static image shown in the same spot whenever there's
   no video link published. Controlled from *either* admin panel (with one
-  restriction on Customer Admin — see below). It displays as a square
-  rather than a 16:9 letterbox, scaled to fit neatly next to the heading
-  text (capped at 440px so it doesn't overwhelm the layout on wide
-  screens) rather than stretched or cropped to the full column width. The
-  video player keeps its normal 16:9 shape, since it has to match the
-  embedded player.
+  restriction on Customer Admin — see below). It displays inside a square
+  frame next to the heading text (capped at 440px so it doesn't overwhelm
+  the layout on wide screens), and the full image is always shown without
+  cropping — if its proportions aren't already square, it letterboxes
+  inside the frame instead of having its edges cut off. The video player
+  keeps its normal 16:9 shape, since it has to match the embedded player.
 - **The video always wins.** If a link is published, the image is hidden
   even if one is uploaded — it comes back automatically the moment the
   link is turned off. Nothing is deleted when this happens; the image is
@@ -131,6 +134,42 @@ or a static image.
   heading/subheading) / Netlify Blobs. The current link/image/text is
   public (anyone visiting the site can fetch it); only setting, uploading,
   editing, or removing needs an admin key.
+
+## Programme / sessions
+
+Replaces the old hardcoded list of sessions with an admin-managed
+programme, shown as the same click-to-expand accordion as before.
+
+- **The session list itself** (date, start/end time, speaker name, speaker
+  bio, session title, description) is **Super Admin only** — Customer
+  Admin can see the list under the Programme block but can't add, edit,
+  delete, or reorder anything there; it's shown read-only with a note
+  explaining why. This ships pre-loaded with the sessions from the
+  original programme spreadsheet, all on 8 October 2026, and Super Admin
+  can add more, edit, delete, or reorder any of them from the Programme
+  block in `admin.html`.
+- **Section heading and subheading** are editable from *either* admin
+  panel, in the same Programme block (same pattern as Hero) — leave both
+  blank to keep the default wording. The subheading accepts up to 2,500
+  characters.
+- **Times shown in your timezone.** Session times are entered and stored
+  as Central European Time (the timezone the source schedule was given
+  in), but every visitor gets a dropdown ("Times shown in") above the
+  programme to switch between their device's local time, CET as
+  originally scheduled, UK time, US Eastern, US Pacific, India, Singapore,
+  or Australian Eastern time — the displayed times and dates update
+  instantly, and the choice is remembered for next visit.
+- **Add to calendar.** Every session has an "Add to calendar" button with
+  three options: Google Calendar (opens a pre-filled event in a new tab),
+  Outlook / Office 365 (same, via Outlook's web compose link), and Apple /
+  iCal (downloads a `.ics` file that Apple Calendar, Outlook desktop, and
+  most other calendar apps can import directly). All three use the exact
+  UTC instant of the session, so the event lands at the right time on the
+  attendee's calendar regardless of which timezone they had selected on
+  the page.
+- Backed by `sessions.mjs` / Netlify Blobs. The list is public (anyone
+  visiting the site can fetch it); adding, editing, deleting, or
+  reordering needs the Super Admin key specifically.
 
 ## Site theme
 
@@ -215,7 +254,8 @@ image link cards, this is a single block, not a repeatable list.
 
 - Fill in the title, body text, and/or upload an image, then **Save**.
   None of the three are required on their own — you can save just text
-  with no image, or upload an image with no text.
+  with no image, or upload an image with no text. Body text accepts up to
+  2,500 characters.
 - **Remove image** clears only the image, keeping whatever text is saved.
   **Clear whole section** wipes the title, body, and image back to empty
   (asks for confirmation first).
@@ -287,8 +327,8 @@ client/customer contact.
 ### Using Super Admin (`admin.html`)
 
 1. Enter the `ADMIN_KEY`, click **Unlock**. Use the pill bar at the top
-   (Survey, Announcement, Hero, Theme, Link cards, Text & image) to jump
-   straight to any feature instead of scrolling.
+   (Survey, Announcement, Hero, Programme, Theme, Link cards, Text & image)
+   to jump straight to any feature instead of scrolling.
 2. **Turn on** to start showing the survey to visitors, **Turn off** to stop
    showing it to new visitors (anyone already looking at it keeps their
    in-progress popup).
@@ -303,15 +343,21 @@ client/customer contact.
    **Upload** for a static image, or **Remove** to take it down. A note
    reminds you the image won't be visible while the video player is live,
    but you can still change it — it'll show as soon as the player is off.
-6. Under **Site theme**, type a Google Fonts name, an accent color, and/or
+6. Under **Programme**, type a heading and/or subheading and click **Save
+   section text** — same idea as the Hero block. Below that, fill in the
+   date, start/end time, speaker name, speaker bio, title, and description
+   for a session and click **Add session**; use **Edit** to change one,
+   ↑/↓ to reorder, and **Delete** to remove one. Only Super Admin sees
+   these session controls — Customer Admin sees the list read-only.
+7. Under **Site theme**, type a Google Fonts name, an accent color, and/or
    set background/text colors and the Recordings heading/subheading, then
    **Save theme**. **Reset all** clears everything back to the default
-   look (Hero's heading/subheading are saved separately, from the Hero
-   block above).
-7. Under **Image link cards**, fill in the title/body/link/image form and
+   look (Hero's and Programme's heading/subheading are saved separately,
+   from their own blocks above).
+8. Under **Image link cards**, fill in the title/body/link/image form and
    click **Add card**; use **Edit** to change one, ↑/↓ to reorder, and
    **Delete** to remove one.
-8. Under **Text & image section**, fill in a title, body text, and/or an
+9. Under **Text & image section**, fill in a title, body text, and/or an
    image, then **Save**. **Remove image** clears just the image;
    **Clear whole section** wipes all three back to empty; **Move section
    up**/**down** repositions it on the page.
@@ -331,7 +377,12 @@ client/customer contact.
    why — ask a Super Admin to turn the player off first (there's no video
    player control here at all — publishing a video link is Super Admin
    only).
-4. Under **Site theme**, **Image link cards**, and **Text & image section**,
+4. Under **Programme**, type a heading and/or subheading and click **Save
+   section text** — same as Super Admin. The session list itself (dates,
+   times, speakers, titles, descriptions) is shown below for reference
+   but is read-only here — a note explains that only Super Admin can add,
+   edit, delete, or reorder sessions.
+5. Under **Site theme**, **Image link cards**, and **Text & image section**,
    the controls work exactly as in Super Admin — both panels have full
    access to these three features.
 
@@ -348,7 +399,7 @@ npm install -g netlify-cli   # if you don't have it
 netlify dev                  # run from the project root, not from inside public/
 ```
 
-This serves `public/` and runs all ten functions together (with a local
+This serves `public/` and runs all eleven functions together (with a local
 Blobs emulator) at `http://localhost:8888`. Opening `index.html` directly as
 a file (double-click / `file://`) will never work for the survey — there's
 no server behind it in that case.
@@ -361,10 +412,10 @@ netlify link                  # or: netlify init, to create a new site
 netlify deploy --prod
 ```
 
-Confirm the deploy summary lists **10 functions** (`survey-state`,
+Confirm the deploy summary lists **11 functions** (`survey-state`,
 `survey-response`, `survey-export`, `announcement`, `player`, `whoami`,
-`hero-image`, `theme`, `cards`, `feature`). If it says 0, you're deploying
-from inside `public/` instead of the project root.
+`hero-image`, `sessions`, `theme`, `cards`, `feature`). If it says 0,
+you're deploying from inside `public/` instead of the project root.
 
 Don't forget to set both `ADMIN_KEY` and `CUSTOMER_ADMIN_KEY` (see above) —
 without them, every admin action returns a clear error instead of quietly
@@ -452,11 +503,12 @@ Then manually:
     to two columns only while it's showing, and that **Turn off** removes it
     and collapses the hero back to one column.
 15. Upload a hero image from either admin page while the player is off —
-    confirm it appears to the right of the heading within ~15 seconds as a
-    square, sized to sit neatly next to the text rather than stretching to
-    fill the whole column. Publish a player link and confirm the image is
-    replaced by the video; turn the player off and confirm the image
-    reappears automatically.
+    confirm it appears to the right of the heading within ~15 seconds inside
+    a square frame, sized to sit neatly next to the text rather than
+    stretching to fill the whole column, and that the full image is visible
+    (letterboxed if it isn't already square) rather than cropped. Publish a
+    player link and confirm the image is replaced by the video; turn the
+    player off and confirm the image reappears automatically.
 16. While the player is live, open `customer-admin.html` and confirm the
     hero image upload/remove controls are disabled with an explanatory
     notice. Open `admin.html` with `ADMIN_KEY` at the same time and confirm
@@ -556,12 +608,12 @@ curl -X POST https://<site>/api/feature -H "content-type: application/json" -H "
 
 Then manually:
 
-24. Under **Site theme**, type a custom heading and subheading for **Hero**
-    and confirm the site's H1/lede update within ~15 seconds — note the
-    purple "Work Week" highlight disappears once you set a custom heading
+24. Under the **Hero** block, type a custom heading and subheading and
+    confirm the site's H1/lede update within ~15 seconds — note the purple
+    "Work Week" highlight disappears once you set a custom heading
     (expected, since a custom heading is plain text). Clear both fields
     and confirm the original heading, with its highlight, comes back
-    exactly as it was. Repeat for **Recordings**.
+    exactly as it was. Repeat for **Recordings**, under **Site theme**.
 25. Confirm the hero no longer shows the "5 days / 11 sessions / Global"
     stat row or the "View schedule" / "See recordings" buttons under the
     heading — the hero should now be just the eyebrow, heading, and
@@ -570,6 +622,48 @@ Then manually:
     down** and confirm the section moves on the site within ~15 seconds,
     same three slots as the image link cards. Confirm the buttons disable
     themselves at either end.
+
+```bash
+# 14. Programme — add, edit, delete, reorder a session (super only), and heading/subheading text
+curl -X POST https://<site>/api/sessions -H "content-type: application/json" -H "x-admin-key: <ckey>" -d '{"action":"add","session":{"date":"2026-10-08","startTime":"13:00","endTime":"14:00","speakerName":"Test Speaker","speakerBio":"A short bio.","title":"Test Session","description":"A short description."}}'  # 403, customer can't touch the list
+curl -X POST https://<site>/api/sessions -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"action":"add","session":{"date":"2026-10-08","startTime":"13:00","endTime":"14:00","speakerName":"Test Speaker","speakerBio":"A short bio.","title":"Test Session","description":"A short description."}}'
+curl https://<site>/api/sessions   # new session appended, no key needed to read
+# copy the new session's "id" from the response, then:
+curl -X POST https://<site>/api/sessions -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"action":"edit","id":"<id-from-above>","session":{"date":"2026-10-08","startTime":"13:00","endTime":"14:30","speakerName":"Test Speaker","speakerBio":"A short bio.","title":"Test Session Edited","description":"A short description."}}'
+curl https://<site>/api/sessions   # title/endTime reflect the edit
+curl -X POST https://<site>/api/sessions -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"action":"delete","id":"<id-from-above>"}'
+curl https://<site>/api/sessions   # back to the original list
+
+curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <ckey>" -d '{"font":"","accent":"","sections":{"hero":{"bg":"","text":"","title":"","subtitle":""},"sessions":{"bg":"","text":"","title":"Custom Programme Heading","subtitle":"Custom programme subheading."},"recordings":{"bg":"","text":"","title":"","subtitle":""},"footer":{"bg":"","text":"","title":"","subtitle":""}}}'
+curl https://<site>/api/theme   # sections.sessions.title/subtitle come back — either key can set this
+curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"font":"","accent":"","sections":{"hero":{"bg":"","text":"","title":"","subtitle":""},"sessions":{"bg":"","text":"","title":"","subtitle":""},"recordings":{"bg":"","text":"","title":"","subtitle":""},"footer":{"bg":"","text":"","title":"","subtitle":""}}}'
+curl https://<site>/api/theme   # back to blank
+```
+
+Then manually:
+
+27. Open the site and confirm the programme shows the sessions from the
+    original spreadsheet, each expandable to show the full description
+    and a "Meet the speaker" bio. Use the **Times shown in** dropdown to
+    switch between a few timezones and confirm both the time and the date
+    shown for each session update immediately, and that reloading the
+    page keeps your last choice.
+28. Click **Add to calendar** on any session and confirm Google Calendar
+    and Outlook / Office 365 each open a new tab with a pre-filled event
+    at the correct time (cross-check against the time shown for whichever
+    timezone you have selected — the event should land at the same real
+    moment regardless of which timezone you were viewing). Choose Apple /
+    iCal and confirm a `.ics` file downloads; opening it in a calendar app
+    should show the same event.
+29. Under **Programme** in either admin panel, set a custom heading and
+    subheading and confirm the site updates within ~15 seconds; clear both
+    to restore the default wording.
+30. In `admin.html`, add, edit, delete, and reorder a session under
+    **Programme** and confirm the site's programme list reflects each
+    change within ~15 seconds, in the order shown in the admin list. Open
+    `customer-admin.html` and confirm the same session list shows up
+    read-only, with no Edit/Delete/reorder controls and a note explaining
+    that only Super Admin can change it.
 
 ## Before a live event
 
@@ -585,6 +679,7 @@ netlify blobs:delete demoleqture-cards list --force
 netlify blobs:delete demoleqture-cards meta --force
 netlify blobs:delete demoleqture-feature info --force
 netlify blobs:delete demoleqture-feature bytes --force
+netlify blobs:delete demoleqture-sessions list --force
 ```
 
 The theme, image link cards, and text & image section are cosmetic/content,

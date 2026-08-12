@@ -146,6 +146,31 @@
   }
   details[open] .chev{transform:rotate(180deg);}
 
+  .prog-controls{display:flex;align-items:center;gap:10px;margin-top:28px;flex-wrap:wrap;}
+  .prog-controls label{font-size:12.5px;color:var(--gray-dark);}
+  .prog-controls select{
+    font-family:'Inter',sans-serif;font-size:13px;padding:7px 10px;
+    border:1px solid var(--cream-line);border-radius:var(--radius);background:#fff;color:var(--black);
+  }
+  .no-sessions{padding:36px 0;color:var(--gray-dark);font-size:14px;}
+  .add-cal{position:relative;display:inline-block;margin-top:18px;}
+  .add-cal-btn{
+    display:inline-flex;align-items:center;gap:6px;font-family:'Inter',sans-serif;font-weight:600;
+    font-size:13.5px;color:var(--purple-dark);background:transparent;border:1px solid var(--purple-dark);
+    border-radius:20px;padding:9px 16px;cursor:pointer;
+  }
+  .add-cal-btn:hover{background:var(--purple-dark);color:#fff;}
+  .add-cal-menu{
+    position:absolute;top:calc(100% + 8px);left:0;background:#fff;border:1px solid var(--cream-line);
+    border-radius:var(--radius);box-shadow:0 10px 28px rgba(0,0,0,0.14);min-width:220px;z-index:20;overflow:hidden;
+  }
+  .add-cal-menu[hidden]{display:none;}
+  .add-cal-menu a, .add-cal-menu button{
+    display:block;width:100%;text-align:left;padding:11px 15px;font-size:13.5px;color:var(--black);
+    text-decoration:none;background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;
+  }
+  .add-cal-menu a:hover, .add-cal-menu button:hover{background:var(--cream);}
+
   .prog-body{padding:0 0 34px 0;display:grid;grid-template-columns:2fr 1fr;gap:48px;}
   .prog-body .col-label{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--purple-dark);margin-bottom:10px;}
   .prog-body .headline{font-family:'Poppins',sans-serif;font-weight:600;font-size:19px;margin-bottom:12px;color:var(--black);}
@@ -241,6 +266,7 @@
   .video-embed iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
   .video-embed img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}
   #hero-image-panel .video-embed{padding-top:0;aspect-ratio:1/1;width:min(100%, 440px);margin-left:auto;}
+  #hero-image-panel .video-embed img{object-fit:contain;}
 
   /* ANNOUNCEMENT BAR */
   .announce-bar{background:var(--purple);color:#1f0a33;}
@@ -366,357 +392,16 @@
   <div class="wrap">
     <div class="section-head">
       <span class="eyebrow">The programme</span>
-      <h2>Eleven sessions across the week<span class="dot">.</span></h2>
-      <p>Click any session to read the full description, meet the speaker, and get the joining link. All times are shown in <b>UK time</b>.</p>
+      <h2 id="sessions-title-el">Live sessions across the day<span class="dot">.</span></h2>
+      <p id="sessions-subtitle-el">Click any session to read the full description, meet the speaker, and add it to your calendar.</p>
     </div>
 
-    <div class="prog-list">
-
-      <details class="prog-item" open>
-        <summary>
-          <div class="avatar-group"><div class="avatar">SD</div><div class="avatar">IL</div></div>
-          <div class="prog-meta">
-            <div class="speakers">Siobhan Durcan &amp; Ian Lees</div>
-            <div class="title-row"><span class="title">AI Hub Intro</span></div>
-          </div>
-          <div class="prog-time"><div class="t">09:30 UK</div><div class="d">Mon 6 Jul</div></div>
-          <div class="chev">⌄</div>
-        </summary>
-        <div class="prog-body">
-          <div>
-            <div class="col-label">About the session</div>
-            <div class="headline">Kicking off the week with where Demo Leqture's AI story stands today.</div>
-            <p class="desc">Kicking-off Learning at Work Week with an overview from Siobhan &amp; Ian, taking us through what's happening at Q over the week and framing our position as an AI-native company in progress.</p>
-            <div class="col-label">What you'll take away</div>
-            <ul class="takeaways">
-              <li><span class="num">1</span>Where Demo Leqture's AI-native positioning stands today, and what's changed.</li>
-              <li><span class="num">2</span>What's happening across the AI Hub this week and how it connects to your role.</li>
-              <li><span class="num">3</span>How to get the most from Learning at Work Week, and where to ask questions.</li>
-            </ul>
-            <div class="col-label">Who it's for</div>
-            <p class="who-for">Open to all colleagues.</p>
-          </div>
-          <div class="speakers-col">
-            <div class="col-label">Meet the speakers</div>
-            <div class="speaker"><div class="avatar">SD</div><div><div class="s-name">Siobhan Durcan</div><div class="s-role">AI Hub Lead, Business Operations</div></div></div>
-            <div class="speaker"><div class="avatar">IL</div><div><div class="s-name">Ian Lees</div><div class="s-role">Director of Engineering, Software Engineering</div></div></div>
-          </div>
-        </div>
-      </details>
-
-      <details class="prog-item">
-        <summary>
-          <div class="avatar-group"><div class="avatar">KB</div></div>
-          <div class="prog-meta">
-            <div class="speakers">Karim Benammar</div>
-            <div class="title-row"><span class="title">Reframing AI: exploring radically different ways of working</span><span class="tag-pill">Keynote</span></div>
-          </div>
-          <div class="prog-time"><div class="t">15:00 UK</div><div class="d">Mon 6 Jul</div></div>
-          <div class="chev">⌄</div>
-        </summary>
-        <div class="prog-body">
-          <div>
-            <div class="col-label">About the session</div>
-            <div class="headline">Kick off Learning at Work Week with our first external keynote session!</div>
-            <p class="desc">Join author and philosopher Karim Benammar for a thought-provoking session on how AI can reshape the way we work. Explore practical ways to move beyond writing prompts and start integrating AI into your everyday workflows, challenge ways of thinking, and get more from human-AI collaboration.</p>
-            <div class="col-label">What you'll take away</div>
-            <ul class="takeaways">
-              <li><span class="num">1</span>Practical ways to move beyond basic prompting into real AI collaboration.</li>
-              <li><span class="num">2</span>A framework for challenging your default assumptions about how AI fits into work.</li>
-              <li><span class="num">3</span>How to get more from human-AI collaboration in your everyday workflow.</li>
-            </ul>
-            <div class="col-label">Who it's for</div>
-            <p class="who-for">Open to all colleagues. Recommended for anyone looking to transition from basic prompting and build AI into the way they work.</p>
-          </div>
-          <div class="speakers-col">
-            <div class="col-label">About the speaker</div>
-            <div class="speaker"><div class="avatar">KB</div><div><div class="s-name">Karim Benammar</div><div class="s-role">Author &amp; Philosopher</div></div></div>
-          </div>
-        </div>
-      </details>
-
-      <details class="prog-item">
-        <summary>
-          <div class="avatar-group"><div class="avatar">DR</div></div>
-          <div class="prog-meta">
-            <div class="speakers">Donika Rexhepi</div>
-            <div class="title-row"><span class="title">Q-Net &amp; beyond: Creating Impactful Internal Communications</span><span class="tag-pill">APAC repeat</span></div>
-          </div>
-          <div class="prog-time"><div class="t">06:30 UK</div><div class="d">Tue 7 Jul</div></div>
-          <div class="chev">⌄</div>
-        </summary>
-        <div class="prog-body">
-          <div>
-            <div class="col-label">About the session</div>
-            <div class="headline">The APAC-friendly repeat of the same session below, run without Madeline.</div>
-            <p class="desc">This is the same session as the main Q-Net &amp; beyond session, run a second time at an APAC-friendly hour. Donika covers the same ground on creating internal communications that people actually read and act on, without Madeline, who joins the main session instead.<br><br>This session runs twice: Tuesday 7 July at 6:30am UK for APAC (without Madeline), and Wednesday 8 July at 2pm UK with both speakers.</p>
-            <div class="col-label">Who it's for</div>
-            <p class="who-for">Open to all colleagues, especially those in APAC timezones who can't make the main session.</p>
-          </div>
-          <div class="speakers-col">
-            <div class="col-label">About the speaker</div>
-            <div class="speaker"><div class="avatar">DR</div><div><div class="s-name">Donika Rexhepi</div><div class="s-role">Internal Communications &amp; Engagement Manager, Employee Experience</div></div></div>
-          </div>
-        </div>
-      </details>
-
-      <details class="prog-item">
-        <summary>
-          <div class="avatar-group"><div class="avatar">DP</div></div>
-          <div class="prog-meta">
-            <div class="speakers">Dan Pryer</div>
-            <div class="title-row"><span class="title">Workflows &amp; Workspaces for Claude: Parallelisation of tasks</span></div>
-          </div>
-          <div class="prog-time"><div class="t">09:30 UK</div><div class="d">Tue 7 Jul</div></div>
-          <div class="chev">⌄</div>
-        </summary>
-        <div class="prog-body">
-          <div>
-            <div class="col-label">About the session</div>
-            <div class="headline">See how an expert leads a team of AI agents to the Nth degree.</div>
-            <p class="desc">Dan will be giving a sneak-peek into his current set-up when working with Claude Code, using workspaces for isolated parallel execution of tasks, allowing a single engineer to work on many different things at once (e.g. implementing new features, performing code reviews, doing design work).</p>
-            <div class="col-label">What you'll take away</div>
-            <ul class="takeaways">
-              <li><span class="num">1</span>How to set up workspaces that keep context organised across multiple tasks.</li>
-              <li><span class="num">2</span>Techniques for parallelising work so several streams progress at once.</li>
-              <li><span class="num">3</span>Repeatable patterns the delivery teams use to move faster with Claude.</li>
-            </ul>
-            <div class="col-label">Who it's for</div>
-            <p class="who-for">Engineers looking to move beyond single-threaded AI interactions.</p>
-            <a class="join-link" href="#">Join on Teams →</a>
-          </div>
-          <div class="speakers-col">
-            <div class="col-label">About the speaker</div>
-            <div class="speaker"><div class="avatar">DP</div><div><div class="s-name">Dan Pryer</div><div class="s-role">Senior Engineer, Applications</div></div></div>
-            <p class="bio">Dan has been at Demo Leqture for 4.5 years, starting in the Academy team as an ATL for the first two years before transitioning into RnD where he currently works as a back-end Engineer. Dan works in the Decision Systems team, which provides an out-of-the-box, config-driven scoring solution for our customers. He's also really interested in the development and adoption of AI within RnD, building agents, skills and workflows to help speed up development and free engineers for higher-level problems.</p>
-          </div>
-        </div>
-      </details>
-
-      <details class="prog-item">
-        <summary>
-          <div class="avatar-group"><div class="avatar">RL</div></div>
-          <div class="prog-meta">
-            <div class="speakers">Rosie Lang</div>
-            <div class="title-row"><span class="title">Delivery AI Tooling Overview</span></div>
-          </div>
-          <div class="prog-time"><div class="t">11:00 UK</div><div class="d">Tue 7 Jul</div></div>
-          <div class="chev">⌄</div>
-        </summary>
-        <div class="prog-body">
-          <div>
-            <div class="col-label">About the session</div>
-            <div class="headline">Seeking updates on Delivery's latest AI initiative?</div>
-            <p class="desc">Join Rosie for a walkthrough of Demo Leqture's new AI tooling: what's available now, how delivery can be adopted internally and with clients, and what's coming next. We'll share practical recommendations for getting the most out of these tools and our roadmap for the quarter ahead.</p>
-            <div class="col-label">What you'll take away</div>
-            <ul class="takeaways">
-              <li><span class="num">1</span>A clear map of the AI tools currently available to delivery teams and clients.</li>
-              <li><span class="num">2</span>Where each tool fits (and where it doesn't) in real engagements.</li>
-              <li><span class="num">3</span>Recommended ways of working to get the most out of the toolkit.</li>
-            </ul>
-            <div class="col-label">Who it's for</div>
-            <p class="who-for">Open to all colleagues. Recommended for customer-facing roles, e.g. Delivery, Solution Engineering, TAPs.</p>
-            <a class="join-link" href="#">Join on Teams →</a>
-          </div>
-          <div class="speakers-col">
-            <div class="col-label">About the speaker</div>
-            <div class="speaker"><div class="avatar">RL</div><div><div class="s-name">Rosie Lang</div><div class="s-role">Senior Principal Data Engineer, Engineering</div></div></div>
-            <p class="bio">Rosie has spent 7+ years at Demo Leqture leading technical delivery across UK and international projects, partnering with product and R&amp;D to solve complex challenges for clients. She now leads AI adoption across the delivery organisation, bringing hands-on experience in translating emerging technology into operational impact.</p>
-          </div>
-        </div>
-      </details>
-
-      <details class="prog-item">
-        <summary>
-          <div class="avatar-group"><div class="avatar">IL</div><div class="avatar">SD</div><div class="avatar">P</div></div>
-          <div class="prog-meta">
-            <div class="speakers">Ian Lees &amp; Siobhan Durcan &amp; Panelists</div>
-            <div class="title-row"><span class="title">Ethics of AI</span><span class="tag-pill">Panel</span></div>
-          </div>
-          <div class="prog-time"><div class="t">15:00 UK</div><div class="d">Tue 7 Jul</div></div>
-          <div class="chev">⌄</div>
-        </summary>
-        <div class="prog-body">
-          <div>
-            <div class="col-label">About the session</div>
-            <div class="headline">An honest, cross-functional conversation on doing AI fast, and doing it well.</div>
-            <p class="desc">Write-up coming soon. Check back here closer to the date for the full panel line-up and description.</p>
-            <div class="col-label">Who it's for</div>
-            <p class="who-for">Open to all colleagues.</p>
-            <a class="join-link" href="#">Join on Teams →</a>
-          </div>
-          <div class="speakers-col">
-            <div class="col-label">On the panel</div>
-            <div class="speaker"><div class="avatar">IL</div><div><div class="s-name">Ian Lees</div><div class="s-role">Director of Engineering, Software Engineering</div></div></div>
-            <div class="speaker"><div class="avatar">SD</div><div><div class="s-name">Siobhan Durcan</div><div class="s-role">AI Hub Lead, Business Operations</div></div></div>
-            <div class="speaker"><div class="avatar">P</div><div><div class="s-name">Panelist</div></div></div>
-            <div class="speaker"><div class="avatar">P</div><div><div class="s-name">Panelist</div></div></div>
-            <div class="speaker"><div class="avatar">P</div><div><div class="s-name">Panelist</div></div></div>
-          </div>
-        </div>
-      </details>
-
-      <details class="prog-item">
-        <summary>
-          <div class="avatar-group"><div class="avatar">DR</div><div class="avatar">MG</div></div>
-          <div class="prog-meta">
-            <div class="speakers">Donika Rexhepi &amp; Madeline Grubbs</div>
-            <div class="title-row"><span class="title">Q-Net &amp; beyond: Creating Impactful Internal Communications</span></div>
-          </div>
-          <div class="prog-time"><div class="t">14:00 UK</div><div class="d">Wed 8 Jul</div></div>
-          <div class="chev">⌄</div>
-        </summary>
-        <div class="prog-body">
-          <div>
-            <div class="col-label">About the session</div>
-            <div class="headline">Want to create internal communications that people actually read and act on?</div>
-            <p class="desc">Join us for a practical session covering the essentials of internal communications at Demo Leqture. You'll learn how to create engaging content, choose the right channels, make the most of Q-Net, and measure the impact of your communications, with a live demo to bring it all together. Whether you write often or just now and then, if you're creating content on Q-Net, you're part of our internal comms ecosystem, and this session is for you.<br><br>This session also runs Tuesday 7 July at 6:30am UK for APAC, without Madeline.</p>
-            <div class="col-label">What you'll take away</div>
-            <ul class="takeaways">
-              <li><span class="num">1</span>How Demo Leqture keeps a global workforce informed, engaged and connected.</li>
-              <li><span class="num">2</span>What makes internal channels and an intranet genuinely useful, not just another inbox.</li>
-              <li><span class="num">3</span>How to turn feedback into communications and experiences people value.</li>
-            </ul>
-            <div class="col-label">Who it's for</div>
-            <p class="who-for">Open to all colleagues. Recommended for Q-Net connoisseurs, public-facing roles, and the People team.</p>
-            <a class="join-link" href="#">Join 2pm session on Teams →</a>
-          </div>
-          <div class="speakers-col">
-            <div class="col-label">Meet the speakers</div>
-            <div class="speaker"><div class="avatar">DR</div><div><div class="s-name">Donika Rexhepi</div><div class="s-role">Internal Communications &amp; Engagement Manager, Employee Experience</div></div></div>
-            <div class="speaker"><div class="avatar">MG</div><div><div class="s-name">Madeline Grubbs</div><div class="s-role">Customer Experience Consultant, Simpplr</div></div></div>
-          </div>
-        </div>
-      </details>
-
-      <details class="prog-item">
-        <summary>
-          <div class="avatar-group"><div class="avatar">EH</div></div>
-          <div class="prog-meta">
-            <div class="speakers">Ed Hogarth</div>
-            <div class="title-row"><span class="title">AI Tooling Dependency</span></div>
-          </div>
-          <div class="prog-time"><div class="t">09:30 UK</div><div class="d">Thu 9 Jul</div></div>
-          <div class="chev">⌄</div>
-        </summary>
-        <div class="prog-body">
-          <div>
-            <div class="col-label">About the session</div>
-            <div class="headline">Worried about skill loss as AI dependence drives up?</div>
-            <p class="desc">Ed takes an honest look at the cognitive trade-offs of AI-assisted engineering, where these tools genuinely accelerate us, and where they risk atrophying the skills and judgement that make us effective. Less roadmap, more real talk about staying good at our jobs.</p>
-            <div class="col-label">What you'll take away</div>
-            <ul class="takeaways">
-              <li><span class="num">1</span>Where AI tools genuinely accelerate engineering work, and where they don't.</li>
-              <li><span class="num">2</span>The skills most at risk of atrophying with heavy AI reliance, and why it matters.</li>
-              <li><span class="num">3</span>Honest questions to ask yourself about how you rely on AI day to day.</li>
-            </ul>
-            <div class="col-label">Who it's for</div>
-            <p class="who-for">Recommended for AI users, those who have already bought into AI and are sinking more trust into it.</p>
-            <a class="join-link" href="#">Join on Teams →</a>
-          </div>
-          <div class="speakers-col">
-            <div class="col-label">About the speaker</div>
-            <div class="speaker"><div class="avatar">EH</div><div><div class="s-name">Ed Hogarth</div><div class="s-role">Principal Engineer, Software Engineering</div></div></div>
-          </div>
-        </div>
-      </details>
-
-      <details class="prog-item">
-        <summary>
-          <div class="avatar-group"><div class="avatar">ES</div></div>
-          <div class="prog-meta">
-            <div class="speakers">Erik Spooner</div>
-            <div class="title-row"><span class="title">How to Train Your (A.I.) Dragon: A Live Workshop Using Skills</span><span class="tag-pill">Workshop</span></div>
-          </div>
-          <div class="prog-time"><div class="t">11:00 UK</div><div class="d">Thu 9 Jul</div></div>
-          <div class="chev">⌄</div>
-        </summary>
-        <div class="prog-body">
-          <div>
-            <div class="col-label">About the session</div>
-            <div class="headline">Striving to build brand-worthy collateral, dashboards and more?</div>
-            <p class="desc">In this live workshop, we look under the hood at how Demo Leqture's brand team set up their skill for collateral production, how to help it hone in on your own needs through additional training, and ways to apply the same principles across other AI tools. This demo features real-time Claude Co-Work, Microsoft Co-Pilot and Google Gemini demos, so bring your laptop and your favourite new project, the majority of the time is focused on Claude Skills, with the latter third demoing similar outcomes in other tools.</p>
-            <div class="col-label">What you'll take away</div>
-            <ul class="takeaways">
-              <li><span class="num">1</span>How Demo Leqture's brand team built and trained their own Claude Skill.</li>
-              <li><span class="num">2</span>Ways to hone a skill so it fits your own team's needs, not just a generic use case.</li>
-              <li><span class="num">3</span>How similar outcomes translate across Claude, Co-Pilot and Gemini.</li>
-            </ul>
-            <div class="col-label">Who it's for</div>
-            <p class="who-for">Open to all colleagues. Users of Claude Co-Work, Co-Pilot &amp; Gemini.</p>
-          </div>
-          <div class="speakers-col">
-            <div class="col-label">About the speaker</div>
-            <div class="speaker"><div class="avatar">ES</div><div><div class="s-name">Erik Spooner</div><div class="s-role">Global Head of Brand &amp; Creative, Corporate Marketing</div></div></div>
-            <p class="bio">Erik Spooner recently joined Demo Leqture as the Global Head of Brand &amp; Creative in the Corporate Marketing team. With professional roots in journalism and design, he brings editorial authority, strategic vision and hands-on craft to enterprise brand work that delivers measurable business impact. He also maintains a position on the faculty of Pratt Institute, teaching undergraduates in Branding &amp; Messaging, Typography, Graphic Design and Creative Strategy.</p>
-          </div>
-        </div>
-      </details>
-
-      <details class="prog-item">
-        <summary>
-          <div class="avatar-group"><div class="avatar">MS</div></div>
-          <div class="prog-meta">
-            <div class="speakers">Michelle Schechter</div>
-            <div class="title-row"><span class="title">Critical Thinking and AI</span><span class="tag-pill">Keynote</span></div>
-          </div>
-          <div class="prog-time"><div class="t">15:00 UK</div><div class="d">Thu 9 Jul</div></div>
-          <div class="chev">⌄</div>
-        </summary>
-        <div class="prog-body">
-          <div>
-            <div class="col-label">About the session</div>
-            <div class="headline">How do we prevent "AI slop" and keep our critical thinking sharp?</div>
-            <p class="desc">As AI adoption accelerates, join Michelle Schechter for a practical session tailored specifically for knowledge workers. Learn the essential mindset shifts required to treat AI as a powerful collaborative partner, rather than just an automated shortcut.</p>
-            <div class="col-label">What you'll take away</div>
-            <ul class="takeaways">
-              <li><span class="num">1</span>The essential mindset shifts for treating AI as a collaborative partner, not a shortcut.</li>
-              <li><span class="num">2</span>How to spot and avoid "AI slop" in your own work.</li>
-              <li><span class="num">3</span>Ways to keep critical thinking sharp as AI use becomes routine.</li>
-            </ul>
-            <div class="col-label">Who it's for</div>
-            <p class="who-for">Open to all colleagues. Recommended for knowledge workers, developers, and team leads who use AI regularly.</p>
-          </div>
-          <div class="speakers-col">
-            <div class="col-label">About the speaker</div>
-            <div class="speaker"><div class="avatar">MS</div><div><div class="s-name">Michelle Schechter</div><div class="s-role">Philosophy at Work</div></div></div>
-          </div>
-        </div>
-      </details>
-
-      <details class="prog-item">
-        <summary>
-          <div class="avatar-group"><div class="avatar">SD</div></div>
-          <div class="prog-meta">
-            <div class="speakers">Siobhan Durcan</div>
-            <div class="title-row"><span class="title">Psychology of Computer Interactions &amp; Well-being</span></div>
-          </div>
-          <div class="prog-time"><div class="t">09:30 UK</div><div class="d">Fri 10 Jul</div></div>
-          <div class="chev">⌄</div>
-        </summary>
-        <div class="prog-body">
-          <div>
-            <div class="col-label">About the session</div>
-            <div class="headline">Does the psychological impact of AI adoption strike a chord in your psyche?</div>
-            <p class="desc">Siobhan explores the psychology behind how we interact with technology, and what changes when AI becomes a constant presence in engineering workflows and people processes. As AI adoption scales across software development and team management, she examines how trust, over-reliance, and decision fatigue affect not just productivity but cognitive load and job satisfaction, and shares practical strategies for designing human-AI interactions that enhance well-being rather than erode it.</p>
-            <div class="col-label">What you'll take away</div>
-            <ul class="takeaways">
-              <li><span class="num">1</span>How the way we interact with computers and AI shapes how we feel at work.</li>
-              <li><span class="num">2</span>Practical ways to keep wellbeing front of mind as AI becomes part of daily work.</li>
-              <li><span class="num">3</span>What "safe AI" looks like in practice, and why it matters for all of us.</li>
-            </ul>
-            <div class="col-label">Who it's for</div>
-            <p class="who-for">Open to all colleagues. Recommended for users of AI.</p>
-            <a class="join-link" href="#">Join on Teams →</a>
-          </div>
-          <div class="speakers-col">
-            <div class="col-label">About the speaker</div>
-            <div class="speaker"><div class="avatar">SD</div><div><div class="s-name">Siobhan Durcan</div><div class="s-role">AI Strategy &amp; Governance Specialist, Business Operations</div></div></div>
-          </div>
-        </div>
-      </details>
-
+    <div class="prog-controls">
+      <label for="tz-select">Times shown in</label>
+      <select id="tz-select"></select>
     </div>
+
+    <div class="prog-list" id="prog-list"></div>
   </div>
 </section>
 
@@ -1153,10 +838,14 @@
 
   var heroTitleEl = document.getElementById("hero-title-el");
   var heroSubtitleEl = document.getElementById("hero-subtitle-el");
+  var sessionsTitleEl = document.getElementById("sessions-title-el");
+  var sessionsSubtitleEl = document.getElementById("sessions-subtitle-el");
   var recordingsTitleEl = document.getElementById("recordings-title-el");
   var recordingsSubtitleEl = document.getElementById("recordings-subtitle-el");
   var heroTitleDefaultHTML = heroTitleEl.innerHTML;
   var heroSubtitleDefaultText = heroSubtitleEl.textContent;
+  var sessionsTitleDefaultHTML = sessionsTitleEl.innerHTML;
+  var sessionsSubtitleDefaultText = sessionsSubtitleEl.textContent;
   var recordingsTitleDefaultHTML = recordingsTitleEl.innerHTML;
   var recordingsSubtitleDefaultText = recordingsSubtitleEl.textContent;
 
@@ -1251,6 +940,10 @@
     setTitleHTML(heroTitleEl, heroTitleDefaultHTML, (heroSec.title || "").trim());
     setBodyText(heroSubtitleEl, heroSubtitleDefaultText, (heroSec.subtitle || "").trim());
 
+    var sessionsSec = sections.sessions || {};
+    setTitleHTML(sessionsTitleEl, sessionsTitleDefaultHTML, (sessionsSec.title || "").trim());
+    setBodyText(sessionsSubtitleEl, sessionsSubtitleDefaultText, (sessionsSec.subtitle || "").trim());
+
     var recSec = sections.recordings || {};
     setTitleHTML(recordingsTitleEl, recordingsTitleDefaultHTML, (recSec.title || "").trim());
     setBodyText(recordingsSubtitleEl, recordingsSubtitleDefaultText, (recSec.subtitle || "").trim());
@@ -1266,6 +959,227 @@
   check();
   setInterval(function () { if (!document.hidden) check(); }, 15000);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
+})();
+</script>
+
+<script>
+(function () {
+  // ---- Programme / sessions ----
+  var list = document.getElementById("prog-list");
+  var tzSelect = document.getElementById("tz-select");
+  var currentSessions = [];
+
+  var TIMEZONES = [
+    { value: "auto", label: "Local time (this device)" },
+    { value: "Etc/GMT-1", label: "Central European Time (as scheduled)" },
+    { value: "Europe/London", label: "UK Time" },
+    { value: "America/New_York", label: "US Eastern" },
+    { value: "America/Los_Angeles", label: "US Pacific" },
+    { value: "Asia/Kolkata", label: "India" },
+    { value: "Asia/Singapore", label: "Singapore / Hong Kong" },
+    { value: "Australia/Sydney", label: "Australia Eastern" }
+  ];
+  tzSelect.innerHTML = TIMEZONES.map(function (z) {
+    return '<option value="' + z.value + '">' + z.label + '</option>';
+  }).join("");
+  var savedTz = "auto";
+  try { savedTz = localStorage.getItem("dl_tz") || "auto"; } catch (e) {}
+  if (TIMEZONES.some(function (z) { return z.value === savedTz; })) tzSelect.value = savedTz;
+
+  function activeTimeZone() {
+    var v = tzSelect.value;
+    if (v === "auto") {
+      try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; }
+      catch (e) { return "UTC"; }
+    }
+    return v;
+  }
+
+  // Stored times are literal CET (UTC+1) wall-clock values, not a
+  // DST-aware zone — this is exactly the offset the source schedule was
+  // given in, so a stored "07:00" always means 06:00 UTC.
+  function toUTCDate(dateStr, timeStr) {
+    return new Date(dateStr + "T" + timeStr + ":00+01:00");
+  }
+
+  function pad2(n) { return n < 10 ? "0" + n : String(n); }
+
+  function toIcsUTC(d) {
+    return d.getUTCFullYear() + pad2(d.getUTCMonth() + 1) + pad2(d.getUTCDate()) + "T" +
+      pad2(d.getUTCHours()) + pad2(d.getUTCMinutes()) + pad2(d.getUTCSeconds()) + "Z";
+  }
+
+  function formatTimeRange(s, tz) {
+    var start = toUTCDate(s.date, s.startTime);
+    var end = toUTCDate(s.date, s.endTime);
+    var opts = { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: tz };
+    try {
+      return new Intl.DateTimeFormat(undefined, opts).format(start) + "–" + new Intl.DateTimeFormat(undefined, opts).format(end);
+    } catch (e) {
+      return s.startTime + "–" + s.endTime;
+    }
+  }
+
+  function formatDayLabel(s, tz) {
+    var start = toUTCDate(s.date, s.startTime);
+    var opts = { weekday: "short", day: "numeric", month: "short", timeZone: tz };
+    try { return new Intl.DateTimeFormat(undefined, opts).format(start); }
+    catch (e) { return s.date; }
+  }
+
+  function calendarLinks(s) {
+    var start = toUTCDate(s.date, s.startTime);
+    var end = toUTCDate(s.date, s.endTime);
+    var title = s.title || "Session";
+    var details = (s.description || "") + (s.speakerName ? ("\n\nSpeaker: " + s.speakerName) : "");
+    var google = "https://calendar.google.com/calendar/render?action=TEMPLATE" +
+      "&text=" + encodeURIComponent(title) +
+      "&dates=" + toIcsUTC(start) + "/" + toIcsUTC(end) +
+      "&details=" + encodeURIComponent(details);
+    var outlook = "https://outlook.office.com/calendar/0/deeplink/compose?path=%2Fcalendar%2Faction%2Fcompose&rru=addevent" +
+      "&subject=" + encodeURIComponent(title) +
+      "&startdt=" + encodeURIComponent(start.toISOString()) +
+      "&enddt=" + encodeURIComponent(end.toISOString()) +
+      "&body=" + encodeURIComponent(details);
+    return { google: google, outlook: outlook, start: start, end: end, title: title, details: details };
+  }
+
+  function icsEscape(v) {
+    return String(v || "").replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+  }
+
+  function downloadIcs(s) {
+    var links = calendarLinks(s);
+    var uid = (s.id || Math.random().toString(36).slice(2)) + "@demoleqture.local";
+    var ics = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//Demo Leqture//Programme//EN",
+      "CALSCALE:GREGORIAN",
+      "BEGIN:VEVENT",
+      "UID:" + uid,
+      "DTSTAMP:" + toIcsUTC(new Date()),
+      "DTSTART:" + toIcsUTC(links.start),
+      "DTEND:" + toIcsUTC(links.end),
+      "SUMMARY:" + icsEscape(links.title),
+      "DESCRIPTION:" + icsEscape(links.details),
+      "END:VEVENT",
+      "END:VCALENDAR",
+      ""
+    ].join("\r\n");
+    var blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = (links.title || "session").replace(/[^a-z0-9]+/gi, "-").toLowerCase() + ".ics";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function initials(name) {
+    var parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return "?";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
+  var escDiv = document.createElement("div");
+  function esc(v) {
+    escDiv.textContent = v == null ? "" : String(v);
+    return escDiv.innerHTML;
+  }
+
+  function renderSessions() {
+    if (!currentSessions.length) {
+      list.innerHTML = '<div class="no-sessions">No sessions have been published yet.</div>';
+      return;
+    }
+    var tz = activeTimeZone();
+    list.innerHTML = currentSessions.map(function (s) {
+      var links = calendarLinks(s);
+      return (
+        '<details class="prog-item" data-id="' + esc(s.id) + '">' +
+          '<summary>' +
+            '<div class="avatar-group"><div class="avatar">' + esc(initials(s.speakerName)) + '</div></div>' +
+            '<div class="prog-meta">' +
+              '<div class="speakers">' + esc(s.speakerName) + '</div>' +
+              '<div class="title-row"><span class="title">' + esc(s.title) + '</span></div>' +
+            '</div>' +
+            '<div class="prog-time"><div class="t">' + esc(formatTimeRange(s, tz)) + '</div><div class="d">' + esc(formatDayLabel(s, tz)) + '</div></div>' +
+            '<div class="chev">⌄</div>' +
+          '</summary>' +
+          '<div class="prog-body">' +
+            '<div>' +
+              '<div class="col-label">About the session</div>' +
+              '<p class="desc">' + esc(s.description) + '</p>' +
+              '<div class="add-cal">' +
+                '<button type="button" class="add-cal-btn" data-cal-toggle>Add to calendar ▾</button>' +
+                '<div class="add-cal-menu" hidden>' +
+                  '<a href="' + links.google + '" target="_blank" rel="noopener">Google Calendar</a>' +
+                  '<a href="' + links.outlook + '" target="_blank" rel="noopener">Outlook / Office 365</a>' +
+                  '<button type="button" data-cal-ics>Apple / iCal (.ics)</button>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="speakers-col">' +
+              '<div class="col-label">Meet the speaker</div>' +
+              '<div class="speaker"><div class="avatar">' + esc(initials(s.speakerName)) + '</div><div><div class="s-name">' + esc(s.speakerName) + '</div></div></div>' +
+              (s.speakerBio ? '<p class="bio">' + esc(s.speakerBio) + '</p>' : '') +
+            '</div>' +
+          '</div>' +
+        '</details>'
+      );
+    }).join("");
+  }
+
+  list.addEventListener("click", function (e) {
+    var toggleBtn = e.target.closest("[data-cal-toggle]");
+    if (toggleBtn) {
+      e.preventDefault();
+      var menu = toggleBtn.nextElementSibling;
+      var wasHidden = menu.hidden;
+      Array.prototype.forEach.call(list.querySelectorAll(".add-cal-menu"), function (m) { m.hidden = true; });
+      menu.hidden = !wasHidden;
+      return;
+    }
+    var icsBtn = e.target.closest("[data-cal-ics]");
+    if (icsBtn) {
+      e.preventDefault();
+      var item = icsBtn.closest(".prog-item");
+      var id = item && item.getAttribute("data-id");
+      var session = currentSessions.filter(function (s) { return s.id === id; })[0];
+      if (session) downloadIcs(session);
+      var openMenu = icsBtn.closest(".add-cal-menu");
+      if (openMenu) openMenu.hidden = true;
+    }
+  });
+
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest(".add-cal")) {
+      Array.prototype.forEach.call(document.querySelectorAll(".add-cal-menu"), function (m) { m.hidden = true; });
+    }
+  });
+
+  tzSelect.addEventListener("change", function () {
+    try { localStorage.setItem("dl_tz", tzSelect.value); } catch (e) {}
+    renderSessions();
+  });
+
+  function fetchSessions() {
+    return fetch("/api/sessions", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        currentSessions = (data && data.sessions) || [];
+        renderSessions();
+      })
+      .catch(function () {});
+  }
+
+  fetchSessions();
+  setInterval(function () { if (!document.hidden) fetchSessions(); }, 15000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) fetchSessions(); });
 })();
 </script>
 

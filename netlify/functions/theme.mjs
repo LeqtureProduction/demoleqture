@@ -10,7 +10,7 @@ const SECTION_KEYS = ["hero", "sessions", "recordings", "footer"];
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 const FONT_RE = /^[A-Za-z0-9 '-]{0,60}$/;
 const TITLE_MAX = 80;
-const SUBTITLE_MAX = 240;
+const SUBTITLE_MAX = 2500;
 
 function emptyTheme() {
   const sections = {};

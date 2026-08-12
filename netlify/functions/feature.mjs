@@ -10,7 +10,7 @@ import { getRole } from "./lib/auth.mjs";
 const INFO_KEY = "info";
 const BYTES_KEY = "bytes";
 const TITLE_MAX = 80;
-const BODY_MAX = 600;
+const BODY_MAX = 2500;
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB
 
 // position: 0 = before Sessions, 1 = between Sessions and Recordings,
