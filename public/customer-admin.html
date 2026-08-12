@@ -28,7 +28,7 @@
     display:flex;align-items:center;justify-content:center;padding:24px;
   }
   h1,h2,h3{font-family:'Poppins',Arial,sans-serif;margin:0;line-height:1.15;}
-  .wrap{width:100%;max-width:480px;}
+  .wrap{width:100%;max-width:560px;}
   .eyebrow{
     display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:12.5px;
     letter-spacing:0.14em;text-transform:uppercase;color:var(--purple);
@@ -100,6 +100,14 @@
   .card-item-actions button:hover:not(:disabled){border-color:var(--purple);}
   .card-item-actions button:disabled{opacity:.35;cursor:not-allowed;}
   .card-empty{font-size:12px;color:var(--gray);padding:6px 0 14px;}
+  .quick-nav{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #232323;}
+  .quick-nav-pill{font-size:11.5px;font-weight:600;color:var(--gray);background:#161616;border:1px solid #262626;border-radius:20px;padding:6px 12px;text-decoration:none;white-space:nowrap;transition:all .15s;}
+  .quick-nav-pill:hover{color:var(--white);border-color:var(--purple);}
+  .feature-block{scroll-margin-top:16px;}
+  .feature-header{display:flex;align-items:flex-start;gap:11px;margin-bottom:16px;}
+  .feature-icon{font-size:19px;line-height:1.3;flex-shrink:0;}
+  .feature-name{font-family:'Poppins',sans-serif;font-weight:700;font-size:15px;color:var(--white);margin-bottom:3px;}
+  .feature-desc{font-size:12px;color:var(--gray);line-height:1.45;}
 </style>
 </head>
 <body>
@@ -107,7 +115,7 @@
   <div class="card">
     <span class="eyebrow">Customer Admin</span>
     <h1>Site controls</h1>
-    <p class="lede">Enter your admin key to see survey responses, manage the hero image, the site theme, and the image link cards.</p>
+    <p class="lede">Enter your admin key to see survey responses, manage the hero image, the site theme, the image link cards, and the text &amp; image section. Use the pills below to jump to any of them.</p>
 
     <div id="gate">
       <label for="admin-key">Admin key</label>
@@ -117,128 +125,202 @@
     </div>
 
     <div id="panel" hidden>
-      <div class="status-row">
-        <span>Survey is currently</span>
-        <span class="badge" id="state-badge">—</span>
-      </div>
-      <div class="status-row">
-        <span>Responses collected</span>
-        <span class="badge" id="count-badge">—</span>
-      </div>
-      <div class="actions">
-        <button type="button" class="btn btn-primary" id="download-csv">Download CSV</button>
-        <button type="button" class="btn btn-outline" id="download-json">Download JSON</button>
-      </div>
-      <div class="actions">
-        <button type="button" class="btn btn-outline" id="refresh-btn">Refresh</button>
+      <nav class="quick-nav" id="quick-nav">
+        <a href="#block-survey" class="quick-nav-pill">&#128203; Survey</a>
+        <a href="#block-hero-image" class="quick-nav-pill">&#128444; Hero image</a>
+        <a href="#block-theme" class="quick-nav-pill">&#127912; Theme</a>
+        <a href="#block-cards" class="quick-nav-pill">&#128279; Link cards</a>
+        <a href="#block-feature" class="quick-nav-pill">&#128221; Text &amp; image</a>
+      </nav>
+
+      <div class="feature-block" id="block-survey">
+        <div class="feature-header">
+          <span class="feature-icon">&#128203;</span>
+          <div>
+            <div class="feature-name">Survey</div>
+            <div class="feature-desc">View status and download responses. Turning it on/off is Super Admin only.</div>
+          </div>
+        </div>
+        <div class="status-row">
+          <span>Survey is currently</span>
+          <span class="badge" id="state-badge">—</span>
+        </div>
+        <div class="status-row">
+          <span>Responses collected</span>
+          <span class="badge" id="count-badge">—</span>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="download-csv">Download CSV</button>
+          <button type="button" class="btn btn-outline" id="download-json">Download JSON</button>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn btn-outline" id="refresh-btn">Refresh</button>
+        </div>
       </div>
 
       <div class="divider"></div>
 
-      <div class="status-row">
-        <span>Hero image</span>
-        <span class="badge" id="image-badge">—</span>
+      <div class="feature-block" id="block-hero-image">
+        <div class="feature-header">
+          <span class="feature-icon">&#128444;</span>
+          <div>
+            <div class="feature-name">Hero image</div>
+            <div class="feature-desc">Static image next to the heading, shown whenever no video is live.</div>
+          </div>
+        </div>
+        <div class="status-row">
+          <span>Hero image</span>
+          <span class="badge" id="image-badge">—</span>
+        </div>
+        <div class="notice" id="player-live-notice" hidden>
+          The hero video player is currently live, so the image can't be changed right now. Ask a Super Admin to turn it off first.
+        </div>
+        <div class="image-preview" id="image-preview"><span class="empty">No image uploaded</span></div>
+        <input type="file" id="image-file" accept="image/*" />
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="image-upload">Upload</button>
+          <button type="button" class="btn btn-outline" id="image-remove">Remove</button>
+        </div>
+        <p class="hint">Shown to the right of the main heading whenever there's no hero video player link published. Max 5MB.</p>
       </div>
-      <div class="notice" id="player-live-notice" hidden>
-        The hero video player is currently live, so the image can't be changed right now. Ask a Super Admin to turn it off first.
-      </div>
-      <div class="image-preview" id="image-preview"><span class="empty">No image uploaded</span></div>
-      <input type="file" id="image-file" accept="image/*" />
-      <div class="actions">
-        <button type="button" class="btn btn-primary" id="image-upload">Upload</button>
-        <button type="button" class="btn btn-outline" id="image-remove">Remove</button>
-      </div>
-      <p class="hint">Shown to the right of the main heading whenever there's no hero video player link published. Max 5MB.</p>
 
       <div class="divider"></div>
 
-      <div class="status-row">
-        <span>Site theme</span>
-        <span class="badge" id="theme-badge">—</span>
-      </div>
-      <label for="theme-font">Font (type any Google Fonts name)</label>
-      <input type="text" id="theme-font" placeholder="e.g. Poppins, Sora, Playfair Display" autocomplete="off" />
+      <div class="feature-block" id="block-theme">
+        <div class="feature-header">
+          <span class="feature-icon">&#127912;</span>
+          <div>
+            <div class="feature-name">Site theme</div>
+            <div class="feature-desc">Font, accent color, and background/text color per section.</div>
+          </div>
+        </div>
+        <div class="status-row">
+          <span>Site theme</span>
+          <span class="badge" id="theme-badge">—</span>
+        </div>
+        <label for="theme-font">Font (type any Google Fonts name)</label>
+        <input type="text" id="theme-font" placeholder="e.g. Poppins, Sora, Playfair Display" autocomplete="off" />
 
-      <label for="theme-accent">Accent color (buttons, highlights &mdash; default purple)</label>
-      <div class="theme-field-inputs single" style="margin-bottom:12px;">
-        <input type="text" id="theme-accent" placeholder="#a855f7" maxlength="7">
-        <input type="color" data-target="theme-accent" value="#a855f7">
-      </div>
+        <label for="theme-accent">Accent color (buttons, highlights &mdash; default purple)</label>
+        <div class="theme-field-inputs single" style="margin-bottom:12px;">
+          <input type="text" id="theme-accent" placeholder="#a855f7" maxlength="7">
+          <input type="color" data-target="theme-accent" value="#a855f7">
+        </div>
 
-      <div class="theme-field-row">
-        <div class="theme-field-name">Hero</div>
-        <div class="theme-field-inputs">
-          <input type="text" id="theme-hero-bg" placeholder="Background #hex" maxlength="7">
-          <input type="color" data-target="theme-hero-bg" value="#0a0a0a">
-          <input type="text" id="theme-hero-text" placeholder="Text #hex" maxlength="7">
-          <input type="color" data-target="theme-hero-text" value="#ffffff">
+        <div class="theme-field-row">
+          <div class="theme-field-name">Hero</div>
+          <div class="theme-field-inputs">
+            <input type="text" id="theme-hero-bg" placeholder="Background #hex" maxlength="7">
+            <input type="color" data-target="theme-hero-bg" value="#0a0a0a">
+            <input type="text" id="theme-hero-text" placeholder="Text #hex" maxlength="7">
+            <input type="color" data-target="theme-hero-text" value="#ffffff">
+          </div>
         </div>
-      </div>
-      <div class="theme-field-row">
-        <div class="theme-field-name">Sessions</div>
-        <div class="theme-field-inputs">
-          <input type="text" id="theme-sessions-bg" placeholder="Background #hex" maxlength="7">
-          <input type="color" data-target="theme-sessions-bg" value="#eeece6">
-          <input type="text" id="theme-sessions-text" placeholder="Text #hex" maxlength="7">
-          <input type="color" data-target="theme-sessions-text" value="#0a0a0a">
+        <div class="theme-field-row">
+          <div class="theme-field-name">Sessions</div>
+          <div class="theme-field-inputs">
+            <input type="text" id="theme-sessions-bg" placeholder="Background #hex" maxlength="7">
+            <input type="color" data-target="theme-sessions-bg" value="#eeece6">
+            <input type="text" id="theme-sessions-text" placeholder="Text #hex" maxlength="7">
+            <input type="color" data-target="theme-sessions-text" value="#0a0a0a">
+          </div>
         </div>
-      </div>
-      <div class="theme-field-row">
-        <div class="theme-field-name">Recordings</div>
-        <div class="theme-field-inputs">
-          <input type="text" id="theme-recordings-bg" placeholder="Background #hex" maxlength="7">
-          <input type="color" data-target="theme-recordings-bg" value="#0a0a0a">
-          <input type="text" id="theme-recordings-text" placeholder="Text #hex" maxlength="7">
-          <input type="color" data-target="theme-recordings-text" value="#ffffff">
+        <div class="theme-field-row">
+          <div class="theme-field-name">Recordings</div>
+          <div class="theme-field-inputs">
+            <input type="text" id="theme-recordings-bg" placeholder="Background #hex" maxlength="7">
+            <input type="color" data-target="theme-recordings-bg" value="#0a0a0a">
+            <input type="text" id="theme-recordings-text" placeholder="Text #hex" maxlength="7">
+            <input type="color" data-target="theme-recordings-text" value="#ffffff">
+          </div>
         </div>
-      </div>
-      <div class="theme-field-row">
-        <div class="theme-field-name">Footer</div>
-        <div class="theme-field-inputs">
-          <input type="text" id="theme-footer-bg" placeholder="Background #hex" maxlength="7">
-          <input type="color" data-target="theme-footer-bg" value="#a855f7">
-          <input type="text" id="theme-footer-text" placeholder="Text #hex" maxlength="7">
-          <input type="color" data-target="theme-footer-text" value="#1f0a33">
+        <div class="theme-field-row">
+          <div class="theme-field-name">Footer</div>
+          <div class="theme-field-inputs">
+            <input type="text" id="theme-footer-bg" placeholder="Background #hex" maxlength="7">
+            <input type="color" data-target="theme-footer-bg" value="#a855f7">
+            <input type="text" id="theme-footer-text" placeholder="Text #hex" maxlength="7">
+            <input type="color" data-target="theme-footer-text" value="#1f0a33">
+          </div>
         </div>
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="theme-save">Save theme</button>
+          <button type="button" class="btn btn-outline" id="theme-reset">Reset all</button>
+        </div>
+        <p class="hint">Sets the font and background/text colors for everyone within about 15 seconds. Leave a color field blank to keep that section's default look.</p>
       </div>
-      <div class="actions">
-        <button type="button" class="btn btn-primary" id="theme-save">Save theme</button>
-        <button type="button" class="btn btn-outline" id="theme-reset">Reset all</button>
-      </div>
-      <p class="hint">Sets the font and background/text colors for everyone within about 15 seconds. Leave a color field blank to keep that section's default look.</p>
 
       <div class="divider"></div>
 
-      <div class="status-row">
-        <span>Image link cards</span>
-        <span class="badge" id="cards-badge">—</span>
+      <div class="feature-block" id="block-cards">
+        <div class="feature-header">
+          <span class="feature-icon">&#128279;</span>
+          <div>
+            <div class="feature-name">Image link cards</div>
+            <div class="feature-desc">A "Useful links" grid of clickable cards you can rename and reposition.</div>
+          </div>
+        </div>
+        <div class="status-row">
+          <span>Image link cards</span>
+          <span class="badge" id="cards-badge">—</span>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn btn-outline" id="links-move-up">&uarr; Move section up</button>
+          <button type="button" class="btn btn-outline" id="links-move-down">&darr; Move section down</button>
+        </div>
+        <label for="links-title">Section title</label>
+        <input type="text" id="links-title" maxlength="60" placeholder="Useful links" autocomplete="off" />
+        <label for="links-subtitle">Section subtitle</label>
+        <input type="text" id="links-subtitle" maxlength="160" placeholder="A few extra resources worth a look." autocomplete="off" />
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="links-save-text">Save section text</button>
+        </div>
+        <div class="divider" style="margin:14px 0;"></div>
+        <div id="cards-list"></div>
+        <label for="card-title" style="margin-top:14px;">Title</label>
+        <input type="text" id="card-title" maxlength="60" placeholder="Card title" autocomplete="off" />
+        <label for="card-body">Body text</label>
+        <textarea id="card-body" class="textarea-field" maxlength="220" placeholder="A short line of description"></textarea>
+        <label for="card-link">External link</label>
+        <input type="text" id="card-link" placeholder="https://..." autocomplete="off" />
+        <label for="card-image">Image</label>
+        <input type="file" id="card-image" accept="image/*" />
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="card-save">Add card</button>
+          <button type="button" class="btn btn-outline" id="card-cancel" hidden>Cancel edit</button>
+        </div>
+        <p class="hint">Shown as a grid of clickable cards between the programme and recordings sections on the site. Each needs an image, title, short body text, and a link. Max 24 cards, images up to 5MB. Use the arrows to reorder.</p>
       </div>
-      <div class="actions">
-        <button type="button" class="btn btn-outline" id="links-move-up">&uarr; Move section up</button>
-        <button type="button" class="btn btn-outline" id="links-move-down">&darr; Move section down</button>
+
+      <div class="divider"></div>
+
+      <div class="feature-block" id="block-feature">
+        <div class="feature-header">
+          <span class="feature-icon">&#128221;</span>
+          <div>
+            <div class="feature-name">Text &amp; image section</div>
+            <div class="feature-desc">One content block (title, body text, image) shown after Recordings.</div>
+          </div>
+        </div>
+        <div class="status-row">
+          <span>Text &amp; image section</span>
+          <span class="badge" id="feature-badge">—</span>
+        </div>
+        <div class="image-preview" id="feature-image-preview"><span class="empty">No image uploaded</span></div>
+        <input type="file" id="feature-image-file" accept="image/*" />
+        <label for="feature-title-input" style="margin-top:12px;">Title</label>
+        <input type="text" id="feature-title-input" maxlength="80" placeholder="Section title" autocomplete="off" />
+        <label for="feature-body-input">Body text</label>
+        <textarea id="feature-body-input" class="textarea-field" maxlength="600" placeholder="A paragraph of body text"></textarea>
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="feature-save">Save</button>
+          <button type="button" class="btn btn-outline" id="feature-remove-image">Remove image</button>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn btn-outline" id="feature-clear-all">Clear whole section</button>
+        </div>
+        <p class="hint">Shown as its own section between Recordings and the footer, only while it has a title, body text, or image — leaving everything blank hides it. You can save title/body without an image, or add an image with no text.</p>
       </div>
-      <label for="links-title">Section title</label>
-      <input type="text" id="links-title" maxlength="60" placeholder="Useful links" autocomplete="off" />
-      <label for="links-subtitle">Section subtitle</label>
-      <input type="text" id="links-subtitle" maxlength="160" placeholder="A few extra resources worth a look." autocomplete="off" />
-      <div class="actions">
-        <button type="button" class="btn btn-primary" id="links-save-text">Save section text</button>
-      </div>
-      <div class="divider" style="margin:14px 0;"></div>
-      <div id="cards-list"></div>
-      <label for="card-title" style="margin-top:14px;">Title</label>
-      <input type="text" id="card-title" maxlength="60" placeholder="Card title" autocomplete="off" />
-      <label for="card-body">Body text</label>
-      <textarea id="card-body" class="textarea-field" maxlength="220" placeholder="A short line of description"></textarea>
-      <label for="card-link">External link</label>
-      <input type="text" id="card-link" placeholder="https://..." autocomplete="off" />
-      <label for="card-image">Image</label>
-      <input type="file" id="card-image" accept="image/*" />
-      <div class="actions">
-        <button type="button" class="btn btn-primary" id="card-save">Add card</button>
-        <button type="button" class="btn btn-outline" id="card-cancel" hidden>Cancel edit</button>
-      </div>
-      <p class="hint">Shown as a grid of clickable cards between the programme and recordings sections on the site. Each needs an image, title, short body text, and a link. Max 24 cards, images up to 5MB. Use the arrows to reorder.</p>
     </div>
   </div>
 </div>
@@ -300,6 +382,7 @@
     fetchHeroImage();
     fetchTheme();
     fetchCards();
+    fetchFeature();
   }
 
   function fetchState() {
@@ -439,6 +522,24 @@
     return document.getElementById("theme-" + section + "-" + kind);
   }
 
+  // The little color-picker squares only accept full 6-digit hex values and
+  // have no concept of "empty" — so after the text fields are populated
+  // (on load, after save, or from a poll tick), walk every swatch and copy
+  // its paired text field's value into it. Without this the swatches stay
+  // stuck at whatever was in the HTML, while only the hex text updates.
+  function syncSwatches() {
+    Array.prototype.forEach.call(document.querySelectorAll(".theme-field-inputs input[type=color]"), function (swatch) {
+      var target = document.getElementById(swatch.getAttribute("data-target"));
+      if (!target) return;
+      var v = target.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+        swatch.value = v;
+      } else if (/^#[0-9a-fA-F]{3}$/.test(v)) {
+        swatch.value = "#" + v.slice(1).split("").map(function (c) { return c + c; }).join("");
+      }
+    });
+  }
+
   function fetchTheme() {
     return fetch("/api/theme", { cache: "no-store" })
       .then(function (r) { return r.json(); })
@@ -464,6 +565,7 @@
     });
     themeBadge.textContent = custom ? "CUSTOM" : "DEFAULT";
     themeBadge.className = "badge " + (custom ? "badge-on" : "");
+    syncSwatches();
   }
 
   function collectTheme() {
@@ -699,13 +801,88 @@
     if (!document.hidden && !panel.hidden) {
       fetchTheme();
       fetchCards();
+      fetchFeature();
     }
   }, 15000);
   document.addEventListener("visibilitychange", function () {
     if (!document.hidden && !panel.hidden) {
       fetchTheme();
       fetchCards();
+      fetchFeature();
     }
+  });
+
+  // ---- Text & image section ----
+  var featureBadge = document.getElementById("feature-badge");
+  var featureImagePreview = document.getElementById("feature-image-preview");
+  var featureImageFile = document.getElementById("feature-image-file");
+  var featureTitleInput = document.getElementById("feature-title-input");
+  var featureBodyInput = document.getElementById("feature-body-input");
+  var featureSaveBtn = document.getElementById("feature-save");
+  var featureRemoveImageBtn = document.getElementById("feature-remove-image");
+  var featureClearAllBtn = document.getElementById("feature-clear-all");
+
+  function renderFeature(info) {
+    info = info || { title: "", body: "", hasImage: false, updated_at: 0 };
+    var active = !!(info.title || info.body || info.hasImage);
+    featureBadge.textContent = active ? "LIVE" : "EMPTY";
+    featureBadge.className = "badge " + (active ? "badge-on" : "");
+    if (document.activeElement !== featureTitleInput) featureTitleInput.value = info.title || "";
+    if (document.activeElement !== featureBodyInput) featureBodyInput.value = info.body || "";
+    if (info.hasImage) {
+      featureImagePreview.innerHTML = '<img src="/api/feature?image=1&t=' + encodeURIComponent(info.updated_at || 0) + '" alt="Section image preview" />';
+    } else {
+      featureImagePreview.innerHTML = '<span class="empty">No image uploaded</span>';
+    }
+  }
+
+  function fetchFeature() {
+    return fetch("/api/feature", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(renderFeature)
+      .catch(function () {});
+  }
+
+  featureSaveBtn.addEventListener("click", function () {
+    var form = new FormData();
+    form.append("title", featureTitleInput.value.trim());
+    form.append("body", featureBodyInput.value.trim());
+    var file = featureImageFile.files && featureImageFile.files[0];
+    if (file) form.append("image", file);
+    featureSaveBtn.disabled = true;
+    fetch("/api/feature", { method: "POST", headers: { "x-admin-key": key }, body: form })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(function (data) { featureImageFile.value = ""; renderFeature(data.info); })
+      .catch(function (err) { alert(err.message); })
+      .finally(function () { featureSaveBtn.disabled = false; });
+  });
+
+  featureRemoveImageBtn.addEventListener("click", function () {
+    featureRemoveImageBtn.disabled = true;
+    fetch("/api/feature?part=image", { method: "DELETE", headers: { "x-admin-key": key } })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(function (data) { renderFeature(data.info); })
+      .catch(function (err) { alert(err.message); })
+      .finally(function () { featureRemoveImageBtn.disabled = false; });
+  });
+
+  featureClearAllBtn.addEventListener("click", function () {
+    if (!confirm("Clear the title, body text, and image for this section?")) return;
+    featureClearAllBtn.disabled = true;
+    fetch("/api/feature", { method: "DELETE", headers: { "x-admin-key": key } })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(function (data) { renderFeature(data.info); })
+      .catch(function (err) { alert(err.message); })
+      .finally(function () { featureClearAllBtn.disabled = false; });
   });
 })();
 </script>

@@ -201,6 +201,14 @@
   .link-title{font-family:'Poppins',sans-serif;font-weight:600;font-size:15.5px;color:var(--black);margin-bottom:6px;}
   .link-body{font-size:13.5px;line-height:1.5;color:var(--gray-dark);}
 
+  /* TEXT + IMAGE FEATURE SECTION */
+  .feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;}
+  .feature-grid.single{grid-template-columns:1fr;max-width:640px;}
+  .feature-media{border-radius:var(--radius);overflow:hidden;background:#e4e1d8;position:relative;aspect-ratio:4/3;}
+  .feature-media img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}
+  .feature-copy h2{margin:0 0 16px;}
+  .feature-copy p{font-size:16px;line-height:1.65;color:var(--gray-dark);}
+
   /* FOOTER */
   footer{background:var(--purple);color:#1f0a33;padding:72px 0 28px;}
   .footer-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:48px;align-items:start;}
@@ -300,6 +308,7 @@
     .hero h1{font-size:40px;}
     .prog-body{grid-template-columns:1fr;}
     .rec-grid{grid-template-columns:1fr;}
+    .feature-grid{grid-template-columns:1fr;}
     .footer-grid{grid-template-columns:1fr;}
     nav.links{display:none;}
     .section-head h2{font-size:30px;}
@@ -750,6 +759,19 @@
           <div class="title">Critical Thinking and AI</div>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-light" id="feature" hidden>
+  <div class="wrap feature-grid" id="feature-grid">
+    <div class="feature-media" id="feature-media" hidden>
+      <img id="feature-image-el" src="" alt="">
+    </div>
+    <div class="feature-copy">
+      <span class="eyebrow">Spotlight</span>
+      <h2 id="feature-title-el" hidden>Title<span class="dot">.</span></h2>
+      <p id="feature-body-el" hidden></p>
     </div>
   </div>
 </section>
@@ -1287,6 +1309,61 @@
         renderCards(data && data.cards);
         renderMeta(data && data.meta);
       })
+      .catch(function () {});
+  }
+
+  check();
+  setInterval(function () { if (!document.hidden) check(); }, 15000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
+})();
+</script>
+
+<script>
+(function () {
+  var section = document.getElementById("feature");
+  var grid = document.getElementById("feature-grid");
+  var media = document.getElementById("feature-media");
+  var imageEl = document.getElementById("feature-image-el");
+  var titleEl = document.getElementById("feature-title-el");
+  var bodyEl = document.getElementById("feature-body-el");
+  var lastSignature = "";
+
+  function render(info) {
+    info = info || { title: "", body: "", hasImage: false, updated_at: 0 };
+    var signature = JSON.stringify(info);
+    if (signature === lastSignature) return;
+    lastSignature = signature;
+
+    var hasTitle = !!info.title;
+    var hasBody = !!info.body;
+    var hasImage = !!info.hasImage;
+
+    if (!hasTitle && !hasBody && !hasImage) {
+      section.hidden = true;
+      return;
+    }
+
+    if (titleEl.firstChild) titleEl.firstChild.nodeValue = info.title || "";
+    titleEl.hidden = !hasTitle;
+    bodyEl.textContent = info.body || "";
+    bodyEl.hidden = !hasBody;
+
+    if (hasImage) {
+      imageEl.src = "/api/feature?image=1&t=" + encodeURIComponent(info.updated_at || 0);
+      media.hidden = false;
+    } else {
+      imageEl.removeAttribute("src");
+      media.hidden = true;
+    }
+
+    grid.classList.toggle("single", !hasImage || (!hasTitle && !hasBody));
+    section.hidden = false;
+  }
+
+  function check() {
+    return fetch("/api/feature", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(render)
       .catch(function () {});
   }
 
