@@ -117,12 +117,12 @@ or a static image.
   (`admin.html`).
 - **Hero image** — a static image shown in the same spot whenever there's
   no video link published. Controlled from *either* admin panel (with one
-  restriction on Customer Admin — see below). It displays inside a square
-  frame next to the heading text (capped at 440px so it doesn't overwhelm
-  the layout on wide screens), and the full image is always shown without
-  cropping — if its proportions aren't already square, it letterboxes
-  inside the frame instead of having its edges cut off. The video player
-  keeps its normal 16:9 shape, since it has to match the embedded player.
+  restriction on Customer Admin — see below). It's shown at a small size
+  (capped at 260×200px) with no fixed box or background behind it — the
+  full image is always visible at its own natural proportions, so there's
+  never a black letterbox bar around it regardless of its aspect ratio.
+  The video player keeps its normal 16:9 shape, since it has to match the
+  embedded player.
 - **The video always wins.** If a link is published, the image is hidden
   even if one is uploaded — it comes back automatically the moment the
   link is turned off. Nothing is deleted when this happens; the image is
@@ -154,11 +154,15 @@ programme, shown as the same click-to-expand accordion as before.
   characters.
 - **Times shown in your timezone.** Session times are entered and stored
   as Central European Time (the timezone the source schedule was given
-  in), but every visitor gets a dropdown ("Times shown in") above the
-  programme to switch between their device's local time, CET as
-  originally scheduled, UK time, US Eastern, US Pacific, India, Singapore,
-  or Australian Eastern time — the displayed times and dates update
-  instantly, and the choice is remembered for next visit.
+  in). Every visitor gets a "Times shown in" dropdown above the programme
+  listing the full IANA timezone list (~418 zones, e.g. `Europe/London`,
+  `America/New_York`, `Asia/Kolkata`) — the same list used by
+  [live.mentalhealthday.com](https://live.mentalhealthday.com/2026/template),
+  so returning visitors see the same set of choices they're used to from
+  that reference. It defaults to the visitor's own detected local zone,
+  falling back to `Europe/London` if that can't be detected. Switching the
+  dropdown updates every session's displayed time and date instantly, and
+  the choice is remembered (via `localStorage`) for their next visit.
 - **Add to calendar.** Every session has an "Add to calendar" button with
   three options: Google Calendar (opens a pre-filled event in a new tab),
   Outlook / Office 365 (same, via Outlook's web compose link), and Apple /
@@ -255,7 +259,14 @@ image link cards, this is a single block, not a repeatable list.
 - Fill in the title, body text, and/or upload an image, then **Save**.
   None of the three are required on their own — you can save just text
   with no image, or upload an image with no text. Body text accepts up to
-  2,500 characters.
+  4,000 characters (titles up to 200).
+- **Both fields support basic rich text** — bold, italic, underline,
+  bullet/numbered lists, and links, via the small toolbar above each
+  field. What you type is what visitors see: the same formatting renders
+  on the live site. Formatting is saved as a small allow-list of safe HTML
+  tags (server-side, in `feature.mjs`) — anything else typed or pasted in
+  is stripped before it's stored, so this can't be used to inject
+  scripts or arbitrary markup.
 - **Remove image** clears only the image, keeping whatever text is saved.
   **Clear whole section** wipes the title, body, and image back to empty
   (asks for confirmation first).
@@ -283,11 +294,17 @@ image link cards, this is a single block, not a repeatable list.
 ## Two admin panels
 
 Both panels open with a row of pill-shaped **jump-to links** (Survey,
-Announcement, Hero video, Hero image, Theme, Link cards, Text & image —
-Customer Admin shows only the ones it has access to) so it's obvious at a
-glance what's available without scrolling through the whole page first.
+Announcement, Hero video, Hero, Programme, Theme, Link cards, Text & image
+— Customer Admin shows only the ones it has access to) so it's obvious at
+a glance what's available without scrolling through the whole page first.
 Each feature is grouped into its own labeled block with an icon, a name,
 and a one-line description of what it does, followed by its controls.
+
+Each block alternates between a white and a light grey background, in the
+order they appear on the page, so it's easy to tell where one section ends
+and the next begins while scrolling — instead of one long unbroken page.
+Both panels use a light color scheme (rather than the dark theme from
+earlier versions) with a slightly larger base font size, for readability.
 
 
 There are two separate, separately-keyed admin pages — not one page with
@@ -664,6 +681,26 @@ Then manually:
     `customer-admin.html` and confirm the same session list shows up
     read-only, with no Edit/Delete/reorder controls and a note explaining
     that only Super Admin can change it.
+31. Upload a non-square hero image (e.g. a wide landscape photo or a tall
+    portrait one) and confirm it shows at a small size with no black bar
+    or empty space around it — just the photo itself, at its own
+    proportions.
+32. Under **Text & image section**, use the toolbar to make part of the
+    title or body bold, italic, or a bulleted list, and add a link. Save,
+    and confirm the formatting shows up on the live site exactly as
+    typed. Try pasting or typing a `<script>` tag or an `onclick`
+    attribute into the field and confirm it's stripped out (not executed,
+    not saved) after saving.
+33. Open `admin.html` and `customer-admin.html` and confirm each feature
+    block has a white or light grey background, alternating down the
+    page, with a visible border around each block. Confirm text is easily
+    readable (dark text on the light backgrounds) and the overall font
+    reads slightly larger than a typical dense admin form.
+34. On the site's programme, open the **Times shown in** dropdown and
+    confirm it lists the full set of IANA timezones (hundreds of options,
+    e.g. `Europe/Berlin`, `America/Sao_Paulo`, `Pacific/Auckland`) rather
+    than a short curated list, and that it starts pre-selected to your own
+    device's timezone.
 
 ## Before a live event
 

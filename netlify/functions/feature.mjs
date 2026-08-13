@@ -6,12 +6,38 @@ import { getRole } from "./lib/auth.mjs";
 // footer). Both Super Admin and Customer Admin can edit it. Unlike the
 // image link cards, this is one block, not a repeatable list — just a
 // title, a paragraph of body text, and one optional image.
+//
+// Title and body accept basic rich text (bold, italic, underline, lists,
+// links) from a small admin toolbar, stored and served as HTML. Since
+// this HTML is rendered on the public site, it's run through a small
+// allow-list sanitizer below before being saved — this is not meant to
+// be a general-purpose HTML sanitizer (it's not hardened against every
+// possible malformed-markup trick), just enough to strip anything but a
+// handful of safe formatting tags for admin-authored content.
 
 const INFO_KEY = "info";
 const BYTES_KEY = "bytes";
-const TITLE_MAX = 80;
-const BODY_MAX = 2500;
+const TITLE_MAX = 200;
+const BODY_MAX = 4000;
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB
+
+const ALLOWED_TAGS = new Set(["b", "strong", "i", "em", "u", "ul", "ol", "li", "br", "a", "p", "div", "span"]);
+
+function sanitizeHtml(html) {
+  if (typeof html !== "string") return "";
+  return html
+    .replace(/<\/?([a-zA-Z0-9]+)([^>]*)>/g, function (match, tag, attrs) {
+      tag = tag.toLowerCase();
+      if (!ALLOWED_TAGS.has(tag)) return "";
+      if (match.charAt(1) === "/") return "</" + tag + ">";
+      if (tag === "a") {
+        const hrefMatch = /href\s*=\s*"(https?:\/\/[^"]*)"/i.exec(attrs) || /href\s*=\s*'(https?:\/\/[^']*)'/i.exec(attrs);
+        return hrefMatch ? '<a href="' + hrefMatch[1].replace(/"/g, "&quot;") + '" target="_blank" rel="noopener">' : "<a>";
+      }
+      return "<" + tag + ">";
+    })
+    .trim();
+}
 
 // position: 0 = before Sessions, 1 = between Sessions and Recordings,
 // 2 = after Recordings, before the footer (the section's original,
@@ -104,8 +130,8 @@ export default async (req) => {
     try { form = await req.formData(); }
     catch { return Response.json({ error: "expected multipart/form-data or application/json" }, { status: 400 }); }
 
-    const title = String(form.get("title") || "").trim();
-    const body = String(form.get("body") || "").trim();
+    const title = sanitizeHtml(String(form.get("title") || ""));
+    const body = sanitizeHtml(String(form.get("body") || ""));
     const file = form.get("image");
 
     if (title.length > TITLE_MAX) return Response.json({ error: `title must be under ${TITLE_MAX} characters` }, { status: 400 });
