@@ -88,7 +88,7 @@
   .btn-outline-light:hover{border-color:var(--black);}
 
   /* HERO */
-  .hero{background:var(--black);padding:96px 0 72px;position:relative;overflow:hidden;}
+  .hero{background:var(--black);padding:72px 0 56px;position:relative;overflow:hidden;}
   .hero-grid{display:grid;grid-template-columns:1fr;gap:56px;align-items:center;}
   .hero-grid.has-side{grid-template-columns:0.9fr 1.1fr;}
   .hero h1{font-size:60px;font-weight:800;color:var(--white);margin:22px 0 22px;}
@@ -97,7 +97,7 @@
   .hero p.lede{font-size:17.5px;line-height:1.65;color:#c7c5bf;max-width:540px;margin-bottom:0;}
 
   /* SECTION GENERIC */
-  section{padding:96px 0;}
+  section{padding:64px 0;}
   .section-light{background:var(--cream);color:var(--black);}
   .section-dark{background:var(--black);color:var(--white);}
   .section-head{max-width:640px;margin-bottom:16px;}
@@ -127,7 +127,9 @@
     display:flex;align-items:center;justify-content:center;
     border:2px solid var(--cream);
     margin-left:-10px;
+    overflow:hidden;
   }
+  .avatar img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;}
   .avatar:first-child{margin-left:0;}
   .prog-meta{flex:1;min-width:0;}
   .prog-meta .speakers{font-size:13px;color:var(--gray-dark);margin-bottom:3px;}
@@ -222,22 +224,46 @@
   .link-title{font-family:'Poppins',sans-serif;font-weight:600;font-size:15.5px;color:var(--black);margin-bottom:6px;}
   .link-body{font-size:13.5px;line-height:1.5;color:var(--gray-dark);}
 
-  /* TEXT + IMAGE FEATURE SECTION — text on the left, a square image on
-     the right, sized to fit neatly alongside the text rather than forced
-     to a fixed pixel size. Collapses to a single centered column when
-     there's no image, or no text. */
-  .feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;}
-  .feature-grid.single{grid-template-columns:1fr;max-width:640px;margin-left:auto;margin-right:auto;text-align:center;}
-  .feature-media{width:100%;max-width:480px;aspect-ratio:1/1;border-radius:var(--radius);overflow:hidden;background:#e4e1d8;position:relative;margin:0 0 0 auto;}
-  .feature-grid.single .feature-media{margin:0 auto;}
+  /* TEXT + IMAGE FEATURE SECTION — admin-chosen layout (image right,
+     image left, text wraps around the image, or image above the text)
+     and an admin-chosen image size (as a percentage). Collapses to a
+     single centered column when there's no image, or no text, regardless
+     of the chosen layout. */
+  .feature-grid{display:grid;gap:56px;align-items:center;}
+  .feature-media{width:100%;min-width:120px;aspect-ratio:1/1;border-radius:var(--radius);overflow:hidden;background:#e4e1d8;position:relative;}
   .feature-media img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}
-  .feature-copy{max-width:560px;}
-  .feature-grid.single .feature-copy{max-width:640px;margin:0 auto;}
   .feature-copy h2{margin:0 0 16px;}
   .feature-copy p{font-size:16px;line-height:1.65;color:var(--gray-dark);}
   .feature-copy p ul, .feature-copy p ol{margin:0 0 12px;padding-left:22px;}
   .feature-copy p a{color:var(--purple-dark);text-decoration:underline;}
   .feature-copy h2 a{color:inherit;text-decoration:underline;}
+
+  /* Image right (default): text in column 1, image in column 2. */
+  .feature-grid.layout-right .feature-copy{order:1;max-width:560px;}
+  .feature-grid.layout-right .feature-media{order:2;margin-left:auto;}
+
+  /* Image left: image in column 1, text in column 2. */
+  .feature-grid.layout-left .feature-copy{order:2;max-width:560px;}
+  .feature-grid.layout-left .feature-media{order:1;margin-right:auto;}
+
+  /* Image above: single column, image on top (full width up to its
+     chosen size, centered), text below. */
+  .feature-grid.layout-above{grid-template-columns:1fr;justify-items:center;text-align:center;}
+  .feature-grid.layout-above .feature-copy{order:2;max-width:720px;}
+  .feature-grid.layout-above .feature-media{order:1;margin:0 auto 8px;}
+
+  /* Wrap: the image is floated inside the copy block (moved there by JS)
+     so the body text flows around it, magazine-style. */
+  .feature-grid.layout-wrap{display:block;}
+  .feature-grid.layout-wrap .feature-copy{display:block;}
+  .feature-grid.layout-wrap .feature-media{float:left;margin:6px 28px 16px 0;}
+
+  /* Single (only image OR only text saved): always centered, one column,
+     regardless of the chosen layout — !important because the layout
+     rules above set inline widths/floats via JS that this needs to beat. */
+  .feature-grid.single{grid-template-columns:1fr !important;max-width:640px;margin-left:auto;margin-right:auto;text-align:center;display:grid !important;}
+  .feature-grid.single .feature-copy{order:1 !important;max-width:640px;margin:0 auto;}
+  .feature-grid.single .feature-media{order:2 !important;width:auto !important;max-width:480px;margin:0 auto !important;float:none !important;}
 
   /* FOOTER */
   footer{background:var(--purple);color:#1f0a33;padding:72px 0 28px;}
@@ -277,7 +303,7 @@
   #hero-image-panel .video-embed{padding-top:0;width:100%;background:none;overflow:visible;}
   #hero-image-panel .video-embed img{
     position:static;display:block;
-    width:100%;height:auto;max-width:480px;min-width:200px;max-height:60vh;
+    width:100%;height:auto;max-width:620px;min-width:220px;max-height:68vh;
     border-radius:var(--radius);margin-left:auto;
   }
 
@@ -350,7 +376,9 @@
     .hero h1{font-size:40px;}
     .prog-body{grid-template-columns:1fr;}
     .rec-grid{grid-template-columns:1fr;}
-    .feature-grid{grid-template-columns:1fr;}
+    .feature-grid{grid-template-columns:1fr !important;}
+    .feature-grid .feature-copy, .feature-grid .feature-media{order:initial !important;max-width:none;}
+    .feature-grid.layout-wrap .feature-media{float:none !important;width:100% !important;margin:0 0 20px;}
     .footer-grid{grid-template-columns:1fr;}
     nav.links{display:none;}
     .section-head h2{font-size:30px;}
@@ -1093,6 +1121,15 @@
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
 
+  // Speaker avatar: the uploaded photo if the Super Admin added one for
+  // this session, otherwise an auto-generated initials circle.
+  function avatarInner(s) {
+    if (s.hasPhoto) {
+      return '<img src="/api/sessions?image=' + esc(s.id) + '&t=' + esc(s.updated_at || 0) + '" alt="" />';
+    }
+    return esc(initials(s.speakerName));
+  }
+
   var escDiv = document.createElement("div");
   function esc(v) {
     escDiv.textContent = v == null ? "" : String(v);
@@ -1110,7 +1147,7 @@
       return (
         '<details class="prog-item" data-id="' + esc(s.id) + '">' +
           '<summary>' +
-            '<div class="avatar-group"><div class="avatar">' + esc(initials(s.speakerName)) + '</div></div>' +
+            '<div class="avatar-group"><div class="avatar">' + avatarInner(s) + '</div></div>' +
             '<div class="prog-meta">' +
               '<div class="speakers">' + esc(s.speakerName) + '</div>' +
               '<div class="title-row"><span class="title">' + esc(s.title) + '</span></div>' +
@@ -1133,7 +1170,7 @@
             '</div>' +
             '<div class="speakers-col">' +
               '<div class="col-label">Meet the speaker</div>' +
-              '<div class="speaker"><div class="avatar">' + esc(initials(s.speakerName)) + '</div><div><div class="s-name">' + esc(s.speakerName) + '</div></div></div>' +
+              '<div class="speaker"><div class="avatar">' + avatarInner(s) + '</div><div><div class="s-name">' + esc(s.speakerName) + '</div></div></div>' +
               (s.speakerBio ? '<p class="bio">' + esc(s.speakerBio) + '</p>' : '') +
             '</div>' +
           '</div>' +
@@ -1281,10 +1318,13 @@
   var imageEl = document.getElementById("feature-image-el");
   var titleEl = document.getElementById("feature-title-el");
   var bodyEl = document.getElementById("feature-body-el");
+  var copy = document.querySelector("#feature-grid .feature-copy");
+  var currentImageSize = 45;
   var sessionsEl = document.getElementById("sessions");
   var recordingsEl = document.getElementById("recordings");
   var lastSignature = "";
   var lastPosition = null;
+  var lastLayout = null;
 
   // Same three slots as the "Useful links" section: 0 = before Sessions,
   // 1 = between Sessions and Recordings, 2 = after Recordings (the
@@ -1302,8 +1342,40 @@
     }
   }
 
+  // Four layouts: image to the right or left of the text (a 2-column
+  // grid, split according to the chosen image size), image above the
+  // text (single column, stacked), or the text wrapping around the
+  // image (the image is moved into the copy block and floated so normal
+  // text flow wraps around it — CSS float only affects following content
+  // within the same flow, so it has to actually live there, not just
+  // sit in a neighboring grid column).
+  function applyLayout(layout) {
+    if (layout !== lastLayout) {
+      grid.classList.remove("layout-right", "layout-left", "layout-wrap", "layout-above");
+      grid.classList.add("layout-" + layout);
+      if (layout === "wrap") {
+        if (media.parentNode !== copy) copy.insertBefore(media, bodyEl);
+      } else if (media.parentNode !== grid) {
+        grid.appendChild(media);
+      }
+      lastLayout = layout;
+    }
+
+    var pct = Math.max(20, Math.min(100, Number(currentImageSize) || 45));
+    if (layout === "right") {
+      grid.style.gridTemplateColumns = (100 - pct) + "fr " + pct + "fr";
+      media.style.width = "";
+    } else if (layout === "left") {
+      grid.style.gridTemplateColumns = pct + "fr " + (100 - pct) + "fr";
+      media.style.width = "";
+    } else {
+      grid.style.gridTemplateColumns = "";
+      media.style.width = pct + "%";
+    }
+  }
+
   function render(info) {
-    info = info || { title: "", body: "", hasImage: false, position: 2, updated_at: 0 };
+    info = info || { title: "", body: "", hasImage: false, position: 2, layout: "right", imageSize: 45, updated_at: 0 };
     var signature = JSON.stringify(info);
     if (signature === lastSignature) return;
     lastSignature = signature;
@@ -1335,6 +1407,8 @@
       media.hidden = true;
     }
 
+    currentImageSize = info.imageSize || 45;
+    applyLayout(info.layout || "right");
     grid.classList.toggle("single", !hasImage || (!hasTitle && !hasBody));
 
     section.hidden = false;

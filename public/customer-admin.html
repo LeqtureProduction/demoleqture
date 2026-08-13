@@ -93,6 +93,15 @@
     resize:vertical;min-height:60px;outline:none;transition:border-color .15s;margin-bottom:12px;
   }
   textarea.textarea-field:focus{border-color:var(--purple);}
+  select{
+    width:100%;background:#ffffff;border:1px solid var(--line);border-radius:var(--radius);
+    padding:10px 13px;color:var(--ink);font-family:'Inter',sans-serif;font-size:14.5px;
+    outline:none;transition:border-color .15s;margin-bottom:12px;cursor:pointer;
+  }
+  select:focus{border-color:var(--purple);}
+  input[type="range"]{width:100%;margin:4px 0 4px;accent-color:var(--purple);}
+  .range-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
+  .range-value{font-size:12.5px;color:var(--ink-soft);font-weight:600;}
   .rte-toolbar{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;}
   .rte-btn{background:#ffffff;border:1px solid var(--line);color:var(--ink);border-radius:var(--radius);padding:6px 10px;font-size:13px;cursor:pointer;line-height:1;}
   .rte-btn:hover{border-color:var(--purple-dark);color:var(--purple-dark);}
@@ -247,7 +256,7 @@
           <span>Sessions</span>
           <span class="badge" id="sessions-badge">—</span>
         </div>
-        <div class="notice">The session list itself (times, speakers, titles, descriptions) can only be added, edited, or reordered by Super Admin. Shown below for reference.</div>
+        <div class="notice">The session list itself (times, speakers, titles, descriptions, and speaker photos) can only be added, edited, or reordered by Super Admin. Shown below for reference.</div>
         <div id="sessions-readonly-list"></div>
         <p class="hint">Session times are stored as Central European Time (CET); the site converts them for each visitor's chosen timezone automatically.</p>
       </div>
@@ -363,7 +372,7 @@
           <span class="feature-icon">&#128221;</span>
           <div>
             <div class="feature-name">Text &amp; image section</div>
-            <div class="feature-desc">One content block (title, body text, image) you can reposition.</div>
+            <div class="feature-desc">One content block (title, body text, image) you can reposition, with a choice of layout and image size.</div>
           </div>
         </div>
         <div class="status-row">
@@ -376,6 +385,20 @@
         </div>
         <div class="image-preview" id="feature-image-preview"><span class="empty">No image uploaded</span></div>
         <input type="file" id="feature-image-file" accept="image/*" />
+
+        <label for="feature-layout" style="margin-top:12px;">Layout</label>
+        <select id="feature-layout">
+          <option value="right">Image on the right</option>
+          <option value="left">Image on the left</option>
+          <option value="wrap">Text wraps around the image</option>
+          <option value="above">Image above the text</option>
+        </select>
+
+        <div class="range-row">
+          <label for="feature-image-size" style="margin-bottom:0;">Image size</label>
+          <span class="range-value"><span id="feature-image-size-value">45</span>%</span>
+        </div>
+        <input type="range" id="feature-image-size" min="20" max="100" step="5" value="45">
         <label for="feature-title-input" style="margin-top:12px;">Title</label>
         <div class="rte-toolbar">
           <button type="button" class="rte-btn" data-rte-target="feature-title-input" data-cmd="bold"><b>B</b></button>
@@ -401,7 +424,7 @@
         <div class="actions">
           <button type="button" class="btn btn-outline" id="feature-clear-all">Clear whole section</button>
         </div>
-        <p class="hint">Use the toolbar above each field for bold, italic, underline, lists, and links. Shown as its own section, only while it has a title, body text, or image — leaving everything blank hides it. You can save title/body without an image, or add an image with no text. Use the buttons above to move it: before Sessions, between Sessions and Recordings, or after Recordings (the default).</p>
+        <p class="hint">Use the toolbar above each field for bold, italic, underline, lists, and links. Choose whether the image sits to the right, to the left, has the text wrapping around it, or sits above the text — and how big it is, as a percentage. Shown as its own section, only while it has a title, body text, or image — leaving everything blank hides it (and always centers whatever's left, regardless of the chosen layout). You can save title/body without an image, or add an image with no text. Use the buttons above to move it: before Sessions, between Sessions and Recordings, or after Recordings (the default).</p>
       </div>
     </div>
   </div>
@@ -972,8 +995,12 @@
       var safeTitle = esc.innerHTML;
       esc.textContent = s.speakerName || "";
       var safeSpeaker = esc.innerHTML;
+      var thumb = s.hasPhoto
+        ? '<img src="/api/sessions?image=' + s.id + '&t=' + (s.updated_at || 0) + '" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;" />'
+        : '<span style="width:32px;height:32px;border-radius:50%;background:var(--panel-grey);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ink-soft);">' + safeSpeaker.slice(0, 1) + '</span>';
       return (
         '<div class="session-item">' +
+          thumb +
           '<div class="session-item-info">' +
             '<div class="session-item-title">' + safeTitle + '</div>' +
             '<div class="session-item-meta">' + (s.date || "") + ' &middot; ' + (s.startTime || "") + '&ndash;' + (s.endTime || "") + ' CET &middot; ' + safeSpeaker + '</div>' +
@@ -995,6 +1022,9 @@
   var featureMoveUpBtn = document.getElementById("feature-move-up");
   var featureMoveDownBtn = document.getElementById("feature-move-down");
   var currentFeaturePosition = 2;
+  var featureLayout = document.getElementById("feature-layout");
+  var featureImageSize = document.getElementById("feature-image-size");
+  var featureImageSizeValue = document.getElementById("feature-image-size-value");
 
   function renderFeature(info) {
     info = info || { title: "", body: "", hasImage: false, position: 2, updated_at: 0 };
@@ -1011,7 +1041,16 @@
     currentFeaturePosition = typeof info.position === "number" ? info.position : 2;
     featureMoveUpBtn.disabled = currentFeaturePosition <= 0;
     featureMoveDownBtn.disabled = currentFeaturePosition >= 2;
+    if (document.activeElement !== featureLayout) featureLayout.value = info.layout || "right";
+    if (document.activeElement !== featureImageSize) {
+      featureImageSize.value = info.imageSize || 45;
+      featureImageSizeValue.textContent = info.imageSize || 45;
+    }
   }
+
+  featureImageSize.addEventListener("input", function () {
+    featureImageSizeValue.textContent = featureImageSize.value;
+  });
 
   function fetchFeature() {
     return fetch("/api/feature", { cache: "no-store" })
@@ -1048,6 +1087,8 @@
     var form = new FormData();
     form.append("title", featureTitleInput.innerHTML.trim());
     form.append("body", featureBodyInput.innerHTML.trim());
+    form.append("layout", featureLayout.value);
+    form.append("imageSize", featureImageSize.value);
     var file = featureImageFile.files && featureImageFile.files[0];
     if (file) form.append("image", file);
     featureSaveBtn.disabled = true;

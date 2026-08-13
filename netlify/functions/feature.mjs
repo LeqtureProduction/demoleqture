@@ -21,6 +21,19 @@ const TITLE_MAX = 200;
 const BODY_MAX = 4000;
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB
 
+// Layout controls how the image and text are arranged on the site:
+//   "right" — text left, image right (the original/default layout)
+//   "left"  — image left, text right
+//   "wrap"  — image floated to one side, text flows around it
+//   "above" — image on top, text below, both full width
+const LAYOUTS = new Set(["right", "left", "wrap", "above"]);
+// imageSize is a percentage of the section's width the image should
+// target (used differently per layout — column share for right/left,
+// float width for wrap, max-width for above).
+const IMAGE_SIZE_MIN = 20;
+const IMAGE_SIZE_MAX = 100;
+const IMAGE_SIZE_DEFAULT = 45;
+
 const ALLOWED_TAGS = new Set(["b", "strong", "i", "em", "u", "ul", "ol", "li", "br", "a", "p", "div", "span"]);
 
 function sanitizeHtml(html) {
@@ -43,7 +56,10 @@ function sanitizeHtml(html) {
 // 2 = after Recordings, before the footer (the section's original,
 // fixed spot — kept as the default so existing content doesn't move).
 function defaultInfo() {
-  return { title: "", body: "", hasImage: false, contentType: "", position: 2, updated_at: 0 };
+  return {
+    title: "", body: "", hasImage: false, contentType: "", position: 2,
+    layout: "right", imageSize: IMAGE_SIZE_DEFAULT, updated_at: 0
+  };
 }
 
 async function readInfo(store) {
@@ -52,7 +68,10 @@ async function readInfo(store) {
 }
 
 function publicInfo(info) {
-  return { title: info.title, body: info.body, hasImage: info.hasImage, position: info.position, updated_at: info.updated_at };
+  return {
+    title: info.title, body: info.body, hasImage: info.hasImage, position: info.position,
+    layout: info.layout, imageSize: info.imageSize, updated_at: info.updated_at
+  };
 }
 
 export default async (req) => {
@@ -138,7 +157,26 @@ export default async (req) => {
     if (body.length > BODY_MAX) return Response.json({ error: `body must be under ${BODY_MAX} characters` }, { status: 400 });
 
     const current = await readInfo(store);
-    const next = { ...current, title, body, updated_at: Date.now() };
+
+    let layout = current.layout || "right";
+    if (form.has("layout")) {
+      const l = String(form.get("layout") || "").trim();
+      if (!LAYOUTS.has(l)) {
+        return Response.json({ error: `layout must be one of: ${Array.from(LAYOUTS).join(", ")}` }, { status: 400 });
+      }
+      layout = l;
+    }
+
+    let imageSize = current.imageSize || IMAGE_SIZE_DEFAULT;
+    if (form.has("imageSize")) {
+      const s = Number(form.get("imageSize"));
+      if (!Number.isInteger(s) || s < IMAGE_SIZE_MIN || s > IMAGE_SIZE_MAX) {
+        return Response.json({ error: `image size must be a whole number between ${IMAGE_SIZE_MIN} and ${IMAGE_SIZE_MAX}` }, { status: 400 });
+      }
+      imageSize = s;
+    }
+
+    const next = { ...current, title, body, layout, imageSize, updated_at: Date.now() };
 
     if (file && typeof file !== "string") {
       if (!file.type || !file.type.startsWith("image/")) return Response.json({ error: "file must be an image" }, { status: 400 });

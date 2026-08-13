@@ -91,6 +91,10 @@ The top of the page is intentionally simple: an eyebrow tag, a heading, a
 subheading, and (to the right, once something is published) a video player
 or a static image.
 
+- **Section spacing** is tighter across the whole page (64px of padding
+  above/below each section, down from 96px), so scrolling between
+  sections feels less sparse. This is a global CSS change, not something
+  editable per section.
 - **Heading and subheading are editable** from either admin panel, under
   the **Hero** block — the same block the hero image lives in, so the text
   and image controls sit together instead of in separate places. Leave
@@ -121,7 +125,7 @@ or a static image.
   natural proportions with no fixed box or background behind it, so
   there's never a black letterbox bar around it regardless of aspect
   ratio. Sized as a fluid percentage of the column rather than a fixed
-  pixel box (capped between 200px and 480px wide, and up to 60% of the
+  pixel box (capped between 220px and 620px wide, and up to 68% of the
   viewport height), so it scales smoothly with the page instead of
   jumping between fixed sizes. The video player keeps its normal 16:9
   shape, since it has to match the embedded player.
@@ -143,13 +147,22 @@ Replaces the old hardcoded list of sessions with an admin-managed
 programme, shown as the same click-to-expand accordion as before.
 
 - **The session list itself** (date, start/end time, speaker name, speaker
-  bio, session title, description) is **Super Admin only** — Customer
-  Admin can see the list under the Programme block but can't add, edit,
-  delete, or reorder anything there; it's shown read-only with a note
-  explaining why. This ships pre-loaded with the sessions from the
-  original programme spreadsheet, all on 8 October 2026, and Super Admin
-  can add more, edit, delete, or reorder any of them from the Programme
-  block in `admin.html`.
+  bio, session title, description, and speaker photo) is **Super Admin
+  only** — Customer Admin can see the list under the Programme block but
+  can't add, edit, delete, or reorder anything there; it's shown read-only
+  with a note explaining why (including any uploaded speaker photo). This
+  ships pre-loaded with the sessions from the original programme
+  spreadsheet, all on 8 October 2026, and Super Admin can add more, edit,
+  delete, or reorder any of them from the Programme block in `admin.html`.
+- **Speaker photo (optional)** — Super Admin can upload a photo for any
+  session, shown as a circular avatar next to the speaker's name on the
+  site (both in the collapsed session row and in the expanded "Meet the
+  speaker" panel), in place of the auto-generated initials circle. Adding
+  a photo to a session that only had initials replaces it; **Remove
+  photo** on the form goes back to initials. Leaving it blank when adding
+  or editing a session keeps whatever photo state it already had (photos
+  aren't cleared just because you saved other fields). Images up to 5MB;
+  same size limit as the other image uploads on the site.
 - **Section heading and subheading** are editable from *either* admin
   panel, in the same Programme block (same pattern as Hero) — leave both
   blank to keep the default wording. The subheading accepts up to 2,500
@@ -274,12 +287,20 @@ image link cards, this is a single block, not a repeatable list.
   (asks for confirmation first).
 - The section is hidden entirely on the site whenever title, body, and
   image are all empty — there's nothing to accidentally leave half-visible.
-- **Layout**: text on the left, a square image on the right (capped at
-  480px so it scales to fit neatly alongside the text rather than
-  overflowing on wide screens). Any image you upload is center-cropped to
-  fit that square, same as the hero image. With no image, the text centers
-  itself in a single column; with no text, the image centers itself
-  instead.
+- **Layout — 4 choices**, set from a dropdown in either admin panel:
+  **image on the right** (default), **image on the left**, **text wraps
+  around the image** (the image floats to one side and the paragraph
+  flows around it, like a magazine layout), or **image above the text**
+  (image on top, full width, text below). Any image you upload is
+  center-cropped to a square, same as before. With no image, the text
+  always centers itself in a single column regardless of which layout is
+  selected; with no text, the image centers itself instead — the layout
+  choice only matters once both are present.
+- **Image size** — a slider (20%–100%, in either admin panel) controls how
+  large the image renders relative to the section, so it isn't locked to
+  one fixed size. The right/left/above layouts resize the image's column
+  or block proportionally; the wrap layout resizes just the floated
+  image. Defaults to 45%.
 - **Move the whole section up or down** with the two **Move section**
   buttons, using the same three slots as the image link cards: before
   Sessions, between Sessions and Recordings, or after Recordings (the
@@ -705,6 +726,47 @@ Then manually:
     e.g. `Europe/Berlin`, `America/Sao_Paulo`, `Pacific/Auckland`) rather
     than a short curated list, and that it starts pre-selected to your own
     device's timezone.
+
+```bash
+# 15. Text & image section — layout and image size
+curl -X POST https://<site>/api/feature -H "x-admin-key: <ckey>" -F "title=Our mission" -F "body=A short paragraph." -F "image=@/path/to/test.jpg" -F "layout=left" -F "imageSize=70"
+curl https://<site>/api/feature   # {"layout":"left","imageSize":70,...}
+curl -X POST https://<site>/api/feature -H "x-admin-key: <key>" -F "layout=wrap" -F "imageSize=30"
+curl https://<site>/api/feature   # layout now "wrap", imageSize now 30, title/body/image untouched
+curl -X POST https://<site>/api/feature -H "x-admin-key: <ckey>" -F "layout=sideways"
+# -> 400, layout must be one of: right, left, wrap, above
+curl -X POST https://<site>/api/feature -H "x-admin-key: <key>" -F "imageSize=150"
+# -> 400, image size must be a whole number between 20 and 100
+
+# 16. Programme — speaker photo upload (super only)
+curl -X POST https://<site>/api/sessions -H "x-admin-key: <key>" -F "id=<session-id>" -F "date=2026-10-08" -F "startTime=07:00" -F "endTime=08:00" -F "speakerName=Liesbeth Smit" -F "title=Pseudoscience And Nutrition" -F "photo=@/path/to/headshot.jpg"
+curl https://<site>/api/sessions   # that session now shows "hasPhoto":true
+curl https://<site>/api/sessions?image=<session-id>   # raw photo bytes
+curl -X POST https://<site>/api/sessions -H "x-admin-key: <ckey>" -F "id=<session-id>" -F "date=2026-10-08" -F "startTime=07:00" -F "endTime=08:00" -F "speakerName=Liesbeth Smit" -F "title=Pseudoscience And Nutrition" -F "photo=@/path/to/headshot.jpg"
+# -> 403, customer key can't touch sessions at all, photo included or not
+curl -X POST https://<site>/api/sessions -H "x-admin-key: <key>" -F "id=<session-id>" -F "date=2026-10-08" -F "startTime=07:00" -F "endTime=08:00" -F "speakerName=Liesbeth Smit" -F "title=Pseudoscience And Nutrition" -F "removePhoto=1"
+curl https://<site>/api/sessions   # back to "hasPhoto":false
+```
+
+Then manually:
+
+35. Under **Text & image section** in either admin panel, with a title,
+    body, and image already saved, switch the **Layout** dropdown through
+    all four options and confirm the site updates within ~15 seconds each
+    time: image right, image left, text wrapping around the image, and
+    image above the text. Drag the **Image size** slider and confirm the
+    live percentage label updates as you drag, and that saving resizes
+    the image on the site accordingly. Confirm the same controls and
+    values show up identically in both `admin.html` and
+    `customer-admin.html` (either role can change layout and size).
+36. Under **Programme** in `admin.html`, edit an existing session (or add
+    a new one) and upload a speaker photo — confirm a circular preview
+    appears in the form, and that the site shows that photo instead of
+    the initials circle within ~15 seconds, both in the collapsed
+    programme row and in the expanded "Meet the speaker" panel. Click
+    **Remove photo** and confirm the site goes back to showing initials.
+    Open `customer-admin.html` and confirm the read-only session list also
+    shows the uploaded photo, with no way to change it.
 
 ## Before a live event
 
