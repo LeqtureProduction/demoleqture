@@ -200,16 +200,19 @@
   .speakers-col .s-role{font-size:13px;color:var(--gray-dark);margin-top:2px;}
   .speakers-col .bio{font-size:13px;color:var(--gray-dark);line-height:1.55;margin-top:8px;}
 
-  /* RECORDINGS */
-  .rec-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:26px;margin-top:44px;}
+  /* RECORDINGS — sized the same as the image link cards below (same
+     grid columns/gap, same aspect-ratio thumbnail technique) so the two
+     card types line up visually even though they show different content. */
+  .rec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:24px;margin-top:44px;}
   .rec-card{border:1px solid #232323;border-radius:var(--radius);overflow:hidden;background:#0e0e0e;}
   a.rec-card{display:block;transition:border-color .15s;}
   a.rec-card:hover{border-color:var(--purple);}
   .rec-thumb{
-    height:190px;background:linear-gradient(150deg,#3a1a3a,#12060f);
-    display:flex;align-items:center;justify-content:center;position:relative;
+    width:100%;padding-top:64%;position:relative;
+    background:linear-gradient(150deg,#3a1a3a,#12060f);overflow:hidden;
   }
   .rec-thumb .play{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
     width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.12);
     border:1px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;
   }
@@ -219,9 +222,9 @@
     font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
     padding:5px 10px;border-radius:20px;
   }
-  .rec-info{padding:18px 20px;}
+  .rec-info{padding:16px 18px;}
   .rec-info .meta{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--gray);margin-bottom:6px;}
-  .rec-info .title{font-family:'Poppins',sans-serif;font-weight:600;font-size:16px;color:var(--white);}
+  .rec-info .title{font-family:'Poppins',sans-serif;font-weight:600;font-size:15.5px;color:var(--white);}
   .rec-avatar{
     width:26px;height:26px;border-radius:50%;flex-shrink:0;overflow:hidden;
     background:linear-gradient(140deg,var(--purple),#d9b8ff);
@@ -400,7 +403,6 @@
     .hero p.lede{font-size:15.5px;max-width:none;}
     #hero-image-panel .video-embed img{max-height:42vh;min-width:0;}
     .prog-body{grid-template-columns:1fr;}
-    .rec-grid{grid-template-columns:1fr;}
     .feature-grid{grid-template-columns:1fr !important;}
     .feature-grid .feature-copy, .feature-grid .feature-media{order:initial !important;max-width:none;}
     .feature-grid.layout-wrap .feature-media{float:none !important;width:100% !important;margin:0 0 20px;}

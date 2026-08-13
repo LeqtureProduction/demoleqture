@@ -267,7 +267,7 @@ the same heading/subheading editing plus the list shown read-only.
 
 ## Site theme
 
-Either admin panel can change, live, for every visitor:
+Either admin panel can change most of this, live, for every visitor:
 
 - **Font** — type any Google Fonts family name (e.g. `Sora`, `Playfair
   Display`). The site loads that font from Google Fonts and applies it
@@ -284,6 +284,13 @@ Either admin panel can change, live, for every visitor:
   section's own background and its heading/intro copy — the cards and
   accordions inside a section keep their own built-in styling so contrast
   stays readable regardless of what colors are chosen.
+- **Footer is Super Admin only.** The Footer color fields are visible but
+  disabled/read-only on the Customer Admin panel, labeled "SUPER ADMIN
+  ONLY". `theme.mjs` enforces this server-side too — even if a raw API
+  request from a customer key includes footer colors, they're silently
+  ignored and the existing footer stays as-is; only a request made with
+  the Super Admin key can change it. Every other section keeps the shared
+  behavior above.
 - **Heading and subheading text** for Hero, Programme, and Recordings each
   live in their own block instead of here — see "Hero section", "Programme
   / sessions", and "Session recordings" above. This block only sets colors
@@ -421,7 +428,7 @@ two logins, two entirely different shared secrets:
 | Site announcement | Yes | No |
 | Hero video player | Yes | No |
 | Hero image | Yes | Yes — **disabled while the hero video player is live** (there's nothing to preview, so changing it would just be confusing; the fields grey out with an explanation until a Super Admin turns the player off) |
-| Site theme (font, accent, section colors) | Yes | Yes |
+| Site theme (font, accent, section colors) | Yes | Yes — **except Footer colors, Super Admin only** |
 | Image link cards | Yes | Yes |
 | Text & image section | Yes | Yes |
 | Recordings (add/edit/delete/reorder) | Yes | No |
@@ -686,6 +693,15 @@ curl https://<site>/api/theme   # should echo it back, no key needed
 curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"font":"","accent":"","sections":{"hero":{"bg":"","text":""},"sessions":{"bg":"","text":""},"recordings":{"bg":"","text":""},"footer":{"bg":"","text":""}}}'
 curl https://<site>/api/theme   # back to default (accent back to purple)
 
+# 8b. Footer color is Super Admin only — a customer POST that includes footer colors
+# should have them silently ignored (existing footer preserved), no error returned
+curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"font":"","accent":"","sections":{"hero":{"bg":"","text":""},"sessions":{"bg":"","text":""},"recordings":{"bg":"","text":""},"footer":{"bg":"#ff0000","text":"#00ff00"}}}'
+curl https://<site>/api/theme   # sections.footer should still be blank, not red/green
+curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <ckey>" -d '{"font":"","accent":"","sections":{"hero":{"bg":"","text":""},"sessions":{"bg":"","text":""},"recordings":{"bg":"","text":""},"footer":{"bg":"#ff0000","text":"#00ff00"}}}'
+curl https://<site>/api/theme   # sections.footer should now be red/green — Super Admin key changed it
+curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <ckey>" -d '{"font":"","accent":"","sections":{"hero":{"bg":"","text":""},"sessions":{"bg":"","text":""},"recordings":{"bg":"","text":""},"footer":{"bg":"","text":""}}}'
+curl https://<site>/api/theme   # footer back to blank/default
+
 # 9. Image link cards — add, list, fetch image, reorder, delete
 curl -X POST https://<site>/api/cards -H "x-admin-key: <key>" -F "title=Test card" -F "body=Short description" -F "link=https://example.com" -F "image=@/path/to/test.jpg"
 curl https://<site>/api/cards   # {"cards":[{"id":"...","title":"Test card",...}],"meta":{...}}
@@ -709,6 +725,14 @@ Then manually:
     section (e.g. Hero) and confirm just that section changes. **Reset
     all** and confirm the site returns to its default look (including
     purple accent).
+17b. Open `customer-admin.html` and confirm the **Footer** row under Site
+    theme is labeled "SUPER ADMIN ONLY" with its color fields greyed out
+    and uneditable. Open `admin.html` with `ADMIN_KEY` and confirm the
+    Footer fields there are fully editable — set a footer color and
+    confirm the site's footer updates within ~15 seconds. Click **Reset
+    all** in `customer-admin.html` afterward and confirm the footer color
+    you just set in `admin.html` is unaffected (only the sections
+    Customer Admin can actually edit get reset).
 18. Add two or three cards under **Image link cards** with different
     images/titles/links. Confirm a new "Useful links" section appears on
     the site between the programme and recordings, that each card opens

@@ -3,8 +3,12 @@ import { getRole } from "./lib/auth.mjs";
 
 // Site-wide theme: one font for the whole page, plus an optional
 // background + text color override per section. Both Super Admin and
-// Customer Admin are allowed to change this (unlike survey/announcement/
-// player, which are super-only).
+// Customer Admin are allowed to change most sections (unlike survey/
+// announcement/player, which are super-only) — EXCEPT the footer
+// section, which is Super Admin only. Customer Admin's incoming footer
+// values are silently ignored/preserved rather than rejected, since the
+// shared client-side save function always sends the whole theme object
+// (see collectTheme() in admin.html / customer-admin.html).
 
 const SECTION_KEYS = ["hero", "sessions", "recordings", "footer"];
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
@@ -42,7 +46,8 @@ export default async (req) => {
         { status: 500 }
       );
     }
-    if (!getRole(req)) {
+    const role = getRole(req);
+    if (!role) {
       return Response.json({ error: "unauthorized" }, { status: 401 });
     }
 
@@ -63,9 +68,20 @@ export default async (req) => {
       return Response.json({ error: "invalid accent color — use hex like #a855f7 or leave blank" }, { status: 400 });
     }
 
+    const current = (await store.get("theme", { type: "json" })) || emptyTheme();
+
     const sections = {};
     const incoming = body.sections && typeof body.sections === "object" ? body.sections : {};
     for (const k of SECTION_KEYS) {
+      // Footer is Super Admin only — Customer Admin's request always
+      // includes a footer object (collectTheme() reads every field
+      // regardless of who can see it), so instead of rejecting the
+      // whole request we just keep whatever footer was already stored.
+      if (k === "footer" && role !== "super") {
+        sections[k] = current.sections?.footer || emptyTheme().sections.footer;
+        continue;
+      }
+
       const src = incoming[k] && typeof incoming[k] === "object" ? incoming[k] : {};
       const bg = sanitizeColor(src.bg);
       const text = sanitizeColor(src.text);
