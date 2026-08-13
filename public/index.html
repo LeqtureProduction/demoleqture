@@ -74,6 +74,15 @@
   nav.links{display:flex;align-items:center;gap:32px;}
   nav.links a{font-size:14.5px;font-weight:500;color:#d8d8d5;transition:color .15s;}
   nav.links a:hover{color:var(--white);}
+  .nav-cta-mobile{display:none;}
+  .nav-toggle{
+    display:none;flex-direction:column;justify-content:center;gap:5px;
+    width:38px;height:38px;padding:0;border:none;background:transparent;cursor:pointer;flex-shrink:0;
+  }
+  .nav-toggle span{display:block;width:100%;height:2px;background:var(--white);border-radius:2px;transition:transform .2s,opacity .2s;}
+  .nav-toggle[aria-expanded="true"] span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+  .nav-toggle[aria-expanded="true"] span:nth-child(2){opacity:0;}
+  .nav-toggle[aria-expanded="true"] span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
   .btn{
     display:inline-flex;align-items:center;justify-content:center;gap:8px;
     font-family:'Inter',sans-serif;font-weight:600;font-size:14px;
@@ -372,16 +381,44 @@
   }
 
   @media (max-width:860px){
-    .hero-grid{grid-template-columns:1fr;}
-    .hero h1{font-size:40px;}
+    /* .hero-grid.has-side (2 classes) otherwise beats this rule's
+       specificity even inside the media query, keeping the 2-column
+       desktop layout on phones whenever a video/image panel is present
+       — !important forces the single-column stack every time. */
+    .hero-grid, .hero-grid.has-side{grid-template-columns:1fr !important;gap:32px;}
+    .hero{padding:44px 0 40px;}
+    .hero-grid > div:first-child{order:0;}
+    .hero-panel{order:1;width:100%;}
+    .hero h1{font-size:34px;margin:16px 0 16px;}
+    .hero p.lede{font-size:15.5px;max-width:none;}
+    #hero-image-panel .video-embed img{max-height:42vh;min-width:0;}
     .prog-body{grid-template-columns:1fr;}
     .rec-grid{grid-template-columns:1fr;}
     .feature-grid{grid-template-columns:1fr !important;}
     .feature-grid .feature-copy, .feature-grid .feature-media{order:initial !important;max-width:none;}
     .feature-grid.layout-wrap .feature-media{float:none !important;width:100% !important;margin:0 0 20px;}
     .footer-grid{grid-template-columns:1fr;}
-    nav.links{display:none;}
+    .nav-toggle{display:flex;}
+    #nav-cta{display:none;}
+    nav.links{
+      display:none;position:absolute;top:100%;left:0;right:0;
+      flex-direction:column;align-items:stretch;gap:0;
+      background:#111111;border-bottom:1px solid #232323;padding:8px 32px 16px;
+    }
+    nav.links.open{display:flex;}
+    nav.links a{padding:13px 0;border-bottom:1px solid #232323;}
+    nav.links a:last-child{border-bottom:none;}
+    .nav-cta-mobile{display:block;color:var(--purple) !important;font-weight:700 !important;}
+    header.nav{position:sticky;}
+    .nav-inner{position:relative;}
     .section-head h2{font-size:30px;}
+  }
+
+  @media (max-width:480px){
+    .hero h1{font-size:28px;}
+    .hero p.lede{font-size:14.5px;}
+    #hero-image-panel .video-embed img{max-height:34vh;}
+    .brand .sub{display:none;}
   }
 </style>
 </head>
@@ -400,11 +437,15 @@
       <span class="logo">DEMO LEQTURE<span>.</span></span>
       <span class="sub">Learning at Work Week</span>
     </a>
-    <nav class="links">
+    <nav class="links" id="nav-links">
       <a href="#sessions">Programme</a>
       <a href="#recordings">Recordings</a>
+      <a href="#sessions" class="nav-cta-mobile">View schedule</a>
     </nav>
-    <a href="#sessions" class="btn btn-primary">View schedule</a>
+    <a href="#sessions" class="btn btn-primary" id="nav-cta">View schedule</a>
+    <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </header>
 
@@ -1424,6 +1465,44 @@
   check();
   setInterval(function () { if (!document.hidden) check(); }, 15000);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
+})();
+</script>
+
+<script>
+(function () {
+  var toggle = document.getElementById("nav-toggle");
+  var links = document.getElementById("nav-links");
+  if (!toggle || !links) return;
+
+  function closeMenu() {
+    links.classList.remove("open");
+    toggle.setAttribute("aria-expanded", "false");
+  }
+  function openMenu() {
+    links.classList.add("open");
+    toggle.setAttribute("aria-expanded", "true");
+  }
+
+  toggle.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (links.classList.contains("open")) closeMenu(); else openMenu();
+  });
+
+  links.addEventListener("click", function (e) {
+    if (e.target.tagName === "A") closeMenu();
+  });
+
+  document.addEventListener("click", function (e) {
+    if (links.classList.contains("open") && !links.contains(e.target) && e.target !== toggle) closeMenu();
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") closeMenu();
+  });
+
+  window.addEventListener("resize", function () {
+    if (window.innerWidth > 860) closeMenu();
+  });
 })();
 </script>
 </body>

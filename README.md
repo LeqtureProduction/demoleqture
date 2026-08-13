@@ -95,6 +95,14 @@ or a static image.
   above/below each section, down from 96px), so scrolling between
   sections feels less sparse. This is a global CSS change, not something
   editable per section.
+- **Mobile layout** — below 860px wide, the top nav collapses to a
+  hamburger button (Programme, Recordings, and View schedule move into a
+  dropdown menu that opens below the header); the hero always stacks the
+  heading/subheading above the video or image panel (a CSS specificity
+  bug used to let the two-column desktop layout leak through on phones
+  whenever a video or image was published — fixed); and heading size,
+  section padding, and the image's height cap all scale down further on
+  narrow screens (with an extra breakpoint under 480px for small phones).
 - **Heading and subheading are editable** from either admin panel, under
   the **Hero** block — the same block the hero image lives in, so the text
   and image controls sit together instead of in separate places. Leave
@@ -767,6 +775,20 @@ Then manually:
     **Remove photo** and confirm the site goes back to showing initials.
     Open `customer-admin.html` and confirm the read-only session list also
     shows the uploaded photo, with no way to change it.
+
+37. Resize the browser (or open on a phone) to under 860px wide and
+    confirm the nav bar collapses to a hamburger icon; the "Programme" /
+    "Recordings" links and the "View schedule" button disappear from the
+    header itself. Tap the hamburger and confirm a dropdown opens below
+    the header with all three; tapping any of them scrolls to the right
+    section and closes the menu; tapping outside the menu or pressing
+    Escape also closes it. Widen the window back past 860px and confirm
+    the menu auto-closes and the normal desktop nav returns.
+38. On the same narrow width, publish a hero image (or video link) and
+    confirm the heading and subheading always appear above the video/image
+    panel — never beside it — at every width from a large phone down to a
+    small one, with no horizontal scrolling and no piece of the layout
+    overflowing the screen edge.
 
 ## Before a live event
 
