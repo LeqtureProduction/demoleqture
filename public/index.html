@@ -207,15 +207,21 @@
   a.rec-card:hover{border-color:var(--purple);}
   .rec-thumb{
     height:190px;background:linear-gradient(150deg,#3a1a3a,#12060f);
-    display:flex;align-items:center;justify-content:center;position:relative;
+    display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;
+  }
+  .rec-thumb img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;}
+  .rec-thumb.has-photo::before{
+    content:"";position:absolute;inset:0;z-index:1;
+    background:linear-gradient(180deg,rgba(0,0,0,0.1),rgba(0,0,0,0.55));
   }
   .rec-thumb .play{
     width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.12);
     border:1px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;
+    position:relative;z-index:2;
   }
   .rec-thumb .play::after{content:"";border-left:14px solid #fff;border-top:9px solid transparent;border-bottom:9px solid transparent;margin-left:4px;}
   .avail-badge{
-    position:absolute;top:14px;right:14px;background:var(--purple);color:#1f0a33;
+    position:absolute;top:14px;right:14px;z-index:3;background:var(--purple);color:#1f0a33;
     font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
     padding:5px 10px;border-radius:20px;
   }
@@ -505,22 +511,7 @@
       <h2 id="recordings-title-el">Session recordings<span class="dot">.</span></h2>
       <p id="recordings-subtitle-el">Missed a session, or in an awkward timezone? Every session is recorded and lands here within 24 hours, so you can watch back whenever suits you.</p>
     </div>
-    <div class="rec-grid">
-      <a class="rec-card" href="https://youtu.be/8qpad45mnCM" target="_blank" rel="noopener">
-        <div class="rec-thumb"><span class="avail-badge">Available now</span><div class="play"></div></div>
-        <div class="rec-info">
-          <div class="meta">Karim Benammar · Mon 6 Jul</div>
-          <div class="title">Reframing AI: exploring radically different ways of working</div>
-        </div>
-      </a>
-      <div class="rec-card">
-        <div class="rec-thumb"><span class="avail-badge">Available soon</span><div class="play"></div></div>
-        <div class="rec-info">
-          <div class="meta">Michelle Schechter · Thu 9 Jul</div>
-          <div class="title">Critical Thinking and AI</div>
-        </div>
-      </div>
-    </div>
+    <div class="rec-grid" id="rec-grid"></div>
   </div>
 </section>
 
@@ -1512,6 +1503,55 @@
   check();
   setInterval(function () { if (!document.hidden) check(); }, 15000);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
+})();
+</script>
+
+<script>
+(function () {
+  // Session recordings — Super Admin manages the list (session name,
+  // speaker name, and an optional link) from admin.html. The speaker's
+  // photo, when there is one, is looked up automatically from the
+  // Programme session with a matching speaker name — never uploaded here.
+  var grid = document.getElementById("rec-grid");
+  var escDiv = document.createElement("div");
+  function esc(v) { escDiv.textContent = v == null ? "" : String(v); return escDiv.innerHTML; }
+
+  function render(recordings) {
+    if (!recordings.length) {
+      grid.innerHTML = '<div class="no-sessions">No recordings have been published yet.</div>';
+      return;
+    }
+    grid.innerHTML = recordings.map(function (r) {
+      var tag = r.available ? "a" : "div";
+      var attrs = r.available ? ' href="' + esc(r.link) + '" target="_blank" rel="noopener"' : "";
+      var badge = r.available ? "Available now" : "Available soon";
+      var hasPhoto = !!r.speakerPhotoSessionId;
+      var photo = hasPhoto
+        ? '<img src="/api/sessions?image=' + esc(r.speakerPhotoSessionId) + '&t=' + esc(r.updated_at || 0) + '" alt="" />'
+        : "";
+      var thumbClass = "rec-thumb" + (hasPhoto ? " has-photo" : "");
+      return (
+        '<' + tag + ' class="rec-card"' + attrs + '>' +
+          '<div class="' + thumbClass + '">' + photo + '<span class="avail-badge">' + badge + '</span><div class="play"></div></div>' +
+          '<div class="rec-info">' +
+            '<div class="meta">' + esc(r.speakerName) + '</div>' +
+            '<div class="title">' + esc(r.sessionName) + '</div>' +
+          '</div>' +
+        '</' + tag + '>'
+      );
+    }).join("");
+  }
+
+  function checkRecordings() {
+    return fetch("/api/recordings", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) { render((data && data.recordings) || []); })
+      .catch(function () {});
+  }
+
+  checkRecordings();
+  setInterval(function () { if (!document.hidden) checkRecordings(); }, 15000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) checkRecordings(); });
 })();
 </script>
 

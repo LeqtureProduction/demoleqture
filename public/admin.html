@@ -180,6 +180,7 @@
         <a href="#block-theme" class="quick-nav-pill">&#127912; Theme</a>
         <a href="#block-cards" class="quick-nav-pill">&#128279; Link cards</a>
         <a href="#block-feature" class="quick-nav-pill">&#128221; Text &amp; image</a>
+        <a href="#block-recordings" class="quick-nav-pill">&#127909; Recordings</a>
       </nav>
 
       <div class="feature-block band-white" id="block-survey">
@@ -543,6 +544,33 @@
         </div>
         <p class="hint">Use the toolbar above each field for bold, italic, underline, lists, and links. Choose whether the image sits to the right, to the left, has the text wrapping around it, or sits above the text — and how big it is, as a percentage. Shown as its own section, only while it has a title, body text, or image — leaving everything blank hides it (and always centers whatever's left, regardless of the chosen layout). You can save title/body without an image, or add an image with no text. Use the buttons above to move it: before Sessions, between Sessions and Recordings, or after Recordings (the default).</p>
       </div>
+
+      <div class="feature-block band-white" id="block-recordings">
+        <div class="feature-header">
+          <span class="feature-icon">&#127909;</span>
+          <div>
+            <div class="feature-name">Recordings</div>
+            <div class="feature-desc">Session recordings shown near the bottom of the site — session name, speaker, and a link.</div>
+          </div>
+        </div>
+        <div class="status-row">
+          <span>Recordings</span>
+          <span class="badge" id="recordings-badge">—</span>
+        </div>
+        <div id="recordings-admin-list"></div>
+
+        <label for="recording-session-name" style="margin-top:14px;">Session name</label>
+        <input type="text" id="recording-session-name" maxlength="150" placeholder="e.g. Reframing AI" autocomplete="off">
+        <label for="recording-speaker-name">Speaker name</label>
+        <input type="text" id="recording-speaker-name" maxlength="100" placeholder="Full name" autocomplete="off">
+        <label for="recording-link">Recording link (optional)</label>
+        <input type="text" id="recording-link" maxlength="500" placeholder="https://... — leave blank for &quot;Available soon&quot;" autocomplete="off">
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="recording-save">Add recording</button>
+          <button type="button" class="btn btn-outline" id="recording-cancel" hidden>Cancel edit</button>
+        </div>
+        <p class="hint">Leave the link blank to show "Available soon" (not clickable); add a link to switch it to "Available now" (opens in a new tab). The speaker's photo shows automatically if that same name has a photo uploaded under <strong>Programme</strong> above — there's no separate photo upload here. Use the arrows to reorder; recordings show on the site in this order.</p>
+      </div>
     </div>
   </div>
 </div>
@@ -571,6 +599,15 @@
   var questionCancelBtn = document.getElementById("question-cancel");
   var currentQuestions = [];
   var editingQuestionId = null;
+  var recordingsBadge = document.getElementById("recordings-badge");
+  var recordingsAdminList = document.getElementById("recordings-admin-list");
+  var recordingSessionName = document.getElementById("recording-session-name");
+  var recordingSpeakerName = document.getElementById("recording-speaker-name");
+  var recordingLink = document.getElementById("recording-link");
+  var recordingSaveBtn = document.getElementById("recording-save");
+  var recordingCancelBtn = document.getElementById("recording-cancel");
+  var currentRecordings = [];
+  var editingRecordingId = null;
   var announceInput = document.getElementById("announce-input");
   var announceCharcount = document.getElementById("announce-charcount");
   var announceBadge = document.getElementById("announce-badge");
@@ -640,6 +677,7 @@
         fetchFeature();
         fetchSessionsAdmin();
         fetchQuestions();
+        fetchRecordingsAdmin();
         return fetchState();
       })
       .catch(function (err) {
@@ -692,6 +730,7 @@
     fetchCards();
     fetchFeature();
     fetchQuestions();
+    fetchRecordingsAdmin();
   });
 
   function refreshCount() {
@@ -1708,6 +1747,145 @@
         return r.json();
       })
       .then(function (data) { currentSessionsAdmin = (data && data.sessions) || currentSessionsAdmin; renderSessionsAdmin(); })
+      .catch(function (err) { alert(err.message); });
+  }
+
+  // ---- Recordings (Super Admin only) ----
+
+  function fetchRecordingsAdmin() {
+    return fetch("/api/recordings", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        currentRecordings = (data && data.recordings) || [];
+        renderRecordingsAdmin();
+      })
+      .catch(function () {});
+  }
+
+  function renderRecordingsAdmin() {
+    recordingsBadge.textContent = String(currentRecordings.length);
+    if (!currentRecordings.length) {
+      recordingsAdminList.innerHTML = '<div class="card-empty">No recordings yet — add one below.</div>';
+      return;
+    }
+    var esc = document.createElement("div");
+    recordingsAdminList.innerHTML = currentRecordings.map(function (r, i) {
+      esc.textContent = r.sessionName || "";
+      var safeSession = esc.innerHTML;
+      esc.textContent = r.speakerName || "";
+      var safeSpeaker = esc.innerHTML;
+      var statusText = r.available ? "Available now" : "Available soon";
+      var photoText = r.speakerPhotoSessionId ? "Photo linked" : "No photo match";
+      return (
+        '<div class="session-item" data-id="' + r.id + '">' +
+          '<div class="session-item-info">' +
+            '<div class="session-item-title">' + safeSession + '</div>' +
+            '<div class="session-item-meta">' + safeSpeaker + ' &middot; ' + statusText + ' &middot; ' + photoText + '</div>' +
+          '</div>' +
+          '<div class="session-item-actions">' +
+            '<button type="button" data-action="up"' + (i === 0 ? " disabled" : "") + '>&uarr;</button>' +
+            '<button type="button" data-action="down"' + (i === currentRecordings.length - 1 ? " disabled" : "") + '>&darr;</button>' +
+            '<button type="button" data-action="edit">Edit</button>' +
+            '<button type="button" data-action="delete">Delete</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join("");
+  }
+
+  recordingsAdminList.addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    var item = btn.closest(".session-item");
+    var id = item.getAttribute("data-id");
+    var action = btn.getAttribute("data-action");
+    if (action === "edit") { startEditRecording(id); }
+    else if (action === "delete") { deleteRecording(id); }
+    else if (action === "up" || action === "down") { moveRecording(id, action); }
+  });
+
+  function startEditRecording(id) {
+    var r = currentRecordings.filter(function (x) { return x.id === id; })[0];
+    if (!r) return;
+    editingRecordingId = id;
+    recordingSessionName.value = r.sessionName || "";
+    recordingSpeakerName.value = r.speakerName || "";
+    recordingLink.value = r.link || "";
+    recordingSaveBtn.textContent = "Save changes";
+    recordingCancelBtn.hidden = false;
+    recordingSessionName.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  function resetRecordingForm() {
+    editingRecordingId = null;
+    recordingSessionName.value = "";
+    recordingSpeakerName.value = "";
+    recordingLink.value = "";
+    recordingSaveBtn.textContent = "Add recording";
+    recordingCancelBtn.hidden = true;
+  }
+
+  recordingCancelBtn.addEventListener("click", resetRecordingForm);
+
+  recordingSaveBtn.addEventListener("click", function () {
+    var payload = {
+      sessionName: recordingSessionName.value.trim(),
+      speakerName: recordingSpeakerName.value.trim(),
+      link: recordingLink.value.trim(),
+    };
+    if (!payload.sessionName) { alert("Session name is required."); return; }
+    if (!payload.speakerName) { alert("Speaker name is required."); return; }
+
+    var reqBody = { action: editingRecordingId ? "edit" : "add", recording: payload };
+    if (editingRecordingId) reqBody.id = editingRecordingId;
+
+    recordingSaveBtn.disabled = true;
+    fetch("/api/recordings", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify(reqBody),
+    })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(function () { resetRecordingForm(); return fetchRecordingsAdmin(); })
+      .catch(function (err) { alert(err.message); })
+      .finally(function () { recordingSaveBtn.disabled = false; });
+  });
+
+  function deleteRecording(id) {
+    if (!confirm("Remove this recording?")) return;
+    fetch("/api/recordings", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify({ action: "delete", id: id }),
+    })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(function () { if (editingRecordingId === id) resetRecordingForm(); return fetchRecordingsAdmin(); })
+      .catch(function (err) { alert(err.message); });
+  }
+
+  function moveRecording(id, direction) {
+    var ids = currentRecordings.map(function (r) { return r.id; });
+    var idx = ids.indexOf(id);
+    if (idx === -1) return;
+    var swapWith = direction === "up" ? idx - 1 : idx + 1;
+    if (swapWith < 0 || swapWith >= ids.length) return;
+    var tmp = ids[idx]; ids[idx] = ids[swapWith]; ids[swapWith] = tmp;
+    fetch("/api/recordings", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify({ action: "reorder", order: ids }),
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error("Request failed (" + r.status + ").");
+        return r.json();
+      })
+      .then(function (data) { currentRecordings = (data && data.recordings) || currentRecordings; renderRecordingsAdmin(); })
       .catch(function (err) { alert(err.message); });
   }
 })();

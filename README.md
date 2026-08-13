@@ -1,12 +1,14 @@
 # Demo Leqture — Learning at Work Week 2026
 
 Static site for Demo Leqture's Learning at Work Week 2026, with a live anonymous
-Q&A-style feedback survey, a site announcement bar, a hero video player/image,
-a site-wide theme (font, accent color, per-section colors, and editable
-Hero/Recordings headings), a repositionable, renameable grid of
-admin-managed image link cards, and a repositionable admin-editable text +
-image content block — all switched on and off from two separate admin
-panels. Styled in Demo Leqture's black/purple brand (Poppins/Inter, 2px
+Q&A-style feedback survey (fully editable question set, Super Admin only),
+a site announcement bar, a hero video player/image, an editable Programme
+with per-session speaker photos, a Session recordings list whose cards
+link speaker photos automatically from Programme, a site-wide theme (font,
+accent color, per-section colors, and editable Hero/Recordings headings),
+a repositionable, renameable grid of admin-managed image link cards, and a
+repositionable admin-editable text + image content block — all switched on
+and off from two separate admin panels. Styled in Demo Leqture's black/purple brand (Poppins/Inter, 2px
 corner radius, purple accent) by default, but the look and copy can be
 changed live from either admin panel, and both panels stay in sync with
 each other. Each admin panel opens with a "jump to" pill bar and clearly
@@ -16,9 +18,9 @@ labeled sections so it's obvious at a glance what can be changed.
 
 ```
 public/                     → published static site
-  index.html                  the site itself, incl. survey popup, announcement bar, hero player/image, programme, link cards, text+image section
+  index.html                  the site itself, incl. survey popup, announcement bar, hero player/image, programme, recordings, link cards, text+image section
   admin.html                   Super Admin: everything
-  customer-admin.html          Customer Admin: survey responses (view only) + hero image + programme heading (view-only session list) + theme + link cards + text/image section
+  customer-admin.html          Customer Admin: survey responses (view only) + hero image + programme heading (view-only session list) + theme + link cards + text/image section (no recordings editor)
 netlify/functions/          → serverless functions
   lib/auth.mjs                 shared role check (not a function itself, just imported by the others)
   lib/survey-schema.mjs        shared question-list schema/defaults (not a function itself, just imported by the survey functions below)
@@ -31,6 +33,7 @@ netlify/functions/          → serverless functions
   player.mjs                   GET (public): current hero video link / POST (super only): publish or turn it off
   hero-image.mjs                GET (public): the hero image / POST, DELETE (super or customer): upload or remove it
   sessions.mjs                 GET (public): the programme (session list) / POST (super only): add, edit, delete, reorder
+  recordings.mjs               GET (public): the recordings list, incl. auto-matched speaker photo / POST (super only): add, edit, delete, reorder
   theme.mjs                    GET (public): font, accent + per-section colors / POST (super or customer): change them
   cards.mjs                    GET (public): the link cards list/images/section text / POST, DELETE (super or customer): manage them
   feature.mjs                  GET (public): the text+image block / POST, DELETE (super or customer): edit or clear it
@@ -227,6 +230,35 @@ programme, shown as the same click-to-expand accordion as before.
   visiting the site can fetch it); adding, editing, deleting, or
   reordering needs the Super Admin key specifically.
 
+## Session recordings
+
+The "Session recordings" grid near the bottom of the site — **Super Admin
+only**, from the **Recordings** block at the bottom of `admin.html`.
+
+- **Add a recording** with a session name, a speaker name, and an optional
+  link. Leaving the link blank shows the card as **Available soon** (not
+  clickable); filling it in switches it to **Available now** (opens the
+  link in a new tab) — those exact two labels are kept as-is. Edit,
+  delete, or reorder (↑/↓) any recording the same way as Programme
+  sessions.
+- **The speaker's photo links itself automatically.** There's no photo
+  upload here — if the speaker name on a recording matches (case- and
+  whitespace-insensitive) the speaker name on a Programme session that has
+  a photo uploaded, that same photo shows on the recording card. No match,
+  or a match with no photo uploaded yet, and the card just shows without
+  one (still fully functional — the photo is a nice-to-have, not
+  required). Uploading or changing a speaker's photo under **Programme**
+  updates every recording card using that name too, automatically, next
+  time the site polls.
+- **Section heading and subheading** for "Session recordings" are edited
+  from **Site theme → Recordings**, same as before — this section only
+  covers the list of recording cards itself.
+- Backed by `recordings.mjs` / Netlify Blobs (`demoleqture-recordings`).
+  The list is public (anyone visiting the site can fetch it, including the
+  photo lookup); adding, editing, deleting, or reordering needs the Super
+  Admin key specifically — same restriction as the Programme session list
+  it's paired with.
+
 ## Site theme
 
 Either admin panel can change, live, for every visitor:
@@ -354,9 +386,10 @@ image link cards, this is a single block, not a repeatable list.
 ## Two admin panels
 
 Both panels open with a row of pill-shaped **jump-to links** (Survey,
-Announcement, Hero video, Hero, Programme, Theme, Link cards, Text & image
-— Customer Admin shows only the ones it has access to) so it's obvious at
-a glance what's available without scrolling through the whole page first.
+Announcement, Hero video, Hero, Programme, Theme, Link cards, Text &
+image, Recordings — Customer Admin shows only the ones it has access to)
+so it's obvious at a glance what's available without scrolling through
+the whole page first.
 Each feature is grouped into its own labeled block with an icon, a name,
 and a one-line description of what it does, followed by its controls.
 
@@ -382,6 +415,7 @@ two logins, two entirely different shared secrets:
 | Site theme (font, accent, section colors) | Yes | Yes |
 | Image link cards | Yes | Yes |
 | Text & image section | Yes | Yes |
+| Recordings (add/edit/delete/reorder) | Yes | No |
 
 Both are plain, unlisted pages — not linked from the site nav — gated by a
 shared secret each, not a full login system. Enough to keep random visitors
@@ -445,6 +479,12 @@ client/customer contact.
    image, then **Save**. **Remove image** clears just the image;
    **Clear whole section** wipes all three back to empty; **Move section
    up**/**down** repositions it on the page.
+11. Under **Recordings**, fill in a session name and speaker name, add a
+    link if the recording's ready (leave it blank for **Available soon**),
+    and click **Add recording**; use **Edit** to change one, ↑/↓ to
+    reorder, and **Delete** to remove one. If the speaker name matches
+    someone with a photo uploaded under **Programme**, that photo shows up
+    on the recording card automatically — no separate upload here.
 
 ### Using Customer Admin (`customer-admin.html`)
 
@@ -470,6 +510,9 @@ client/customer contact.
 5. Under **Site theme**, **Image link cards**, and **Text & image section**,
    the controls work exactly as in Super Admin — both panels have full
    access to these three features.
+6. There's no **Recordings** block here at all — the recordings list is
+   Super Admin only, added/edited from `admin.html`. Recordings still show
+   normally on the live site regardless of which admin key is in use.
 
 ## Setup
 
@@ -497,11 +540,11 @@ netlify link                  # or: netlify init, to create a new site
 netlify deploy --prod
 ```
 
-Confirm the deploy summary lists **12 functions** (`survey-state`,
+Confirm the deploy summary lists **13 functions** (`survey-state`,
 `survey-questions`, `survey-response`, `survey-export`, `announcement`,
-`player`, `whoami`, `hero-image`, `sessions`, `theme`, `cards`, `feature`).
-If it says 0, you're deploying from inside `public/` instead of the
-project root.
+`player`, `whoami`, `hero-image`, `sessions`, `recordings`, `theme`,
+`cards`, `feature`). If it says 0, you're deploying from inside `public/`
+instead of the project root.
 
 Don't forget to set both `ADMIN_KEY` and `CUSTOMER_ADMIN_KEY` (see above) —
 without them, every admin action returns a clear error instead of quietly
@@ -809,6 +852,18 @@ curl -X POST https://<site>/api/sessions -H "x-admin-key: <ckey>" -F "id=<sessio
 # -> 403, customer key can't touch sessions at all, photo included or not
 curl -X POST https://<site>/api/sessions -H "x-admin-key: <key>" -F "id=<session-id>" -F "date=2026-10-08" -F "startTime=07:00" -F "endTime=08:00" -F "speakerName=Liesbeth Smit" -F "title=Pseudoscience And Nutrition" -F "removePhoto=1"
 curl https://<site>/api/sessions   # back to "hasPhoto":false
+
+# 17. Recordings (super only) + automatic speaker photo matching
+curl https://<site>/api/recordings   # public GET, starts empty
+curl -X POST https://<site>/api/recordings -H "content-type: application/json" -H "x-admin-key: <ckey>" -d '{"action":"add","recording":{"sessionName":"Pseudoscience And Nutrition","speakerName":"Liesbeth Smit"}}'
+# -> 403, customer key can't touch recordings
+curl -X POST https://<site>/api/recordings -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"action":"add","recording":{"sessionName":"Pseudoscience And Nutrition","speakerName":"Liesbeth Smit"}}'
+curl https://<site>/api/recordings   # "available":false (no link yet), "speakerPhotoSessionId" set if that speaker has an uploaded Programme photo, else null
+# copy the new recording's "id" from the response, then add a link:
+curl -X POST https://<site>/api/recordings -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"action":"edit","id":"<id-from-above>","recording":{"sessionName":"Pseudoscience And Nutrition","speakerName":"Liesbeth Smit","link":"https://youtu.be/8qpad45mnCM"}}'
+curl https://<site>/api/recordings   # "available":true now
+curl -X POST https://<site>/api/recordings -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"action":"delete","id":"<id-from-above>"}'
+curl https://<site>/api/recordings   # back to empty
 ```
 
 Then manually:
@@ -859,6 +914,21 @@ Then manually:
     warns it's permanent, confirm it, and check the response count drops
     to 0 and both CSV/JSON downloads come back empty. Confirm
     `customer-admin.html` has no **Clear all responses** button at all.
+41. In `admin.html`, under **Recordings**, add one with a session name and
+    speaker name that exactly matches an existing Programme speaker who
+    already has a photo uploaded — confirm the site's recordings grid
+    shows that same photo on the card within ~15 seconds, badged
+    "Available soon" (no link yet) and not clickable. Add a link and
+    confirm it flips to "Available now" and becomes a clickable card that
+    opens the link in a new tab. Add a second recording with a speaker
+    name that doesn't match anyone in Programme and confirm that card
+    shows with no photo (just the plain dark thumbnail), everything else
+    working the same. Reorder with ↑/↓ and confirm the site's order
+    updates to match. Delete one and confirm it disappears from the site.
+42. Confirm `customer-admin.html` has no Recordings block or pill at all
+    (Super Admin only), and that unlocking `customer-admin.html` with the
+    `ADMIN_KEY` (not `CUSTOMER_ADMIN_KEY`) still doesn't show a Recordings
+    block there either — it's specific to `admin.html`, not the key's role.
 
 ## Before a live event
 
@@ -881,6 +951,7 @@ netlify blobs:delete demoleqture-cards meta --force
 netlify blobs:delete demoleqture-feature info --force
 netlify blobs:delete demoleqture-feature bytes --force
 netlify blobs:delete demoleqture-sessions list --force
+netlify blobs:delete demoleqture-recordings list --force
 ```
 
 The theme, image link cards, and text & image section are cosmetic/content,
