@@ -117,12 +117,14 @@ or a static image.
   (`admin.html`).
 - **Hero image** — a static image shown in the same spot whenever there's
   no video link published. Controlled from *either* admin panel (with one
-  restriction on Customer Admin — see below). It's shown at a small size
-  (capped at 260×200px) with no fixed box or background behind it — the
-  full image is always visible at its own natural proportions, so there's
-  never a black letterbox bar around it regardless of its aspect ratio.
-  The video player keeps its normal 16:9 shape, since it has to match the
-  embedded player.
+  restriction on Customer Admin — see below). It's shown at its own
+  natural proportions with no fixed box or background behind it, so
+  there's never a black letterbox bar around it regardless of aspect
+  ratio. Sized as a fluid percentage of the column rather than a fixed
+  pixel box (capped between 200px and 480px wide, and up to 60% of the
+  viewport height), so it scales smoothly with the page instead of
+  jumping between fixed sizes. The video player keeps its normal 16:9
+  shape, since it has to match the embedded player.
 - **The video always wins.** If a link is published, the image is hidden
   even if one is uploaded — it comes back automatically the moment the
   link is turned off. Nothing is deleted when this happens; the image is
@@ -682,9 +684,11 @@ Then manually:
     read-only, with no Edit/Delete/reorder controls and a note explaining
     that only Super Admin can change it.
 31. Upload a non-square hero image (e.g. a wide landscape photo or a tall
-    portrait one) and confirm it shows at a small size with no black bar
-    or empty space around it — just the photo itself, at its own
-    proportions.
+    portrait one) and confirm it shows with no black bar or empty space
+    around it — just the photo itself, at its own proportions. Resize your
+    browser window (or check on mobile) and confirm the image scales up
+    and down smoothly with the page width instead of staying a fixed
+    size.
 32. Under **Text & image section**, use the toolbar to make part of the
     title or body bold, italic, or a bulleted list, and add a link. Save,
     and confirm the formatting shows up on the live site exactly as

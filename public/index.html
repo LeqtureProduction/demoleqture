@@ -269,13 +269,15 @@
   .video-embed iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
   .video-embed img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}
   /* Hero image: no fixed square/letterbox — the box hugs the image's own
-     shape so nothing but the photo itself is visible, capped smaller than
-     the video player so it doesn't dominate the hero. */
+     shape so nothing but the photo itself is visible. Sized as a fluid
+     percentage of the column (not a fixed pixel box) so it scales
+     smoothly up on wide screens and down on narrow ones, capped so it
+     never gets too large or too small either way. */
   #hero-image-panel{border:none;background:none;padding:0;}
-  #hero-image-panel .video-embed{padding-top:0;width:auto;background:none;overflow:visible;margin-left:auto;}
+  #hero-image-panel .video-embed{padding-top:0;width:100%;background:none;overflow:visible;}
   #hero-image-panel .video-embed img{
-    position:static;display:block;width:auto;height:auto;
-    max-width:260px;max-height:200px;object-fit:contain;
+    position:static;display:block;
+    width:100%;height:auto;max-width:480px;min-width:200px;max-height:60vh;
     border-radius:var(--radius);margin-left:auto;
   }
 
