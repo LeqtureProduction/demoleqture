@@ -65,12 +65,12 @@
     max-width:1180px;margin:0 auto;padding:18px 32px;
     display:flex;align-items:center;justify-content:space-between;gap:24px;
   }
-  .brand{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
   .brand .logo{
     font-family:'Poppins',sans-serif;font-weight:800;font-size:21px;letter-spacing:-0.02em;color:var(--white);
   }
   .brand .logo span{color:var(--purple);}
-  .brand .sub{font-size:13px;color:var(--gray);font-weight:500;}
+  .brand .logo-img{height:34px;max-width:200px;object-fit:contain;display:block;}
   nav.links{display:flex;align-items:center;gap:32px;}
   nav.links a{font-size:14.5px;font-weight:500;color:#d8d8d5;transition:color .15s;}
   nav.links a:hover{color:var(--white);}
@@ -443,8 +443,8 @@
 <header class="nav">
   <div class="nav-inner">
     <a href="#top" class="brand">
-      <span class="logo">DEMO LEQTURE<span>.</span></span>
-      <span class="sub">Learning at Work Week</span>
+      <img id="nav-logo-img" class="logo-img" src="" alt="Demo Leqture" hidden />
+      <span class="logo" id="nav-logo-text">DEMO LEQTURE<span>.</span></span>
     </a>
     <nav class="links" id="nav-links">
       <a href="#sessions">Programme</a>
@@ -461,7 +461,7 @@
 <section class="hero" id="top">
   <div class="wrap hero-grid">
     <div>
-      <span class="eyebrow on-dark">DEMO LEQTURE · 6–10 JULY 2026</span>
+      <span class="eyebrow on-dark" id="hero-eyebrow-el">DEMO LEQTURE · 6–10 JULY 2026</span>
       <h1 id="hero-title-el">Learning at <em>Work Week</em> 2026<span class="dot">.</span></h1>
       <p class="lede" id="hero-subtitle-el">A week of live sessions on AI, communication and wellbeing, streamed for every Demo Leqture attendee, wherever you are in the world. Watch live, ask questions, and catch up on demand.</p>
     </div>
@@ -955,18 +955,59 @@
 
 <script>
 (function () {
+  // Nav-bar logo, top-left — falls back to the plain-text "DEMO LEQTURE."
+  // wordmark whenever no logo has been uploaded by either admin.
+  var logoImg = document.getElementById("nav-logo-img");
+  var logoText = document.getElementById("nav-logo-text");
+  var logoVersion = 0;
+
+  function renderLogo(exists, updatedAt) {
+    if (exists) {
+      if (logoImg.getAttribute("data-version") !== String(updatedAt)) {
+        logoImg.src = "/api/logo?t=" + updatedAt;
+        logoImg.setAttribute("data-version", String(updatedAt));
+      }
+      logoImg.hidden = false;
+      logoText.hidden = true;
+    } else {
+      logoImg.hidden = true;
+      logoImg.removeAttribute("src");
+      logoImg.removeAttribute("data-version");
+      logoText.hidden = false;
+    }
+  }
+
+  function checkLogo() {
+    return fetch("/api/logo?meta=1", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        renderLogo(!!(data && data.exists), (data && data.updated_at) || 0);
+      })
+      .catch(function () {});
+  }
+
+  checkLogo();
+  setInterval(function () { if (!document.hidden) checkLogo(); }, 15000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) checkLogo(); });
+})();
+</script>
+
+<script>
+(function () {
   var fontLink = document.getElementById("theme-font-link");
   var styleEl = document.getElementById("theme-style");
   var lastFont = "";
 
   var heroTitleEl = document.getElementById("hero-title-el");
   var heroSubtitleEl = document.getElementById("hero-subtitle-el");
+  var heroEyebrowEl = document.getElementById("hero-eyebrow-el");
   var sessionsTitleEl = document.getElementById("sessions-title-el");
   var sessionsSubtitleEl = document.getElementById("sessions-subtitle-el");
   var recordingsTitleEl = document.getElementById("recordings-title-el");
   var recordingsSubtitleEl = document.getElementById("recordings-subtitle-el");
   var heroTitleDefaultHTML = heroTitleEl.innerHTML;
   var heroSubtitleDefaultText = heroSubtitleEl.textContent;
+  var heroEyebrowDefaultText = heroEyebrowEl.textContent;
   var sessionsTitleDefaultHTML = sessionsTitleEl.innerHTML;
   var sessionsSubtitleDefaultText = sessionsSubtitleEl.textContent;
   var recordingsTitleDefaultHTML = recordingsTitleEl.innerHTML;
@@ -1062,6 +1103,7 @@
     var heroSec = sections.hero || {};
     setTitleHTML(heroTitleEl, heroTitleDefaultHTML, (heroSec.title || "").trim());
     setBodyText(heroSubtitleEl, heroSubtitleDefaultText, (heroSec.subtitle || "").trim());
+    setBodyText(heroEyebrowEl, heroEyebrowDefaultText, (heroSec.eyebrow || "").trim());
 
     var sessionsSec = sections.sessions || {};
     setTitleHTML(sessionsTitleEl, sessionsTitleDefaultHTML, (sessionsSec.title || "").trim());

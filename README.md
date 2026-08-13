@@ -20,7 +20,7 @@ labeled sections so it's obvious at a glance what can be changed.
 public/                     → published static site
   index.html                  the site itself, incl. survey popup, announcement bar, hero player/image, programme, recordings, link cards, text+image section
   admin.html                   Super Admin: everything
-  customer-admin.html          Customer Admin: survey responses (view only) + hero image + programme heading (view-only session list) + theme + link cards + text/image section + recordings heading (view-only recordings list)
+  customer-admin.html          Customer Admin: survey responses (view only) + site logo + hero image + programme heading (view-only session list) + theme + link cards + text/image section + recordings heading (view-only recordings list)
 netlify/functions/          → serverless functions
   lib/auth.mjs                 shared role check (not a function itself, just imported by the others)
   lib/survey-schema.mjs        shared question-list schema/defaults (not a function itself, just imported by the survey functions below)
@@ -32,6 +32,7 @@ netlify/functions/          → serverless functions
   announcement.mjs             GET (public): current site announcement / POST (super only): publish or clear it
   player.mjs                   GET (public): current hero video link / POST (super only): publish or turn it off
   hero-image.mjs                GET (public): the hero image / POST, DELETE (super or customer): upload or remove it
+  logo.mjs                     GET (public): the site logo / POST, DELETE (super or customer): upload or remove it
   sessions.mjs                 GET (public): the programme (session list) / POST (super only): add, edit, delete, reorder
   recordings.mjs               GET (public): the recordings list, incl. auto-matched speaker photo / POST (super only): add, edit, delete, reorder
   theme.mjs                    GET (public): font, accent + per-section colors / POST (super or customer): change them
@@ -117,6 +118,31 @@ site whenever you want, e.g. "Lunch is now being served in the atrium."
 
 Controlled from the same `admin.html` page as the survey — see below.
 
+## Site logo
+
+The nav bar (top-left of every page) shows a plain-text "DEMO LEQTURE."
+wordmark by default. Either admin panel can upload an image logo to
+replace it — under **Logo & hero → Site logo** (the same block the Hero
+heading/image lives in). The logo:
+
+- Appears for every visitor within about 15 seconds of being uploaded,
+  same polling pattern as everything else on this site.
+- Is capped at 3MB, any image type.
+- Sits at a fixed 34px tall (width scales with it, up to 200px, so wide
+  logos don't crowd out the nav links), replacing the text wordmark
+  entirely while a logo is set.
+- **Remove** brings the plain-text wordmark straight back — nothing about
+  the nav layout changes either way.
+- No admin-tier restriction: Super Admin and Customer Admin both have full
+  upload/remove access, same as Image link cards.
+- Backed by `logo.mjs` / Netlify Blobs (`demoleqture-logo`). The current
+  logo (or its absence) is public; only uploading or removing it needs an
+  admin key.
+
+The nav bar previously also showed a "Learning at Work Week" sub-line next
+to the wordmark — that's been removed for good (not a toggle, just gone),
+since the logo is meant to carry that branding instead.
+
 ## Hero section
 
 The top of the page is intentionally simple: an eyebrow tag, a heading, a
@@ -135,18 +161,22 @@ or a static image.
   whenever a video or image was published — fixed); and heading size,
   section padding, and the image's height cap all scale down further on
   narrow screens (with an extra breakpoint under 480px for small phones).
-- **Heading and subheading are editable** from either admin panel, under
-  the **Hero** block — the same block the hero image lives in, so the text
-  and image controls sit together instead of in separate places. Leave
-  both blank to keep the original copy ("Learning at *Work Week* 2026."
-  with "Work Week" highlighted in purple). Typing a custom heading
-  replaces the whole line with plain text plus the decorative purple "." —
-  a custom heading can't keep that one-word highlight, since there's no
-  way to know which word in arbitrary text should be emphasized. Click
-  **Save hero text** to publish it (the Hero background/text *colors* are
-  still set separately, under **Site theme → Hero**). The subheading
-  accepts up to 2,500 characters, so it can hold more than a one-line
-  tagline if needed.
+- **Eyebrow, heading, and subheading are all editable** from either admin
+  panel, under the **Logo & hero** block — the same block the logo and
+  hero image live in, so all the top-of-page controls sit together
+  instead of in separate places. The eyebrow is the small line above the
+  heading (default "DEMO LEQTURE · 6–10 JULY 2026"), capped at 80
+  characters, plain text — leave it blank to keep the default. Leave the
+  heading and subheading blank to keep the original copy ("Learning at
+  *Work Week* 2026." with "Work Week" highlighted in purple). Typing a
+  custom heading replaces the whole line with plain text plus the
+  decorative purple "." — a custom heading can't keep that one-word
+  highlight, since there's no way to know which word in arbitrary text
+  should be emphasized. Click **Save hero text** to publish all three
+  fields together (the Hero background/text *colors* are still set
+  separately, under **Site theme → Hero**). The subheading accepts up to
+  2,500 characters, so it can hold more than a one-line tagline if
+  needed.
 - The original stat row ("5 days / 11 sessions / Global") and the **View
   schedule** / **See recordings** buttons that used to sit under the
   heading have been removed — the hero is just the eyebrow, heading, and
@@ -177,9 +207,9 @@ or a static image.
   (video or image) — with neither set, the hero goes back to a single
   column.
 - Backed by `player.mjs`, `hero-image.mjs`, and `theme.mjs` (for the
-  heading/subheading) / Netlify Blobs. The current link/image/text is
-  public (anyone visiting the site can fetch it); only setting, uploading,
-  editing, or removing needs an admin key.
+  eyebrow/heading/subheading) / Netlify Blobs. The current
+  link/image/text is public (anyone visiting the site can fetch it); only
+  setting, uploading, editing, or removing needs an admin key.
 
 ## Programme / sessions
 
@@ -428,6 +458,8 @@ two logins, two entirely different shared secrets:
 | Site announcement | Yes | No |
 | Hero video player | Yes | No |
 | Hero image | Yes | Yes — **disabled while the hero video player is live** (there's nothing to preview, so changing it would just be confusing; the fields grey out with an explanation until a Super Admin turns the player off) |
+| Site logo (nav bar, top-left) | Yes | Yes |
+| Hero eyebrow text | Yes | Yes |
 | Site theme (font, accent, section colors) | Yes | Yes — **except Footer colors, Super Admin only** |
 | Image link cards | Yes | Yes |
 | Text & image section | Yes | Yes |
@@ -565,11 +597,11 @@ netlify link                  # or: netlify init, to create a new site
 netlify deploy --prod
 ```
 
-Confirm the deploy summary lists **13 functions** (`survey-state`,
+Confirm the deploy summary lists **14 functions** (`survey-state`,
 `survey-questions`, `survey-response`, `survey-export`, `announcement`,
-`player`, `whoami`, `hero-image`, `sessions`, `recordings`, `theme`,
-`cards`, `feature`). If it says 0, you're deploying from inside `public/`
-instead of the project root.
+`player`, `whoami`, `hero-image`, `logo`, `sessions`, `recordings`,
+`theme`, `cards`, `feature`). If it says 0, you're deploying from inside
+`public/` instead of the project root.
 
 Don't forget to set both `ADMIN_KEY` and `CUSTOMER_ADMIN_KEY` (see above) —
 without them, every admin action returns a clear error instead of quietly
@@ -637,6 +669,14 @@ curl https://<site>/api/hero-image?meta=1   # {"exists":true,"updated_at":...}
 curl -X DELETE https://<site>/api/hero-image -H "x-admin-key: <ckey>"
 curl https://<site>/api/hero-image?meta=1   # {"exists":false,"updated_at":0}
 
+# 6b. Site logo — either admin can upload/remove, no restriction
+curl -X POST https://<site>/api/logo -H "x-admin-key: <ckey>" -F "image=@/path/to/test.jpg"
+curl https://<site>/api/logo?meta=1   # {"exists":true,"updated_at":...}
+curl https://<site>/api/logo -o /tmp/downloaded-logo.jpg   # raw bytes, no key needed
+curl -X POST https://<site>/api/logo -H "x-admin-key: <key>" -F "image=@/path/to/test.jpg"   # super can also change it
+curl -X DELETE https://<site>/api/logo -H "x-admin-key: <ckey>"
+curl https://<site>/api/logo?meta=1   # {"exists":false,"updated_at":0}
+
 # 7. Confirm Customer Admin is blocked from uploading while the player is live
 curl -X POST https://<site>/api/player -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ"}'
 curl -X POST https://<site>/api/hero-image -H "x-admin-key: <ckey>" -F "image=@/path/to/test.jpg"   # 409
@@ -685,6 +725,14 @@ Then manually:
     notice. Open `admin.html` with `ADMIN_KEY` at the same time and confirm
     Super Admin can still upload/change the image even while the player is
     live.
+16b. Open either admin panel and upload an image under **Logo & hero →
+    Site logo**. Confirm the plain-text "DEMO LEQTURE." wordmark in the
+    site's nav bar (top-left) is replaced by the uploaded image within
+    ~15 seconds, and that both admin panels show it as UPLOADED. Click
+    **Remove** and confirm the text wordmark comes back on the site.
+    Type something in the **Eyebrow** field under the same block and
+    confirm the small line above the Hero heading updates to match; clear
+    it and confirm it reverts to "DEMO LEQTURE · 6–10 JULY 2026".
 
 ```bash
 # 8. Site theme — set a font, accent color, and section colors as customer, confirm public GET
@@ -701,6 +749,12 @@ curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-
 curl https://<site>/api/theme   # sections.footer should now be red/green — Super Admin key changed it
 curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <ckey>" -d '{"font":"","accent":"","sections":{"hero":{"bg":"","text":""},"sessions":{"bg":"","text":""},"recordings":{"bg":"","text":""},"footer":{"bg":"","text":""}}}'
 curl https://<site>/api/theme   # footer back to blank/default
+
+# 8c. Hero eyebrow text — editable by either admin (not restricted like footer)
+curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <ckey>" -d '{"font":"","accent":"","sections":{"hero":{"bg":"","text":"","eyebrow":"DEMO LEQTURE · TEST WEEK"},"sessions":{"bg":"","text":""},"recordings":{"bg":"","text":""},"footer":{"bg":"","text":""}}}'
+curl https://<site>/api/theme   # sections.hero.eyebrow should show the custom text
+curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"font":"","accent":"","sections":{"hero":{"bg":"","text":"","eyebrow":""},"sessions":{"bg":"","text":""},"recordings":{"bg":"","text":""},"footer":{"bg":"","text":""}}}'
+curl https://<site>/api/theme   # eyebrow back to blank (site shows the default "DEMO LEQTURE · 6-10 JULY 2026")
 
 # 9. Image link cards — add, list, fetch image, reorder, delete
 curl -X POST https://<site>/api/cards -H "x-admin-key: <key>" -F "title=Test card" -F "body=Short description" -F "link=https://example.com" -F "image=@/path/to/test.jpg"
@@ -1004,6 +1058,8 @@ netlify blobs:delete quantexa-survey responses --force
 netlify blobs:delete quantexa-survey questions --force   # only if you also want the question list back to the original 5
 netlify blobs:delete demoleqture-hero-image bytes --force
 netlify blobs:delete demoleqture-hero-image info --force
+netlify blobs:delete demoleqture-logo bytes --force
+netlify blobs:delete demoleqture-logo info --force
 netlify blobs:delete demoleqture-theme theme --force
 netlify blobs:delete demoleqture-cards list --force
 netlify blobs:delete demoleqture-cards meta --force

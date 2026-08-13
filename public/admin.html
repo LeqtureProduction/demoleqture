@@ -184,7 +184,7 @@
         <a href="#block-survey" class="quick-nav-pill">&#128203; Survey</a>
         <a href="#block-announcement" class="quick-nav-pill">&#128227; Announcement</a>
         <a href="#block-player" class="quick-nav-pill">&#127909; Hero video</a>
-        <a href="#block-hero-image" class="quick-nav-pill">&#128444; Hero</a>
+        <a href="#block-hero-image" class="quick-nav-pill">&#128444; Logo &amp; hero</a>
         <a href="#block-programme" class="quick-nav-pill">&#128197; Programme</a>
         <a href="#block-theme" class="quick-nav-pill">&#127912; Theme</a>
         <a href="#block-cards" class="quick-nav-pill">&#128279; Link cards</a>
@@ -296,14 +296,30 @@
         <div class="feature-header">
           <span class="feature-icon">&#128444;</span>
           <div>
-            <div class="feature-name">Hero</div>
-            <div class="feature-desc">Heading, subheading, and the image or video at the top of the site.</div>
+            <div class="feature-name">Logo &amp; hero</div>
+            <div class="feature-desc">Site logo, plus the heading, subheading, and image or video at the top of the site.</div>
           </div>
         </div>
+        <div class="status-row">
+          <span>Site logo</span>
+          <span class="badge" id="logo-badge">—</span>
+        </div>
+        <div class="image-preview" id="logo-preview"><span class="empty">No logo uploaded</span></div>
+        <input type="file" id="logo-file" accept="image/*" />
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="logo-upload">Upload</button>
+          <button type="button" class="btn btn-outline" id="logo-remove">Remove</button>
+        </div>
+        <p class="hint">Shown top-left of the nav bar for every visitor within about 15 seconds, replacing the plain-text "DEMO LEQTURE." wordmark. Max 3MB. Remove it to bring the text wordmark back.</p>
+
+        <div class="divider" style="margin:14px 0;"></div>
+
         <div class="status-row">
           <span>Hero heading &amp; subheading</span>
           <span class="badge" id="hero-text-badge">—</span>
         </div>
+        <label for="theme-hero-eyebrow">Eyebrow (small line above the heading)</label>
+        <input type="text" id="theme-hero-eyebrow" maxlength="80" placeholder="DEMO LEQTURE · 6–10 JULY 2026" autocomplete="off">
         <label for="theme-hero-title">Heading</label>
         <input type="text" id="theme-hero-title" maxlength="80" placeholder="Learning at Work Week 2026" autocomplete="off">
         <label for="theme-hero-subtitle">Subheading</label>
@@ -311,7 +327,7 @@
         <div class="actions">
           <button type="button" class="btn btn-primary" id="hero-text-save">Save hero text</button>
         </div>
-        <p class="hint">Leave both blank to keep the original wording, including the purple "Work Week" highlight — a custom heading replaces the whole line with plain text instead.</p>
+        <p class="hint">Leave the heading and subheading blank to keep the original wording, including the purple "Work Week" highlight — a custom heading replaces the whole line with plain text instead. Leave the eyebrow blank to keep "DEMO LEQTURE · 6–10 JULY 2026".</p>
 
         <div class="divider" style="margin:14px 0;"></div>
 
@@ -694,6 +710,7 @@
         fetchAnnouncement();
         fetchPlayer();
         fetchHeroImage();
+        fetchLogo();
         fetchTheme();
         fetchCards();
         fetchFeature();
@@ -748,6 +765,7 @@
     fetchAnnouncement();
     fetchPlayer();
     fetchHeroImage();
+    fetchLogo();
     fetchTheme();
     fetchCards();
     fetchFeature();
@@ -1049,6 +1067,78 @@
     publishPlayer("");
   });
 
+  // ---- Site logo ----
+  var logoPreview = document.getElementById("logo-preview");
+  var logoBadge = document.getElementById("logo-badge");
+  var logoFile = document.getElementById("logo-file");
+  var logoUploadBtn = document.getElementById("logo-upload");
+  var logoRemoveBtn = document.getElementById("logo-remove");
+
+  function renderLogoPreview(exists, updatedAt) {
+    logoBadge.textContent = exists ? "UPLOADED" : "NONE";
+    logoBadge.className = "badge " + (exists ? "badge-on" : "");
+    if (exists) {
+      logoPreview.innerHTML = '<img src="/api/logo?t=' + updatedAt + '" alt="Logo preview" />';
+    } else {
+      logoPreview.innerHTML = '<span class="empty">No logo uploaded</span>';
+    }
+  }
+
+  function fetchLogo() {
+    return fetch("/api/logo?meta=1", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        renderLogoPreview(!!(data && data.exists), (data && data.updated_at) || 0);
+      })
+      .catch(function () {});
+  }
+
+  logoUploadBtn.addEventListener("click", function () {
+    var file = logoFile.files && logoFile.files[0];
+    if (!file) { alert("Choose an image file first."); return; }
+    logoUploadBtn.disabled = true;
+    logoRemoveBtn.disabled = true;
+    var form = new FormData();
+    form.append("image", file);
+    fetch("/api/logo", {
+      method: "POST",
+      headers: { "x-admin-key": key },
+      body: form,
+    })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(function (data) {
+        logoFile.value = "";
+        renderLogoPreview(true, data.info.updated_at);
+      })
+      .catch(function (err) { alert(err.message); })
+      .finally(function () {
+        logoUploadBtn.disabled = false;
+        logoRemoveBtn.disabled = false;
+      });
+  });
+
+  logoRemoveBtn.addEventListener("click", function () {
+    logoUploadBtn.disabled = true;
+    logoRemoveBtn.disabled = true;
+    fetch("/api/logo", {
+      method: "DELETE",
+      headers: { "x-admin-key": key },
+    })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(function () { renderLogoPreview(false, 0); })
+      .catch(function (err) { alert(err.message); })
+      .finally(function () {
+        logoUploadBtn.disabled = false;
+        logoRemoveBtn.disabled = false;
+      });
+  });
+
   function renderImagePreview(exists, updatedAt) {
     imageBadge.textContent = exists ? "UPLOADED" : "NONE";
     imageBadge.className = "badge " + (exists ? "badge-on" : "");
@@ -1178,16 +1268,18 @@
       var textEl = themeFieldEl(s, "text");
       var titleEl = themeFieldEl(s, "title");
       var subtitleEl = themeFieldEl(s, "subtitle");
+      var eyebrowEl = themeFieldEl(s, "eyebrow");
       if (document.activeElement !== bgEl) bgEl.value = sec.bg || "";
       if (document.activeElement !== textEl) textEl.value = sec.text || "";
       if (titleEl && document.activeElement !== titleEl) titleEl.value = sec.title || "";
       if (subtitleEl && document.activeElement !== subtitleEl) subtitleEl.value = sec.subtitle || "";
-      if (sec.bg || sec.text || sec.title || sec.subtitle) custom = true;
+      if (eyebrowEl && document.activeElement !== eyebrowEl) eyebrowEl.value = sec.eyebrow || "";
+      if (sec.bg || sec.text || sec.title || sec.subtitle || sec.eyebrow) custom = true;
     });
     themeBadge.textContent = custom ? "CUSTOM" : "DEFAULT";
     themeBadge.className = "badge " + (custom ? "badge-on" : "");
     var heroSec = (theme.sections && theme.sections.hero) || {};
-    var heroTextCustom = !!(heroSec.title || heroSec.subtitle);
+    var heroTextCustom = !!(heroSec.title || heroSec.subtitle || heroSec.eyebrow);
     heroTextBadge.textContent = heroTextCustom ? "CUSTOM" : "DEFAULT";
     heroTextBadge.className = "badge " + (heroTextCustom ? "badge-on" : "");
     var programmeSec = (theme.sections && theme.sections.sessions) || {};
@@ -1206,11 +1298,13 @@
     THEME_SECTIONS.forEach(function (s) {
       var titleEl = themeFieldEl(s, "title");
       var subtitleEl = themeFieldEl(s, "subtitle");
+      var eyebrowEl = themeFieldEl(s, "eyebrow");
       sections[s] = {
         bg: themeFieldEl(s, "bg").value.trim(),
         text: themeFieldEl(s, "text").value.trim(),
         title: titleEl ? titleEl.value.trim() : "",
-        subtitle: subtitleEl ? subtitleEl.value.trim() : ""
+        subtitle: subtitleEl ? subtitleEl.value.trim() : "",
+        eyebrow: eyebrowEl ? eyebrowEl.value.trim() : ""
       };
     });
     return { font: themeFont.value.trim(), accent: themeAccent.value.trim(), sections: sections };
@@ -1248,7 +1342,7 @@
   recordingsTextSaveBtn.addEventListener("click", function () { saveTheme(collectTheme()); });
   themeResetBtn.addEventListener("click", function () {
     var empty = { font: "", accent: "", sections: {} };
-    THEME_SECTIONS.forEach(function (s) { empty.sections[s] = { bg: "", text: "", title: "", subtitle: "" }; });
+    THEME_SECTIONS.forEach(function (s) { empty.sections[s] = { bg: "", text: "", title: "", subtitle: "", eyebrow: "" }; });
     saveTheme(empty);
   });
 
@@ -1452,6 +1546,7 @@
       fetchCards();
       fetchFeature();
       fetchSessionsAdmin();
+      fetchLogo();
     }
   }, 15000);
   document.addEventListener("visibilitychange", function () {
@@ -1460,6 +1555,7 @@
       fetchCards();
       fetchFeature();
       fetchSessionsAdmin();
+      fetchLogo();
     }
   });
 

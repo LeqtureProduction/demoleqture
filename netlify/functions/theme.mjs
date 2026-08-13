@@ -15,10 +15,11 @@ const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 const FONT_RE = /^[A-Za-z0-9 '-]{0,60}$/;
 const TITLE_MAX = 80;
 const SUBTITLE_MAX = 2500;
+const EYEBROW_MAX = 80; // small line above Hero's heading, e.g. "DEMO LEQTURE · 6-10 JULY 2026"
 
 function emptyTheme() {
   const sections = {};
-  for (const k of SECTION_KEYS) sections[k] = { bg: "", text: "", title: "", subtitle: "" };
+  for (const k of SECTION_KEYS) sections[k] = { bg: "", text: "", title: "", subtitle: "", eyebrow: "" };
   return { font: "", accent: "", sections, updated_at: 0 };
 }
 
@@ -96,7 +97,14 @@ export default async (req) => {
       if (subtitle === null) {
         return Response.json({ error: `subtitle for section "${k}" must be under ${SUBTITLE_MAX} characters` }, { status: 400 });
       }
-      sections[k] = { bg, text, title, subtitle };
+      // Only Hero currently shows an eyebrow line on the site, but the
+      // field is accepted generically for every section (like title and
+      // subtitle) so the schema stays uniform.
+      const eyebrow = sanitizeText(src.eyebrow, EYEBROW_MAX);
+      if (eyebrow === null) {
+        return Response.json({ error: `eyebrow text for section "${k}" must be under ${EYEBROW_MAX} characters` }, { status: 400 });
+      }
+      sections[k] = { bg, text, title, subtitle, eyebrow };
     }
 
     const theme = { font, accent, sections, updated_at: Date.now() };
