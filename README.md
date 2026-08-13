@@ -308,12 +308,17 @@ Either admin panel can change most of this, live, for every visitor:
   darker shade for hover states is computed automatically — there's only
   one field to set. Leave it blank to keep the default purple.
 - **Background and text color per section** — Hero, Sessions (the
-  programme), Recordings, and Footer each have their own optional
-  background color and text color (hex, e.g. `#a855f7`). Leave either
-  field blank to keep that section's default look. Colors apply to the
-  section's own background and its heading/intro copy — the cards and
-  accordions inside a section keep their own built-in styling so contrast
-  stays readable regardless of what colors are chosen.
+  programme), Link cards, Recordings, Text & image, and Footer each have
+  their own optional background color and text color (hex, e.g.
+  `#a855f7`). Leave either field blank to keep that section's default
+  look. Colors apply to the section's own background and its
+  heading/intro copy — the cards and accordions inside a section keep
+  their own built-in styling so contrast stays readable regardless of
+  what colors are chosen. For Link cards this colors the "Useful links"
+  section background plus its heading/subheading; for Text & image it
+  colors the section background plus the heading and body text (any
+  links or bold/italic formatting inside the body keep their own
+  styling).
 - **Footer is Super Admin only.** The Footer color fields are visible but
   disabled/read-only on the Customer Admin panel, labeled "SUPER ADMIN
   ONLY". `theme.mjs` enforces this server-side too — even if a raw API
@@ -323,10 +328,11 @@ Either admin panel can change most of this, live, for every visitor:
   behavior above.
 - **Heading and subheading text** for Hero, Programme, and Recordings each
   live in their own block instead of here — see "Hero section", "Programme
-  / sessions", and "Session recordings" above. This block only sets colors
-  for those sections (plus Sessions' and Footer's colors, which don't have
-  separate text fields at all). Leave either color field blank to keep
-  that section's default look.
+  / sessions", and "Session recordings" above. Link cards' title/subtitle
+  are set under **Image link cards** and Text & image's title/body are set
+  under **Text and image section** — this block only sets colors for
+  those two as well. Leave either color field blank to keep that
+  section's default look.
 - Changes apply for every visitor within about 15 seconds, the same
   polling pattern as the announcement bar and hero player. Backed by
   `theme.mjs` / Netlify Blobs (`demoleqture-theme`).
@@ -362,7 +368,9 @@ resources, sign-up forms, related sites, and so on.
 - Up to 24 cards. The section on the site is hidden entirely whenever
   there are zero cards.
 - **Section title and subtitle** are editable text — change "Useful links"
-  and its subtitle line to whatever fits, then **Save section text**.
+  and its subtitle line to whatever fits, then **Save section text**. The
+  section's background and text colors are set separately, under
+  **Site theme → Link cards**.
 - **Move the whole section up or down** with the two **Move section**
   buttons. There are three possible slots: before Sessions (right after
   the hero), between Sessions and Recordings (the default), or after
@@ -420,6 +428,10 @@ image link cards, this is a single block, not a repeatable list.
   at either end. If this section and the image link cards end up in the
   same slot, they just stack — whichever was moved there more recently
   ends up closer to the following section.
+- The section's background and text colors are set separately, under
+  **Site theme → Text & image** — the text color applies to the title and
+  body, but not to any links or bold/italic text inside the body, which
+  keep their own styling regardless.
 - Backed by `feature.mjs` / Netlify Blobs (`demoleqture-feature`). Content
   and the image are public; only editing, moving, or clearing needs an
   admin key.
@@ -756,6 +768,12 @@ curl https://<site>/api/theme   # sections.hero.eyebrow should show the custom t
 curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"font":"","accent":"","sections":{"hero":{"bg":"","text":"","eyebrow":""},"sessions":{"bg":"","text":""},"recordings":{"bg":"","text":""},"footer":{"bg":"","text":""}}}'
 curl https://<site>/api/theme   # eyebrow back to blank (site shows the default "DEMO LEQTURE · 6-10 JULY 2026")
 
+# 8d. Link cards + Text & image section colors — editable by either admin
+curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <ckey>" -d '{"font":"","accent":"","sections":{"hero":{"bg":"","text":""},"sessions":{"bg":"","text":""},"recordings":{"bg":"","text":""},"footer":{"bg":"","text":""},"cards":{"bg":"#f0eadd","text":"#111111"},"feature":{"bg":"#dff6ff","text":"#003344"}}}'
+curl https://<site>/api/theme   # sections.cards and sections.feature should show the custom colors
+curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"font":"","accent":"","sections":{"hero":{"bg":"","text":""},"sessions":{"bg":"","text":""},"recordings":{"bg":"","text":""},"footer":{"bg":"","text":""},"cards":{"bg":"","text":""},"feature":{"bg":"","text":""}}}'
+curl https://<site>/api/theme   # both back to blank/default
+
 # 9. Image link cards — add, list, fetch image, reorder, delete
 curl -X POST https://<site>/api/cards -H "x-admin-key: <key>" -F "title=Test card" -F "body=Short description" -F "link=https://example.com" -F "image=@/path/to/test.jpg"
 curl https://<site>/api/cards   # {"cards":[{"id":"...","title":"Test card",...}],"meta":{...}}
@@ -787,6 +805,15 @@ Then manually:
     all** in `customer-admin.html` afterward and confirm the footer color
     you just set in `admin.html` is unaffected (only the sections
     Customer Admin can actually edit get reset).
+17c. Add at least one card under **Image link cards** and some text under
+    **Text and image section** first (both are hidden on the site when
+    empty, so their colors won't be visible otherwise). Then, from either
+    admin panel, set a background/text color under **Site theme → Link
+    cards** and confirm the "Useful links" section on the site updates
+    within ~15 seconds; do the same for **Site theme → Text & image** and
+    confirm that section updates too, without affecting any other
+    section. Confirm links/bold/italic text inside the Text & image body
+    keep their own color rather than switching to the section text color.
 18. Add two or three cards under **Image link cards** with different
     images/titles/links. Confirm a new "Useful links" section appears on
     the site between the programme and recordings, that each card opens

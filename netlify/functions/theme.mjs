@@ -10,7 +10,7 @@ import { getRole } from "./lib/auth.mjs";
 // shared client-side save function always sends the whole theme object
 // (see collectTheme() in admin.html / customer-admin.html).
 
-const SECTION_KEYS = ["hero", "sessions", "recordings", "footer"];
+const SECTION_KEYS = ["hero", "sessions", "recordings", "footer", "cards", "feature"];
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 const FONT_RE = /^[A-Za-z0-9 '-]{0,60}$/;
 const TITLE_MAX = 80;

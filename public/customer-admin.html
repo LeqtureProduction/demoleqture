@@ -292,7 +292,7 @@
           <span class="feature-icon">&#127912;</span>
           <div>
             <div class="feature-name">Site theme</div>
-            <div class="feature-desc">Font, accent color, and colors per section.</div>
+            <div class="feature-desc">Font, accent color, and colors per section, including Link cards and Text &amp; image.</div>
           </div>
         </div>
         <div class="status-row">
@@ -327,12 +327,30 @@
           </div>
         </div>
         <div class="theme-field-row">
+          <div class="theme-field-name">Link cards</div>
+          <div class="theme-field-inputs">
+            <input type="text" id="theme-cards-bg" placeholder="Background #hex" maxlength="7">
+            <input type="color" data-target="theme-cards-bg" value="#eeece6">
+            <input type="text" id="theme-cards-text" placeholder="Text #hex" maxlength="7">
+            <input type="color" data-target="theme-cards-text" value="#0a0a0a">
+          </div>
+        </div>
+        <div class="theme-field-row">
           <div class="theme-field-name">Recordings</div>
           <div class="theme-field-inputs">
             <input type="text" id="theme-recordings-bg" placeholder="Background #hex" maxlength="7">
             <input type="color" data-target="theme-recordings-bg" value="#0a0a0a">
             <input type="text" id="theme-recordings-text" placeholder="Text #hex" maxlength="7">
             <input type="color" data-target="theme-recordings-text" value="#ffffff">
+          </div>
+        </div>
+        <div class="theme-field-row">
+          <div class="theme-field-name">Text &amp; image</div>
+          <div class="theme-field-inputs">
+            <input type="text" id="theme-feature-bg" placeholder="Background #hex" maxlength="7">
+            <input type="color" data-target="theme-feature-bg" value="#eeece6">
+            <input type="text" id="theme-feature-text" placeholder="Text #hex" maxlength="7">
+            <input type="color" data-target="theme-feature-text" value="#0a0a0a">
           </div>
         </div>
         <div class="theme-field-row">
@@ -774,7 +792,7 @@
   var programmeTextSaveBtn = document.getElementById("programme-text-save");
   var recordingsTextBadge = document.getElementById("recordings-text-badge");
   var recordingsTextSaveBtn = document.getElementById("recordings-text-save");
-  var THEME_SECTIONS = ["hero", "sessions", "recordings", "footer"];
+  var THEME_SECTIONS = ["hero", "sessions", "recordings", "footer", "cards", "feature"];
 
   Array.prototype.forEach.call(document.querySelectorAll(".theme-field-inputs input[type=color]"), function (swatch) {
     swatch.addEventListener("input", function () {
