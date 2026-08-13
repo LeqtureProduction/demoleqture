@@ -20,7 +20,7 @@ labeled sections so it's obvious at a glance what can be changed.
 public/                     → published static site
   index.html                  the site itself, incl. survey popup, announcement bar, hero player/image, programme, recordings, link cards, text+image section
   admin.html                   Super Admin: everything
-  customer-admin.html          Customer Admin: survey responses (view only) + hero image + programme heading (view-only session list) + theme + link cards + text/image section (no recordings editor)
+  customer-admin.html          Customer Admin: survey responses (view only) + hero image + programme heading (view-only session list) + theme + link cards + text/image section + recordings heading (view-only recordings list)
 netlify/functions/          → serverless functions
   lib/auth.mjs                 shared role check (not a function itself, just imported by the others)
   lib/survey-schema.mjs        shared question-list schema/defaults (not a function itself, just imported by the survey functions below)
@@ -232,8 +232,10 @@ programme, shown as the same click-to-expand accordion as before.
 
 ## Session recordings
 
-The "Session recordings" grid near the bottom of the site — **Super Admin
-only**, from the **Recordings** block at the bottom of `admin.html`.
+The "Session recordings" grid near the bottom of the site. The list of
+recordings itself is **Super Admin only**, from the **Recordings** block
+in `admin.html`; Customer Admin has its own **Recordings** block too, with
+the same heading/subheading editing plus the list shown read-only.
 
 - **Add a recording** with a session name, a speaker name, and an optional
   link. Leaving the link blank shows the card as **Available soon** (not
@@ -241,18 +243,22 @@ only**, from the **Recordings** block at the bottom of `admin.html`.
   link in a new tab) — those exact two labels are kept as-is. Edit,
   delete, or reorder (↑/↓) any recording the same way as Programme
   sessions.
-- **The speaker's photo links itself automatically.** There's no photo
-  upload here — if the speaker name on a recording matches (case- and
-  whitespace-insensitive) the speaker name on a Programme session that has
-  a photo uploaded, that same photo shows on the recording card. No match,
-  or a match with no photo uploaded yet, and the card just shows without
-  one (still fully functional — the photo is a nice-to-have, not
-  required). Uploading or changing a speaker's photo under **Programme**
-  updates every recording card using that name too, automatically, next
-  time the site polls.
+- **The speaker's photo links itself automatically**, shown as a small
+  round avatar next to the speaker's name (same visual style as the
+  Programme section's speaker avatars) rather than a large photo. There's
+  no photo upload here — if the speaker name on a recording matches (case-
+  and whitespace-insensitive) the speaker name on a Programme session that
+  has a photo uploaded, that same photo fills the avatar circle. No match,
+  or a match with no photo uploaded yet, and the avatar just shows the
+  speaker's initials instead — same fallback pattern as Programme. Nothing
+  here is broken by a missing photo, it's a nice-to-have, not required.
+  Uploading or changing a speaker's photo under **Programme** updates
+  every recording avatar using that name too, automatically, next time the
+  site polls.
 - **Section heading and subheading** for "Session recordings" are edited
-  from **Site theme → Recordings**, same as before — this section only
-  covers the list of recording cards itself.
+  from right inside the **Recordings** block, in either admin panel — not
+  from Site theme (moved out of there, same as Hero and Programme's
+  heading/subheading already were).
 - Backed by `recordings.mjs` / Netlify Blobs (`demoleqture-recordings`).
   The list is public (anyone visiting the site can fetch it, including the
   photo lookup); adding, editing, deleting, or reordering needs the Super
@@ -278,12 +284,12 @@ Either admin panel can change, live, for every visitor:
   section's own background and its heading/intro copy — the cards and
   accordions inside a section keep their own built-in styling so contrast
   stays readable regardless of what colors are chosen.
-- **Heading and subheading text for Hero and Recordings** — Recordings has
-  a heading and subheading field right above its colors, in this same
-  block. Hero's heading/subheading live instead in the **Hero** block
-  (next to the hero image controls) — see "Hero section" above. Leave
-  either blank to keep the original wording. (Sessions and Footer don't
-  have text fields yet — only their colors are editable.)
+- **Heading and subheading text** for Hero, Programme, and Recordings each
+  live in their own block instead of here — see "Hero section", "Programme
+  / sessions", and "Session recordings" above. This block only sets colors
+  for those sections (plus Sessions' and Footer's colors, which don't have
+  separate text fields at all). Leave either color field blank to keep
+  that section's default look.
 - Changes apply for every visitor within about 15 seconds, the same
   polling pattern as the announcement bar and hero player. Backed by
   `theme.mjs` / Netlify Blobs (`demoleqture-theme`).
@@ -389,7 +395,10 @@ Both panels open with a row of pill-shaped **jump-to links** (Survey,
 Announcement, Hero video, Hero, Programme, Theme, Link cards, Text &
 image, Recordings — Customer Admin shows only the ones it has access to)
 so it's obvious at a glance what's available without scrolling through
-the whole page first.
+the whole page first. A small round **↑** button appears in the
+bottom-right corner once you've scrolled down a bit, in either panel —
+click it to jump straight back to the top (and the pill bar) instead of
+scrolling back up manually.
 Each feature is grouped into its own labeled block with an icon, a name,
 and a one-line description of what it does, followed by its controls.
 
@@ -416,6 +425,7 @@ two logins, two entirely different shared secrets:
 | Image link cards | Yes | Yes |
 | Text & image section | Yes | Yes |
 | Recordings (add/edit/delete/reorder) | Yes | No |
+| Recordings heading/subtitle text | Yes | Yes |
 
 Both are plain, unlisted pages — not linked from the site nav — gated by a
 shared secret each, not a full login system. Enough to keep random visitors
@@ -468,10 +478,10 @@ client/customer contact.
    ↑/↓ to reorder, and **Delete** to remove one. Only Super Admin sees
    these session controls — Customer Admin sees the list read-only.
 8. Under **Site theme**, type a Google Fonts name, an accent color, and/or
-   set background/text colors and the Recordings heading/subheading, then
-   **Save theme**. **Reset all** clears everything back to the default
-   look (Hero's and Programme's heading/subheading are saved separately,
-   from their own blocks above).
+   set background/text colors, then **Save theme**. **Reset all** clears
+   everything back to the default look (Hero's, Programme's, and
+   Recordings' heading/subheading are all saved separately, from their own
+   blocks — Hero, Programme, and Recordings above and below this one).
 9. Under **Image link cards**, fill in the title/body/link/image form and
    click **Add card**; use **Edit** to change one, ↑/↓ to reorder, and
    **Delete** to remove one.
@@ -479,12 +489,17 @@ client/customer contact.
    image, then **Save**. **Remove image** clears just the image;
    **Clear whole section** wipes all three back to empty; **Move section
    up**/**down** repositions it on the page.
-11. Under **Recordings**, fill in a session name and speaker name, add a
-    link if the recording's ready (leave it blank for **Available soon**),
-    and click **Add recording**; use **Edit** to change one, ↑/↓ to
-    reorder, and **Delete** to remove one. If the speaker name matches
-    someone with a photo uploaded under **Programme**, that photo shows up
-    on the recording card automatically — no separate upload here.
+11. Under **Recordings**, type a heading and/or subheading and click **Save
+    section text** — same idea as Hero and Programme. Below that, fill in
+    a session name and speaker name, add a link if the recording's ready
+    (leave it blank for **Available soon**), and click **Add recording**;
+    use **Edit** to change one, ↑/↓ to reorder, and **Delete** to remove
+    one. If the speaker name matches someone with a photo uploaded under
+    **Programme**, that photo shows up automatically as a small round
+    avatar next to the speaker's name — no separate upload here.
+12. A small **↑** button appears in the bottom-right corner of either
+    admin panel once you've scrolled down a bit — click it to jump back to
+    the top instead of scrolling manually.
 
 ### Using Customer Admin (`customer-admin.html`)
 
@@ -510,9 +525,12 @@ client/customer contact.
 5. Under **Site theme**, **Image link cards**, and **Text & image section**,
    the controls work exactly as in Super Admin — both panels have full
    access to these three features.
-6. There's no **Recordings** block here at all — the recordings list is
-   Super Admin only, added/edited from `admin.html`. Recordings still show
-   normally on the live site regardless of which admin key is in use.
+6. Under **Recordings**, type a heading and/or subheading and click **Save
+   section text** — same as Super Admin. The recordings list itself
+   (session name, speaker, link) is shown below for reference but is
+   read-only here — a note explains that only Super Admin can add, edit,
+   delete, or reorder recordings.
+7. The same **↑** scroll-to-top button shows up here too, in the same spot.
 
 ## Setup
 
@@ -917,18 +935,35 @@ Then manually:
 41. In `admin.html`, under **Recordings**, add one with a session name and
     speaker name that exactly matches an existing Programme speaker who
     already has a photo uploaded — confirm the site's recordings grid
-    shows that same photo on the card within ~15 seconds, badged
+    shows that same photo as a small round avatar next to the speaker's
+    name (not a large thumbnail photo) within ~15 seconds, badged
     "Available soon" (no link yet) and not clickable. Add a link and
     confirm it flips to "Available now" and becomes a clickable card that
     opens the link in a new tab. Add a second recording with a speaker
     name that doesn't match anyone in Programme and confirm that card
-    shows with no photo (just the plain dark thumbnail), everything else
-    working the same. Reorder with ↑/↓ and confirm the site's order
-    updates to match. Delete one and confirm it disappears from the site.
-42. Confirm `customer-admin.html` has no Recordings block or pill at all
-    (Super Admin only), and that unlocking `customer-admin.html` with the
-    `ADMIN_KEY` (not `CUSTOMER_ADMIN_KEY`) still doesn't show a Recordings
-    block there either — it's specific to `admin.html`, not the key's role.
+    shows an initials avatar instead (same fallback style as Programme),
+    everything else working the same. Reorder with ↑/↓ and confirm the
+    site's order updates to match. Delete one and confirm it disappears
+    from the site.
+42. Under **Recordings** in either admin panel, set a custom heading and
+    subheading and click **Save section text** — confirm the site updates
+    within ~15 seconds, and that the same fields (and the same current
+    values) show up in the other panel too. Clear both to restore the
+    default wording. Confirm this control now lives inside the
+    **Recordings** block in both panels, not under **Site theme** (only
+    colors are left there).
+43. Open `customer-admin.html` and confirm it now has a **Recordings**
+    block and pill: editable heading/subheading (works the same as Super
+    Admin), plus the recordings list shown read-only below with a note
+    explaining only Super Admin can add, edit, delete, or reorder them.
+    Confirm there's still no way to add/edit/delete a recording from this
+    panel.
+44. In either admin panel, scroll down past the first couple of blocks and
+    confirm a small round **↑** button appears in the bottom-right
+    corner; click it and confirm the page smoothly scrolls back to the
+    top. Confirm the button is hidden while still near the top of the
+    page, and hidden entirely before unlocking (while the key-entry gate
+    is showing).
 
 ## Before a live event
 

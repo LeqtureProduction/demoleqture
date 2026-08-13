@@ -207,27 +207,28 @@
   a.rec-card:hover{border-color:var(--purple);}
   .rec-thumb{
     height:190px;background:linear-gradient(150deg,#3a1a3a,#12060f);
-    display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;
-  }
-  .rec-thumb img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;}
-  .rec-thumb.has-photo::before{
-    content:"";position:absolute;inset:0;z-index:1;
-    background:linear-gradient(180deg,rgba(0,0,0,0.1),rgba(0,0,0,0.55));
+    display:flex;align-items:center;justify-content:center;position:relative;
   }
   .rec-thumb .play{
     width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.12);
     border:1px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;
-    position:relative;z-index:2;
   }
   .rec-thumb .play::after{content:"";border-left:14px solid #fff;border-top:9px solid transparent;border-bottom:9px solid transparent;margin-left:4px;}
   .avail-badge{
-    position:absolute;top:14px;right:14px;z-index:3;background:var(--purple);color:#1f0a33;
+    position:absolute;top:14px;right:14px;background:var(--purple);color:#1f0a33;
     font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
     padding:5px 10px;border-radius:20px;
   }
   .rec-info{padding:18px 20px;}
-  .rec-info .meta{font-size:12.5px;color:var(--gray);margin-bottom:6px;}
+  .rec-info .meta{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--gray);margin-bottom:6px;}
   .rec-info .title{font-family:'Poppins',sans-serif;font-weight:600;font-size:16px;color:var(--white);}
+  .rec-avatar{
+    width:26px;height:26px;border-radius:50%;flex-shrink:0;overflow:hidden;
+    background:linear-gradient(140deg,var(--purple),#d9b8ff);
+    color:#1f0a33;font-family:'Poppins',sans-serif;font-weight:700;font-size:10.5px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .rec-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
 
   /* LINK CARDS */
   .link-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:24px;margin-top:44px;}
@@ -1516,6 +1517,13 @@
   var escDiv = document.createElement("div");
   function esc(v) { escDiv.textContent = v == null ? "" : String(v); return escDiv.innerHTML; }
 
+  function initials(name) {
+    var parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return "?";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
   function render(recordings) {
     if (!recordings.length) {
       grid.innerHTML = '<div class="no-sessions">No recordings have been published yet.</div>';
@@ -1525,16 +1533,14 @@
       var tag = r.available ? "a" : "div";
       var attrs = r.available ? ' href="' + esc(r.link) + '" target="_blank" rel="noopener"' : "";
       var badge = r.available ? "Available now" : "Available soon";
-      var hasPhoto = !!r.speakerPhotoSessionId;
-      var photo = hasPhoto
+      var avatarInner = r.speakerPhotoSessionId
         ? '<img src="/api/sessions?image=' + esc(r.speakerPhotoSessionId) + '&t=' + esc(r.updated_at || 0) + '" alt="" />'
-        : "";
-      var thumbClass = "rec-thumb" + (hasPhoto ? " has-photo" : "");
+        : esc(initials(r.speakerName));
       return (
         '<' + tag + ' class="rec-card"' + attrs + '>' +
-          '<div class="' + thumbClass + '">' + photo + '<span class="avail-badge">' + badge + '</span><div class="play"></div></div>' +
+          '<div class="rec-thumb"><span class="avail-badge">' + badge + '</span><div class="play"></div></div>' +
           '<div class="rec-info">' +
-            '<div class="meta">' + esc(r.speakerName) + '</div>' +
+            '<div class="meta"><span class="rec-avatar">' + avatarInner + '</span>' + esc(r.speakerName) + '</div>' +
             '<div class="title">' + esc(r.sessionName) + '</div>' +
           '</div>' +
         '</' + tag + '>'

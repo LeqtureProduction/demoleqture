@@ -70,6 +70,15 @@
   .actions .btn{flex:1;}
   .divider{border-top:1px solid var(--line);margin:22px 0;}
   .hint{font-size:12.5px;color:var(--muted);margin-top:18px;line-height:1.55;}
+  .scroll-top-btn{
+    position:fixed;bottom:26px;right:26px;z-index:100;
+    width:46px;height:46px;border-radius:50%;border:none;cursor:pointer;
+    background:var(--purple);color:#ffffff;font-size:19px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 18px rgba(0,0,0,0.22);transition:background .15s,transform .15s;
+  }
+  .scroll-top-btn:hover{background:var(--purple-dark);transform:translateY(-2px);}
+  .scroll-top-btn[hidden]{display:none;}
   .notice{
     font-size:13px;color:var(--amber-ink);background:rgba(242,176,109,0.16);
     border:1px solid rgba(242,176,109,0.45);border-radius:var(--radius);
@@ -163,6 +172,7 @@
         <a href="#block-theme" class="quick-nav-pill">&#127912; Theme</a>
         <a href="#block-cards" class="quick-nav-pill">&#128279; Link cards</a>
         <a href="#block-feature" class="quick-nav-pill">&#128221; Text &amp; image</a>
+        <a href="#block-recordings" class="quick-nav-pill">&#127909; Recordings</a>
       </nav>
 
       <div class="feature-block band-white" id="block-survey">
@@ -266,7 +276,7 @@
           <span class="feature-icon">&#127912;</span>
           <div>
             <div class="feature-name">Site theme</div>
-            <div class="feature-desc">Font, accent color, colors per section, and the Recordings heading.</div>
+            <div class="feature-desc">Font, accent color, and colors per section.</div>
           </div>
         </div>
         <div class="status-row">
@@ -302,8 +312,6 @@
         </div>
         <div class="theme-field-row">
           <div class="theme-field-name">Recordings</div>
-          <input type="text" id="theme-recordings-title" maxlength="80" placeholder="Heading (default: Session recordings)" autocomplete="off" style="margin-bottom:8px;">
-          <textarea id="theme-recordings-subtitle" class="textarea-field" maxlength="240" placeholder="Subheading (default: Missed a session...)" style="min-height:44px;"></textarea>
           <div class="theme-field-inputs">
             <input type="text" id="theme-recordings-bg" placeholder="Background #hex" maxlength="7">
             <input type="color" data-target="theme-recordings-bg" value="#0a0a0a">
@@ -324,7 +332,7 @@
           <button type="button" class="btn btn-primary" id="theme-save">Save theme</button>
           <button type="button" class="btn btn-outline" id="theme-reset">Reset all</button>
         </div>
-        <p class="hint">Sets the font, accent color, and background/text colors for everyone within about 15 seconds — plus the Recordings heading/subheading (the Hero and Programme heading/subheading are set in their own sections instead). Leave a field blank to keep that section's default text/look.</p>
+        <p class="hint">Sets the font, accent color, and background/text colors for everyone within about 15 seconds (Hero, Programme, and Recordings heading/subheading are all set in their own sections instead). Leave a field blank to keep that section's default text/look.</p>
       </div>
 
       <div class="feature-block band-white" id="block-cards">
@@ -426,6 +434,38 @@
         </div>
         <p class="hint">Use the toolbar above each field for bold, italic, underline, lists, and links. Choose whether the image sits to the right, to the left, has the text wrapping around it, or sits above the text — and how big it is, as a percentage. Shown as its own section, only while it has a title, body text, or image — leaving everything blank hides it (and always centers whatever's left, regardless of the chosen layout). You can save title/body without an image, or add an image with no text. Use the buttons above to move it: before Sessions, between Sessions and Recordings, or after Recordings (the default).</p>
       </div>
+
+      <div class="feature-block band-white" id="block-recordings">
+        <div class="feature-header">
+          <span class="feature-icon">&#127909;</span>
+          <div>
+            <div class="feature-name">Recordings</div>
+            <div class="feature-desc">Session recordings shown near the bottom of the site — session name, speaker, and a link.</div>
+          </div>
+        </div>
+        <div class="status-row">
+          <span>Recordings heading &amp; subheading</span>
+          <span class="badge" id="recordings-text-badge">—</span>
+        </div>
+        <label for="theme-recordings-title">Heading</label>
+        <input type="text" id="theme-recordings-title" maxlength="80" placeholder="Heading (default: Session recordings)" autocomplete="off">
+        <label for="theme-recordings-subtitle">Subheading</label>
+        <textarea id="theme-recordings-subtitle" class="textarea-field" maxlength="240" placeholder="Subheading (default: Missed a session...)" style="min-height:44px;"></textarea>
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="recordings-text-save">Save section text</button>
+        </div>
+        <p class="hint">Leave both blank to keep the default wording.</p>
+
+        <div class="divider" style="margin:14px 0;"></div>
+
+        <div class="status-row">
+          <span>Recordings</span>
+          <span class="badge" id="recordings-badge">—</span>
+        </div>
+        <div class="notice">The recordings list itself (session name, speaker, link) can only be added, edited, or reordered by Super Admin. Shown below for reference.</div>
+        <div id="recordings-readonly-list"></div>
+        <p class="hint">The speaker's photo, when shown, is linked automatically from a matching Programme speaker photo — there's no separate upload here either way.</p>
+      </div>
     </div>
   </div>
 </div>
@@ -512,6 +552,7 @@
     fetchCards();
     fetchFeature();
     fetchSessionsReadOnly();
+    fetchRecordingsReadOnly();
   }
 
   function fetchState() {
@@ -642,6 +683,8 @@
   var heroTextSaveBtn = document.getElementById("hero-text-save");
   var programmeTextBadge = document.getElementById("programme-text-badge");
   var programmeTextSaveBtn = document.getElementById("programme-text-save");
+  var recordingsTextBadge = document.getElementById("recordings-text-badge");
+  var recordingsTextSaveBtn = document.getElementById("recordings-text-save");
   var THEME_SECTIONS = ["hero", "sessions", "recordings", "footer"];
 
   Array.prototype.forEach.call(document.querySelectorAll(".theme-field-inputs input[type=color]"), function (swatch) {
@@ -710,6 +753,10 @@
     var programmeTextCustom = !!(programmeSec.title || programmeSec.subtitle);
     programmeTextBadge.textContent = programmeTextCustom ? "CUSTOM" : "DEFAULT";
     programmeTextBadge.className = "badge " + (programmeTextCustom ? "badge-on" : "");
+    var recordingsSec = (theme.sections && theme.sections.recordings) || {};
+    var recordingsTextCustom = !!(recordingsSec.title || recordingsSec.subtitle);
+    recordingsTextBadge.textContent = recordingsTextCustom ? "CUSTOM" : "DEFAULT";
+    recordingsTextBadge.className = "badge " + (recordingsTextCustom ? "badge-on" : "");
     syncSwatches();
   }
 
@@ -733,6 +780,7 @@
     themeResetBtn.disabled = true;
     heroTextSaveBtn.disabled = true;
     programmeTextSaveBtn.disabled = true;
+    recordingsTextSaveBtn.disabled = true;
     fetch("/api/theme", {
       method: "POST",
       headers: { "content-type": "application/json", "x-admin-key": key },
@@ -749,12 +797,14 @@
         themeResetBtn.disabled = false;
         heroTextSaveBtn.disabled = false;
         programmeTextSaveBtn.disabled = false;
+        recordingsTextSaveBtn.disabled = false;
       });
   }
 
   themeSaveBtn.addEventListener("click", function () { saveTheme(collectTheme()); });
   heroTextSaveBtn.addEventListener("click", function () { saveTheme(collectTheme()); });
   programmeTextSaveBtn.addEventListener("click", function () { saveTheme(collectTheme()); });
+  recordingsTextSaveBtn.addEventListener("click", function () { saveTheme(collectTheme()); });
   themeResetBtn.addEventListener("click", function () {
     var empty = { font: "", accent: "", sections: {} };
     THEME_SECTIONS.forEach(function (s) { empty.sections[s] = { bg: "", text: "", title: "", subtitle: "" }; });
@@ -961,6 +1011,7 @@
       fetchCards();
       fetchFeature();
       fetchSessionsReadOnly();
+      fetchRecordingsReadOnly();
     }
   }, 15000);
   document.addEventListener("visibilitychange", function () {
@@ -969,6 +1020,7 @@
       fetchCards();
       fetchFeature();
       fetchSessionsReadOnly();
+      fetchRecordingsReadOnly();
     }
   });
 
@@ -1004,6 +1056,45 @@
           '<div class="session-item-info">' +
             '<div class="session-item-title">' + safeTitle + '</div>' +
             '<div class="session-item-meta">' + (s.date || "") + ' &middot; ' + (s.startTime || "") + '&ndash;' + (s.endTime || "") + ' CET &middot; ' + safeSpeaker + '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join("");
+  }
+
+  // ---- Recordings (read-only here — Super Admin only can edit) ----
+  var recordingsBadge = document.getElementById("recordings-badge");
+  var recordingsReadonlyList = document.getElementById("recordings-readonly-list");
+
+  function fetchRecordingsReadOnly() {
+    return fetch("/api/recordings", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) { renderRecordingsReadOnly((data && data.recordings) || []); })
+      .catch(function () {});
+  }
+
+  function renderRecordingsReadOnly(recordings) {
+    recordingsBadge.textContent = String(recordings.length);
+    if (!recordings.length) {
+      recordingsReadonlyList.innerHTML = '<div class="card-empty">No recordings yet.</div>';
+      return;
+    }
+    var esc = document.createElement("div");
+    recordingsReadonlyList.innerHTML = recordings.map(function (r) {
+      esc.textContent = r.sessionName || "";
+      var safeSession = esc.innerHTML;
+      esc.textContent = r.speakerName || "";
+      var safeSpeaker = esc.innerHTML;
+      var statusText = r.available ? "Available now" : "Available soon";
+      var thumb = r.speakerPhotoSessionId
+        ? '<img src="/api/sessions?image=' + r.speakerPhotoSessionId + '&t=' + (r.updated_at || 0) + '" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;" />'
+        : '<span style="width:32px;height:32px;border-radius:50%;background:var(--panel-grey);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ink-soft);">' + safeSpeaker.slice(0, 1) + '</span>';
+      return (
+        '<div class="session-item">' +
+          thumb +
+          '<div class="session-item-info">' +
+            '<div class="session-item-title">' + safeSession + '</div>' +
+            '<div class="session-item-meta">' + safeSpeaker + ' &middot; ' + statusText + '</div>' +
           '</div>' +
         '</div>'
       );
@@ -1126,6 +1217,33 @@
       .catch(function (err) { alert(err.message); })
       .finally(function () { featureClearAllBtn.disabled = false; });
   });
+})();
+</script>
+
+<button type="button" class="scroll-top-btn" id="scroll-top-btn" aria-label="Scroll to top" hidden>&uarr;</button>
+<script>
+(function () {
+  var panelEl = document.getElementById("panel");
+  var btn = document.getElementById("scroll-top-btn");
+
+  function updateVisibility() {
+    btn.hidden = panelEl.hidden || window.scrollY < 400;
+  }
+
+  window.addEventListener("scroll", updateVisibility);
+  window.addEventListener("resize", updateVisibility);
+  btn.addEventListener("click", function () {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  // The panel only becomes visible after a successful unlock, at which
+  // point there's suddenly something worth scrolling — recheck right
+  // after that (and every second briefly) rather than waiting for the
+  // first scroll event.
+  var recheck = setInterval(function () {
+    updateVisibility();
+    if (!panelEl.hidden) clearInterval(recheck);
+  }, 300);
 })();
 </script>
 </body>

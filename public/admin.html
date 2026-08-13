@@ -71,6 +71,15 @@
   .actions .btn{flex:1;}
   .divider{border-top:1px solid var(--line);margin:22px 0;}
   .hint{font-size:12.5px;color:var(--muted);margin-top:18px;line-height:1.55;}
+  .scroll-top-btn{
+    position:fixed;bottom:26px;right:26px;z-index:100;
+    width:46px;height:46px;border-radius:50%;border:none;cursor:pointer;
+    background:var(--purple);color:#ffffff;font-size:19px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 18px rgba(0,0,0,0.22);transition:background .15s,transform .15s;
+  }
+  .scroll-top-btn:hover{background:var(--purple-dark);transform:translateY(-2px);}
+  .scroll-top-btn[hidden]{display:none;}
   textarea.announce-textarea{
     width:100%;background:#ffffff;border:1px solid var(--line);border-radius:var(--radius);
     padding:11px 13px;color:var(--ink);font-family:'Inter',sans-serif;font-size:14.5px;
@@ -384,7 +393,7 @@
           <span class="feature-icon">&#127912;</span>
           <div>
             <div class="feature-name">Site theme</div>
-            <div class="feature-desc">Font, accent color, colors per section, and the Recordings heading.</div>
+            <div class="feature-desc">Font, accent color, and colors per section.</div>
           </div>
         </div>
         <div class="status-row">
@@ -420,8 +429,6 @@
         </div>
         <div class="theme-field-row">
           <div class="theme-field-name">Recordings</div>
-          <input type="text" id="theme-recordings-title" maxlength="80" placeholder="Heading (default: Session recordings)" autocomplete="off" style="margin-bottom:8px;">
-          <textarea id="theme-recordings-subtitle" class="textarea-field" maxlength="240" placeholder="Subheading (default: Missed a session...)" style="min-height:44px;"></textarea>
           <div class="theme-field-inputs">
             <input type="text" id="theme-recordings-bg" placeholder="Background #hex" maxlength="7">
             <input type="color" data-target="theme-recordings-bg" value="#0a0a0a">
@@ -442,7 +449,7 @@
           <button type="button" class="btn btn-primary" id="theme-save">Save theme</button>
           <button type="button" class="btn btn-outline" id="theme-reset">Reset all</button>
         </div>
-        <p class="hint">Sets the font, accent color, and background/text colors for everyone within about 15 seconds — plus the Recordings heading/subheading (the Hero and Programme heading/subheading are set in their own sections instead). Leave a field blank to keep that section's default text/look.</p>
+        <p class="hint">Sets the font, accent color, and background/text colors for everyone within about 15 seconds (Hero, Programme, and Recordings heading/subheading are all set in their own sections instead). Leave a field blank to keep that section's default text/look.</p>
       </div>
 
       <div class="feature-block band-white" id="block-cards">
@@ -553,6 +560,21 @@
             <div class="feature-desc">Session recordings shown near the bottom of the site — session name, speaker, and a link.</div>
           </div>
         </div>
+        <div class="status-row">
+          <span>Recordings heading &amp; subheading</span>
+          <span class="badge" id="recordings-text-badge">—</span>
+        </div>
+        <label for="theme-recordings-title">Heading</label>
+        <input type="text" id="theme-recordings-title" maxlength="80" placeholder="Heading (default: Session recordings)" autocomplete="off">
+        <label for="theme-recordings-subtitle">Subheading</label>
+        <textarea id="theme-recordings-subtitle" class="textarea-field" maxlength="240" placeholder="Subheading (default: Missed a session...)" style="min-height:44px;"></textarea>
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="recordings-text-save">Save section text</button>
+        </div>
+        <p class="hint">Leave both blank to keep the default wording.</p>
+
+        <div class="divider" style="margin:14px 0;"></div>
+
         <div class="status-row">
           <span>Recordings</span>
           <span class="badge" id="recordings-badge">—</span>
@@ -1102,6 +1124,8 @@
   var heroTextSaveBtn = document.getElementById("hero-text-save");
   var programmeTextBadge = document.getElementById("programme-text-badge");
   var programmeTextSaveBtn = document.getElementById("programme-text-save");
+  var recordingsTextBadge = document.getElementById("recordings-text-badge");
+  var recordingsTextSaveBtn = document.getElementById("recordings-text-save");
   var THEME_SECTIONS = ["hero", "sessions", "recordings", "footer"];
 
   Array.prototype.forEach.call(document.querySelectorAll(".theme-field-inputs input[type=color]"), function (swatch) {
@@ -1170,6 +1194,10 @@
     var programmeTextCustom = !!(programmeSec.title || programmeSec.subtitle);
     programmeTextBadge.textContent = programmeTextCustom ? "CUSTOM" : "DEFAULT";
     programmeTextBadge.className = "badge " + (programmeTextCustom ? "badge-on" : "");
+    var recordingsSec = (theme.sections && theme.sections.recordings) || {};
+    var recordingsTextCustom = !!(recordingsSec.title || recordingsSec.subtitle);
+    recordingsTextBadge.textContent = recordingsTextCustom ? "CUSTOM" : "DEFAULT";
+    recordingsTextBadge.className = "badge " + (recordingsTextCustom ? "badge-on" : "");
     syncSwatches();
   }
 
@@ -1193,6 +1221,7 @@
     themeResetBtn.disabled = true;
     heroTextSaveBtn.disabled = true;
     programmeTextSaveBtn.disabled = true;
+    recordingsTextSaveBtn.disabled = true;
     fetch("/api/theme", {
       method: "POST",
       headers: { "content-type": "application/json", "x-admin-key": key },
@@ -1209,12 +1238,14 @@
         themeResetBtn.disabled = false;
         heroTextSaveBtn.disabled = false;
         programmeTextSaveBtn.disabled = false;
+        recordingsTextSaveBtn.disabled = false;
       });
   }
 
   themeSaveBtn.addEventListener("click", function () { saveTheme(collectTheme()); });
   heroTextSaveBtn.addEventListener("click", function () { saveTheme(collectTheme()); });
   programmeTextSaveBtn.addEventListener("click", function () { saveTheme(collectTheme()); });
+  recordingsTextSaveBtn.addEventListener("click", function () { saveTheme(collectTheme()); });
   themeResetBtn.addEventListener("click", function () {
     var empty = { font: "", accent: "", sections: {} };
     THEME_SECTIONS.forEach(function (s) { empty.sections[s] = { bg: "", text: "", title: "", subtitle: "" }; });
@@ -1888,6 +1919,33 @@
       .then(function (data) { currentRecordings = (data && data.recordings) || currentRecordings; renderRecordingsAdmin(); })
       .catch(function (err) { alert(err.message); });
   }
+})();
+</script>
+
+<button type="button" class="scroll-top-btn" id="scroll-top-btn" aria-label="Scroll to top" hidden>&uarr;</button>
+<script>
+(function () {
+  var panelEl = document.getElementById("panel");
+  var btn = document.getElementById("scroll-top-btn");
+
+  function updateVisibility() {
+    btn.hidden = panelEl.hidden || window.scrollY < 400;
+  }
+
+  window.addEventListener("scroll", updateVisibility);
+  window.addEventListener("resize", updateVisibility);
+  btn.addEventListener("click", function () {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  // The panel only becomes visible after a successful unlock, at which
+  // point there's suddenly something worth scrolling — recheck right
+  // after that (and every second briefly) rather than waiting for the
+  // first scroll event.
+  var recheck = setInterval(function () {
+    updateVisibility();
+    if (!panelEl.hidden) clearInterval(recheck);
+  }, 300);
 })();
 </script>
 </body>
