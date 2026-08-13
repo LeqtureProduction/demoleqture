@@ -569,26 +569,7 @@
       <h3 class="survey-title" id="survey-title">We would really appreciate your feedback on today's event.</h3>
       <p class="survey-sub">The survey is completely anonymous.</p>
 
-      <div class="survey-q">
-        <label>How would you rate the session?<span class="req">*</span></label>
-        <div class="stars" data-q="q1" role="radiogroup" aria-label="Rating"><button type="button" class="star" data-value="1" aria-label="1 star">★</button><button type="button" class="star" data-value="2" aria-label="2 stars">★</button><button type="button" class="star" data-value="3" aria-label="3 stars">★</button><button type="button" class="star" data-value="4" aria-label="4 stars">★</button><button type="button" class="star" data-value="5" aria-label="5 stars">★</button></div>
-      </div>
-      <div class="survey-q">
-        <label>How would you rate the speaker?<span class="req">*</span></label>
-        <div class="stars" data-q="q2" role="radiogroup" aria-label="Rating"><button type="button" class="star" data-value="1" aria-label="1 star">★</button><button type="button" class="star" data-value="2" aria-label="2 stars">★</button><button type="button" class="star" data-value="3" aria-label="3 stars">★</button><button type="button" class="star" data-value="4" aria-label="4 stars">★</button><button type="button" class="star" data-value="5" aria-label="5 stars">★</button></div>
-      </div>
-      <div class="survey-q">
-        <label>What did you enjoy most?</label>
-        <textarea class="survey-textarea" id="survey-q3" maxlength="2000" placeholder="Optional — share what stood out&hellip;"></textarea>
-      </div>
-      <div class="survey-q">
-        <label>What have you learned?</label>
-        <textarea class="survey-textarea" id="survey-q4" maxlength="2000" placeholder="Optional — share a key takeaway&hellip;"></textarea>
-      </div>
-      <div class="survey-q">
-        <label>What could we improve?</label>
-        <textarea class="survey-textarea" id="survey-q5" maxlength="2000" placeholder="Optional — be as honest as you like&hellip;"></textarea>
-      </div>
+      <div id="survey-questions"></div>
 
       <span class="survey-hint" id="survey-hint">Rate both above to unlock closing — you can leave any time after that.</span>
       <button type="button" class="btn btn-primary survey-submit" id="survey-submit" disabled>Rate both to continue</button>
@@ -610,9 +591,15 @@
   var hint = document.getElementById("survey-hint");
   var formWrap = document.getElementById("survey-form");
   var thanksWrap = document.getElementById("survey-thanks");
-  var textareaIds = ["survey-q3", "survey-q4", "survey-q5"];
+  var questionsWrap = document.getElementById("survey-questions");
 
-  var ratings = { q1: 0, q2: 0 };
+  // The current, visible (non-hidden) question list, fetched fresh each
+  // time the survey is triggered — so a question Super Admin added, hid,
+  // edited, or deleted between rounds always shows the latest set. Answers
+  // are keyed by whatever question id is active this round; anything for
+  // a question id that no longer exists just never gets sent.
+  var questions = [];
+  var answers = {};
   var responseId = null;
   var savedMandatory = false;
   var finished = false;
@@ -621,28 +608,90 @@
   var storedRound = null;
   try { storedRound = localStorage.getItem(DISMISS_KEY); } catch (e) {}
 
-  function paintStars(group) {
-    var q = group.getAttribute("data-q");
-    var val = ratings[q];
+  var escDiv = document.createElement("div");
+  function esc(v) { escDiv.textContent = v == null ? "" : String(v); return escDiv.innerHTML; }
+
+  function requiredQuestions() {
+    return questions.filter(function (q) { return q.required; });
+  }
+
+  function hasValue(q) {
+    var v = answers[q.id];
+    if (q.type === "rating") return !!v;
+    return typeof v === "string" && v.length > 0;
+  }
+
+  function paintStars(qid) {
+    var group = questionsWrap.querySelector('.stars[data-q="' + qid + '"]');
+    if (!group) return;
+    var val = answers[qid] || 0;
     group.querySelectorAll(".star").forEach(function (btn) {
       var v = parseInt(btn.getAttribute("data-value"), 10);
       btn.classList.toggle("filled", v <= val);
     });
   }
 
-  document.querySelectorAll(".stars").forEach(function (group) {
-    group.addEventListener("click", function (e) {
-      var btn = e.target.closest(".star");
-      if (!btn) return;
-      var q = group.getAttribute("data-q");
-      ratings[q] = parseInt(btn.getAttribute("data-value"), 10);
-      paintStars(group);
-      maybeUnlock();
+  function renderQuestions() {
+    questionsWrap.innerHTML = questions.map(function (q) {
+      var reqMark = q.required ? '<span class="req">*</span>' : "";
+      var safeLabel = esc(q.label);
+      if (q.type === "rating") {
+        var stars = [1, 2, 3, 4, 5].map(function (v) {
+          return '<button type="button" class="star" data-value="' + v + '" aria-label="' + v + ' star' + (v > 1 ? "s" : "") + '">★</button>';
+        }).join("");
+        return (
+          '<div class="survey-q">' +
+            '<label>' + safeLabel + reqMark + '</label>' +
+            '<div class="stars" data-q="' + q.id + '" role="radiogroup" aria-label="Rating">' + stars + '</div>' +
+          '</div>'
+        );
+      }
+      var placeholder = q.required ? "Share your answer\u2026" : "Optional \u2014 share your thoughts\u2026";
+      return (
+        '<div class="survey-q">' +
+          '<label>' + safeLabel + reqMark + '</label>' +
+          '<textarea class="survey-textarea" data-q="' + q.id + '" maxlength="2000" placeholder="' + placeholder + '"></textarea>' +
+        '</div>'
+      );
+    }).join("");
+
+    questionsWrap.querySelectorAll(".stars").forEach(function (group) {
+      group.addEventListener("click", function (e) {
+        var btn = e.target.closest(".star");
+        if (!btn) return;
+        var qid = group.getAttribute("data-q");
+        answers[qid] = parseInt(btn.getAttribute("data-value"), 10);
+        paintStars(qid);
+        maybeUnlock();
+      });
     });
-  });
+
+    questionsWrap.querySelectorAll(".survey-textarea").forEach(function (ta) {
+      var qid = ta.getAttribute("data-q");
+      ta.addEventListener("input", function () {
+        answers[qid] = ta.value;
+        maybeUnlock();
+      });
+      ta.addEventListener("blur", function () {
+        if (savedMandatory) saveResponse(false);
+      });
+    });
+  }
+
+  function lockedLabels() {
+    var hasRequired = requiredQuestions().length > 0;
+    return {
+      submit: hasRequired ? "Answer required fields to continue" : "Submit feedback",
+      hint: hasRequired
+        ? "Answer the required question(s) above to unlock closing — you can leave any time after that."
+        : "You're free to close or submit any time — add feedback below if you'd like.",
+    };
+  }
 
   function maybeUnlock() {
-    if (ratings.q1 && ratings.q2 && !savedMandatory) {
+    if (savedMandatory) return;
+    var allAnswered = requiredQuestions().every(hasValue);
+    if (allAnswered) {
       savedMandatory = true;
       closeBtn.disabled = false;
       closeBtn.classList.add("enabled");
@@ -656,11 +705,7 @@
   function currentPayload(complete) {
     return {
       id: responseId || undefined,
-      q1_rating: ratings.q1 || undefined,
-      q2_rating: ratings.q2 || undefined,
-      q3_text: document.getElementById("survey-q3").value,
-      q4_text: document.getElementById("survey-q4").value,
-      q5_text: document.getElementById("survey-q5").value,
+      answers: answers,
       complete: !!complete,
     };
   }
@@ -684,21 +729,23 @@
 
   // Wipes the form back to a blank state, ready for the next time the
   // survey is triggered — used both right after a visitor finishes and
-  // defensively before showing it again.
+  // defensively before showing it again. Assumes `questions` has already
+  // been (re)fetched for this round.
   function resetForm() {
-    ratings = { q1: 0, q2: 0 };
+    answers = {};
     responseId = null;
     savedMandatory = false;
     finished = false;
-    document.querySelectorAll(".stars").forEach(paintStars);
-    textareaIds.forEach(function (id) { document.getElementById(id).value = ""; });
+    renderQuestions();
+    var labels = lockedLabels();
     closeBtn.disabled = true;
     closeBtn.classList.remove("enabled");
     submitBtn.disabled = true;
-    submitBtn.textContent = "Rate both to continue";
-    hint.textContent = "Rate both above to unlock closing — you can leave any time after that.";
+    submitBtn.textContent = labels.submit;
+    hint.textContent = labels.hint;
     thanksWrap.hidden = true;
     formWrap.hidden = false;
+    maybeUnlock();
   }
 
   function markRoundDismissed() {
@@ -733,12 +780,6 @@
     finishAndClose(true);
   });
 
-  textareaIds.forEach(function (id) {
-    document.getElementById(id).addEventListener("blur", function () {
-      if (savedMandatory) saveResponse(false);
-    });
-  });
-
   function flush() {
     if (savedMandatory && !finished) saveResponse(false, true);
   }
@@ -748,7 +789,8 @@
   // Poll the admin-controlled survey state. Each time it's switched on,
   // its "updated_at" changes, so that timestamp doubles as a round id —
   // a visitor who already dismissed round A will still see round B once
-  // the admin triggers the survey again, with a blank form.
+  // the admin triggers the survey again, with a blank form and whatever
+  // the current question list is at that moment.
   function checkState() {
     if (overlay.hidden === false) return;
     fetch("/api/survey-state", { cache: "no-store" })
@@ -758,8 +800,13 @@
         var roundId = String(data.updated_at);
         if (roundId === storedRound) return;
         currentRoundId = roundId;
-        resetForm();
-        overlay.hidden = false;
+        return fetch("/api/survey-questions", { cache: "no-store" })
+          .then(function (r) { return r.json(); })
+          .then(function (qData) {
+            questions = ((qData && qData.questions) || []).filter(function (q) { return !q.hidden; });
+            resetForm();
+            overlay.hidden = false;
+          });
       })
       .catch(function () {});
   }

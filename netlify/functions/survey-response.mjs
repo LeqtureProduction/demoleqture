@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { readQuestions } from "./lib/survey-schema.mjs";
 
 const KEY = "responses";
 const MAX = 5000;
@@ -26,47 +27,64 @@ export default async (req) => {
     body = await req.json();
   } catch {}
 
-  const q1_rating = "q1_rating" in body ? clampRating(body.q1_rating) : undefined;
-  const q2_rating = "q2_rating" in body ? clampRating(body.q2_rating) : undefined;
+  const incoming = body.answers && typeof body.answers === "object" ? body.answers : {};
 
   // Strong consistency is required here too — this does a read-modify-write
   // of one shared JSON blob, so a stale read would silently drop or clobber
   // someone else's answer when two people save within the same second.
   const store = getStore({ name: "quantexa-survey", consistency: "strong" });
+  const questions = await readQuestions(store);
+  const byId = new Map(questions.map((q) => [q.id, q]));
+
+  // Validate/clean whatever answers were sent against the *current*
+  // question list — anything for a question id that's since been deleted
+  // is silently dropped rather than trusted as-is.
+  const cleanAnswers = {};
+  for (const [qid, raw] of Object.entries(incoming)) {
+    const q = byId.get(qid);
+    if (!q) continue;
+    if (q.type === "rating") {
+      const n = clampRating(raw);
+      if (n !== null) cleanAnswers[qid] = n;
+    } else {
+      cleanAnswers[qid] = clampText(raw);
+    }
+  }
+
   const list = (await store.get(KEY, { type: "json" })) || [];
 
   let id = (body.id || "").toString().slice(0, 40);
   let entry = id ? list.find((r) => r.id === id) : null;
 
+  // Questions that are both required and currently visible are the
+  // mandatory gate — matches the client, which only ever creates a
+  // response once every required field has a value, but we don't trust
+  // the client alone.
+  const requiredIds = questions.filter((q) => q.required && !q.hidden).map((q) => q.id);
+
   if (!entry) {
-    // Creating a brand-new response requires both mandatory ratings — this
-    // mirrors the client, which only ever creates a response once both
-    // stars are set, but we don't trust the client alone.
-    if (q1_rating === null || q2_rating === null || q1_rating === undefined || q2_rating === undefined) {
+    const hasAllRequired = requiredIds.every((qid) => {
+      const q = byId.get(qid);
+      const v = cleanAnswers[qid];
+      return q.type === "rating" ? typeof v === "number" : typeof v === "string" && v.length > 0;
+    });
+    if (!hasAllRequired) {
       return Response.json(
-        { error: "both mandatory ratings are required to start a response" },
+        { error: "all required questions must be answered to start a response" },
         { status: 400 }
       );
     }
     id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     entry = {
       id,
-      q1_rating,
-      q2_rating,
-      q3_text: "",
-      q4_text: "",
-      q5_text: "",
+      answers: cleanAnswers,
       complete: false,
       created_at: Date.now(),
       updated_at: Date.now(),
     };
     list.push(entry);
   } else {
-    if (q1_rating !== undefined && q1_rating !== null) entry.q1_rating = q1_rating;
-    if (q2_rating !== undefined && q2_rating !== null) entry.q2_rating = q2_rating;
-    if ("q3_text" in body) entry.q3_text = clampText(body.q3_text);
-    if ("q4_text" in body) entry.q4_text = clampText(body.q4_text);
-    if ("q5_text" in body) entry.q5_text = clampText(body.q5_text);
+    entry.answers = { ...entry.answers, ...cleanAnswers };
     if ("complete" in body) entry.complete = !!body.complete;
     entry.updated_at = Date.now();
   }

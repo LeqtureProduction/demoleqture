@@ -187,7 +187,7 @@
           <span class="feature-icon">&#128203;</span>
           <div>
             <div class="feature-name">Survey</div>
-            <div class="feature-desc">Anonymous 5-question star-rating + feedback survey, shown on demand.</div>
+            <div class="feature-desc">Star-rating + feedback survey, shown on demand — questions and results are fully editable.</div>
           </div>
         </div>
         <div class="status-row">
@@ -199,7 +199,32 @@
           <button type="button" class="btn btn-outline" id="refresh-btn">Refresh</button>
         </div>
 
-        <div class="divider"></div>
+        <div class="divider" style="margin:14px 0;"></div>
+
+        <div class="status-row">
+          <span>Questions</span>
+          <span class="badge" id="questions-badge">—</span>
+        </div>
+        <div id="questions-admin-list"></div>
+
+        <label for="question-type" style="margin-top:14px;">Question type</label>
+        <select id="question-type">
+          <option value="rating">Star rating (1–5)</option>
+          <option value="text">Free text</option>
+        </select>
+        <label for="question-label">Question text</label>
+        <input type="text" id="question-label" maxlength="150" placeholder="e.g. How would you rate the session?" autocomplete="off">
+        <label style="display:flex;align-items:center;gap:8px;margin:12px 0 16px;font-weight:500;">
+          <input type="checkbox" id="question-required" style="width:auto;margin:0;">
+          Required — visitor must answer before they can close the survey
+        </label>
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="question-save">Add question</button>
+          <button type="button" class="btn btn-outline" id="question-cancel" hidden>Cancel edit</button>
+        </div>
+        <p class="hint">Use the arrows to reorder; questions show on the site in this order. <strong>Hide</strong> keeps a question (and any answers already collected for it) but stops showing it to new visitors — <strong>Show</strong> brings it back. <strong>Delete</strong> removes it permanently.</p>
+
+        <div class="divider" style="margin:14px 0;"></div>
 
         <div class="status-row">
           <span>Responses collected</span>
@@ -209,8 +234,11 @@
           <button type="button" class="btn btn-primary" id="download-csv">Download CSV</button>
           <button type="button" class="btn btn-outline" id="download-json">Download JSON</button>
         </div>
+        <div class="actions">
+          <button type="button" class="btn btn-outline" id="clear-responses-btn" style="color:var(--red);border-color:var(--red);">Clear all responses</button>
+        </div>
 
-        <p class="hint">Turning the survey on makes it appear for visitors, within about 15 seconds. Click refresh to load the new survey responses.</p>
+        <p class="hint">Turning the survey on makes it appear for visitors, within about 15 seconds. Click refresh to load new survey responses and questions. Clearing responses is permanent — download a backup first if you want to keep a copy.</p>
       </div>
 
       <div class="feature-block band-grey" id="block-announcement">
@@ -533,6 +561,16 @@
   var refreshBtn = document.getElementById("refresh-btn");
   var downloadCsvBtn = document.getElementById("download-csv");
   var downloadJsonBtn = document.getElementById("download-json");
+  var clearResponsesBtn = document.getElementById("clear-responses-btn");
+  var questionsBadge = document.getElementById("questions-badge");
+  var questionsAdminList = document.getElementById("questions-admin-list");
+  var questionType = document.getElementById("question-type");
+  var questionLabel = document.getElementById("question-label");
+  var questionRequired = document.getElementById("question-required");
+  var questionSaveBtn = document.getElementById("question-save");
+  var questionCancelBtn = document.getElementById("question-cancel");
+  var currentQuestions = [];
+  var editingQuestionId = null;
   var announceInput = document.getElementById("announce-input");
   var announceCharcount = document.getElementById("announce-charcount");
   var announceBadge = document.getElementById("announce-badge");
@@ -601,6 +639,7 @@
         fetchCards();
         fetchFeature();
         fetchSessionsAdmin();
+        fetchQuestions();
         return fetchState();
       })
       .catch(function (err) {
@@ -652,6 +691,7 @@
     fetchTheme();
     fetchCards();
     fetchFeature();
+    fetchQuestions();
   });
 
   function refreshCount() {
@@ -685,6 +725,174 @@
 
   downloadCsvBtn.addEventListener("click", function () { download("csv"); });
   downloadJsonBtn.addEventListener("click", function () { download("json"); });
+
+  clearResponsesBtn.addEventListener("click", function () {
+    if (!confirm("Permanently delete every stored survey response? This can't be undone \u2014 download a backup first if you want to keep a copy.")) return;
+    clearResponsesBtn.disabled = true;
+    fetch("/api/survey-export", { method: "DELETE", headers: { "x-admin-key": key } })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(function () { refreshCount(); })
+      .catch(function (err) { alert(err.message); })
+      .finally(function () { clearResponsesBtn.disabled = false; });
+  });
+
+  // ---- Survey questions (Super Admin only) ----
+
+  function fetchQuestions() {
+    return fetch("/api/survey-questions", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        currentQuestions = (data && data.questions) || [];
+        renderQuestionsAdmin();
+      })
+      .catch(function () {});
+  }
+
+  function renderQuestionsAdmin() {
+    questionsBadge.textContent = String(currentQuestions.length);
+    if (!currentQuestions.length) {
+      questionsAdminList.innerHTML = '<div class="card-empty">No questions yet — add one below.</div>';
+      return;
+    }
+    var esc = document.createElement("div");
+    questionsAdminList.innerHTML = currentQuestions.map(function (q, i) {
+      esc.textContent = q.label || "";
+      var safeLabel = esc.innerHTML;
+      var typeLabel = q.type === "rating" ? "Star rating" : "Free text";
+      var meta = typeLabel + (q.required ? " · Required" : "") + (q.hidden ? " · Hidden" : "");
+      return (
+        '<div class="session-item" data-id="' + q.id + '">' +
+          '<div class="session-item-info">' +
+            '<div class="session-item-title">' + safeLabel + '</div>' +
+            '<div class="session-item-meta">' + meta + '</div>' +
+          '</div>' +
+          '<div class="session-item-actions">' +
+            '<button type="button" data-action="up"' + (i === 0 ? " disabled" : "") + '>&uarr;</button>' +
+            '<button type="button" data-action="down"' + (i === currentQuestions.length - 1 ? " disabled" : "") + '>&darr;</button>' +
+            '<button type="button" data-action="edit">Edit</button>' +
+            '<button type="button" data-action="hide">' + (q.hidden ? "Show" : "Hide") + '</button>' +
+            '<button type="button" data-action="delete">Delete</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join("");
+  }
+
+  questionsAdminList.addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    var item = btn.closest(".session-item");
+    var id = item.getAttribute("data-id");
+    var action = btn.getAttribute("data-action");
+    if (action === "edit") { startEditQuestion(id); }
+    else if (action === "delete") { deleteQuestion(id); }
+    else if (action === "hide") { toggleHideQuestion(id); }
+    else if (action === "up" || action === "down") { moveQuestion(id, action); }
+  });
+
+  function startEditQuestion(id) {
+    var q = currentQuestions.filter(function (x) { return x.id === id; })[0];
+    if (!q) return;
+    editingQuestionId = id;
+    questionType.value = q.type;
+    questionLabel.value = q.label || "";
+    questionRequired.checked = !!q.required;
+    questionSaveBtn.textContent = "Save changes";
+    questionCancelBtn.hidden = false;
+    questionLabel.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  function resetQuestionForm() {
+    editingQuestionId = null;
+    questionType.value = "rating";
+    questionLabel.value = "";
+    questionRequired.checked = false;
+    questionSaveBtn.textContent = "Add question";
+    questionCancelBtn.hidden = true;
+  }
+
+  questionCancelBtn.addEventListener("click", resetQuestionForm);
+
+  questionSaveBtn.addEventListener("click", function () {
+    var label = questionLabel.value.trim();
+    if (!label) { alert("Question text is required."); return; }
+
+    var reqBody = {
+      action: editingQuestionId ? "edit" : "add",
+      type: questionType.value,
+      label: label,
+      required: questionRequired.checked,
+    };
+    if (editingQuestionId) reqBody.id = editingQuestionId;
+
+    questionSaveBtn.disabled = true;
+    fetch("/api/survey-questions", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify(reqBody),
+    })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(function () { resetQuestionForm(); return fetchQuestions(); })
+      .catch(function (err) { alert(err.message); })
+      .finally(function () { questionSaveBtn.disabled = false; });
+  });
+
+  function toggleHideQuestion(id) {
+    var q = currentQuestions.filter(function (x) { return x.id === id; })[0];
+    if (!q) return;
+    fetch("/api/survey-questions", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify({ action: "hide", id: id, hidden: !q.hidden }),
+    })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(function () { return fetchQuestions(); })
+      .catch(function (err) { alert(err.message); });
+  }
+
+  function deleteQuestion(id) {
+    if (!confirm("Remove this question? Past answers already collected for it will stay in exported data.")) return;
+    fetch("/api/survey-questions", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify({ action: "delete", id: id }),
+    })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(function () { if (editingQuestionId === id) resetQuestionForm(); return fetchQuestions(); })
+      .catch(function (err) { alert(err.message); });
+  }
+
+  function moveQuestion(id, direction) {
+    var ids = currentQuestions.map(function (q) { return q.id; });
+    var idx = ids.indexOf(id);
+    if (idx === -1) return;
+    var swapWith = direction === "up" ? idx - 1 : idx + 1;
+    if (swapWith < 0 || swapWith >= ids.length) return;
+    var tmp = ids[idx]; ids[idx] = ids[swapWith]; ids[swapWith] = tmp;
+    fetch("/api/survey-questions", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify({ action: "reorder", order: ids }),
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error("Request failed (" + r.status + ").");
+        return r.json();
+      })
+      .then(function (data) { currentQuestions = (data && data.questions) || currentQuestions; renderQuestionsAdmin(); })
+      .catch(function (err) { alert(err.message); });
+  }
 
   announceInput.addEventListener("input", function () {
     announceCharcount.textContent = announceInput.value.length;

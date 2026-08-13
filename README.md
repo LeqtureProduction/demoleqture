@@ -21,10 +21,12 @@ public/                     → published static site
   customer-admin.html          Customer Admin: survey responses (view only) + hero image + programme heading (view-only session list) + theme + link cards + text/image section
 netlify/functions/          → serverless functions
   lib/auth.mjs                 shared role check (not a function itself, just imported by the others)
+  lib/survey-schema.mjs        shared question-list schema/defaults (not a function itself, just imported by the survey functions below)
   whoami.mjs                   GET: validates a key, returns its role ("super" / "customer")
   survey-state.mjs             GET (public): is the survey on? / POST (super only): turn it on or off
+  survey-questions.mjs         GET (public): the question list / POST (super only): add, edit, hide, delete, or reorder questions
   survey-response.mjs          POST: create/update a response, backed by Netlify Blobs
-  survey-export.mjs            GET (super or customer): download all responses as CSV or JSON
+  survey-export.mjs            GET (super or customer): download all responses as CSV or JSON / DELETE (super only): clear all responses
   announcement.mjs             GET (public): current site announcement / POST (super only): publish or clear it
   player.mjs                   GET (public): current hero video link / POST (super only): publish or turn it off
   hero-image.mjs                GET (public): the hero image / POST, DELETE (super or customer): upload or remove it
@@ -41,31 +43,58 @@ as static files.
 
 ## How the survey works
 
-- **5 questions**: 2 mandatory star ratings (1–5), then 3 optional open text
-  questions.
-- **Quit after the mandatory two.** The close (×) button stays disabled until
-  both stars are set. The moment they are, the two ratings are saved to the
-  backend immediately and the visitor is free to close the popup.
+- **The question set is fully editable**, from the **Survey** block in
+  `admin.html` — **Super Admin only**. Add a question (star rating 1–5, or
+  free text), mark it required or optional, reorder it with the ↑ / ↓
+  buttons, **Hide** it (stops showing it to new visitors but keeps it and
+  any answers already collected for it — **Show** brings it back), **Edit**
+  its text/type/required flag, or **Delete** it outright. Ships pre-loaded
+  with the original 5 questions (2 mandatory star ratings, then 3 optional
+  open text prompts) as a starting point, not a fixed shape — add, remove,
+  or rework them however you like. Customer Admin doesn't see this editor;
+  it can still view survey status and download responses (see below).
+- **Required questions gate closing.** The close (×) button stays disabled
+  until every question currently marked *required* has an answer. The
+  moment they're all answered, those answers are saved to the backend
+  immediately and the visitor is free to close the popup. If there are no
+  required questions at all, the popup is closeable right away.
 - **Nothing is lost.** Any optional answer typed after that point is saved
   when the field loses focus, and again automatically if the visitor
   switches tabs or navigates away (via `navigator.sendBeacon`), so a
   half-finished survey is never discarded.
-- **Anonymous.** Only ratings, text, and timestamps are stored — no name,
-  no login, no IP.
+- **Anonymous.** Only answers and timestamps are stored — no name, no
+  login, no IP.
 - **Shared & server-side**, same architecture as the site's live Q&A: one
-  JSON blob in Netlify Blobs, read/written with `consistency: "strong"` so
-  concurrent submissions don't clobber each other.
+  JSON blob in Netlify Blobs per concern (state, questions, responses),
+  read/written with `consistency: "strong"` so concurrent submissions
+  don't clobber each other. Backed by `survey-state.mjs`,
+  `survey-questions.mjs`, `survey-response.mjs`, and `survey-export.mjs`.
 - **Shows only when you turn it on.** The site polls `/api/survey-state`
   every 15 seconds. Flip it on from `admin.html` and visitors currently on
   the page will see it within ~15 seconds; new visitors see it on load.
-  Once someone completes or closes it, they see a "Thanks for your
-  feedback!" confirmation and the popup closes on its own. Their browser
-  then remembers that specific round (`localStorage`, keyed to the
-  survey's activation timestamp) so they won't be nagged again on that
-  device *for that round* — this is just a "don't re-annoy this visitor"
-  flag, not where the actual answers are stored. If you turn the survey
-  off and later on again, that's a new round: everyone, including people
-  who already answered before, gets a blank form again.
+  Each time it's triggered, the site fetches the *current* question list
+  fresh, so anything Super Admin added, hid, edited, or deleted since the
+  last round is reflected immediately. Once someone completes or closes
+  it, they see a "Thanks for your feedback!" confirmation and the popup
+  closes on its own. Their browser then remembers that specific round
+  (`localStorage`, keyed to the survey's activation timestamp) so they
+  won't be nagged again on that device *for that round* — this is just a
+  "don't re-annoy this visitor" flag, not where the actual answers are
+  stored. If you turn the survey off and later on again, that's a new
+  round: everyone, including people who already answered before, gets a
+  blank form again (with whatever the question list looks like by then).
+- **Deleting results.** **Clear all responses** (Super Admin only, in the
+  same Survey block) permanently wipes every stored response — there's a
+  confirmation prompt first, and no way to undo it, so download a CSV/JSON
+  backup beforehand if you want to keep a copy. There's no per-response
+  delete in the admin UI (responses aren't listed individually there,
+  only as a count) — it's all-or-nothing.
+- **CSV export columns follow the current question list** — one column
+  per question, headed with that question's label, in its current order.
+  A response's answer for a question that's since been deleted has nowhere
+  to go in the CSV; use **Download JSON** instead if you need that raw
+  data preserved (it always includes every answer ever saved, keyed by
+  question id, regardless of what's since changed).
 
 ## Site announcement bar
 
@@ -344,7 +373,9 @@ two logins, two entirely different shared secrets:
 | | Super Admin (`admin.html`) | Customer Admin (`customer-admin.html`) |
 |---|---|---|
 | Survey on/off | Yes | No (view only) |
+| Survey questions (add/edit/hide/delete/reorder) | Yes | No |
 | Survey responses (view/download) | Yes | Yes |
+| Survey responses (delete) | Yes | No |
 | Site announcement | Yes | No |
 | Hero video player | Yes | No |
 | Hero image | Yes | Yes — **disabled while the hero video player is live** (there's nothing to preview, so changing it would just be confusing; the fields grey out with an explanation until a Super Admin turns the player off) |
@@ -380,32 +411,37 @@ client/customer contact.
 2. **Turn on** to start showing the survey to visitors, **Turn off** to stop
    showing it to new visitors (anyone already looking at it keeps their
    in-progress popup).
-3. **Download CSV** or **Download JSON** any time to get everything
-   collected so far.
-4. Under **Site announcement**, type a message and click **Publish** to push
+3. Under **Questions**, add, edit, hide/show, delete, or reorder the
+   survey's questions — changes apply the *next* time the survey is
+   triggered (visitors mid-survey keep whatever list they already loaded).
+4. **Download CSV** or **Download JSON** any time to get everything
+   collected so far, or **Clear all responses** to permanently delete
+   everything (confirmation required — download a backup first if you
+   want one).
+5. Under **Site announcement**, type a message and click **Publish** to push
    it live, or **Clear** to take it down.
-5. Under **Hero**, type a heading and/or subheading and click **Save hero
+6. Under **Hero**, type a heading and/or subheading and click **Save hero
    text** (leave both blank to keep the original wording). In the same
    block, paste a YouTube or Clevercast link and click **Publish** to show
    a live player, or **Turn off** to remove it; or choose a file and click
    **Upload** for a static image, or **Remove** to take it down. A note
    reminds you the image won't be visible while the video player is live,
    but you can still change it — it'll show as soon as the player is off.
-6. Under **Programme**, type a heading and/or subheading and click **Save
+7. Under **Programme**, type a heading and/or subheading and click **Save
    section text** — same idea as the Hero block. Below that, fill in the
    date, start/end time, speaker name, speaker bio, title, and description
    for a session and click **Add session**; use **Edit** to change one,
    ↑/↓ to reorder, and **Delete** to remove one. Only Super Admin sees
    these session controls — Customer Admin sees the list read-only.
-7. Under **Site theme**, type a Google Fonts name, an accent color, and/or
+8. Under **Site theme**, type a Google Fonts name, an accent color, and/or
    set background/text colors and the Recordings heading/subheading, then
    **Save theme**. **Reset all** clears everything back to the default
    look (Hero's and Programme's heading/subheading are saved separately,
    from their own blocks above).
-8. Under **Image link cards**, fill in the title/body/link/image form and
+9. Under **Image link cards**, fill in the title/body/link/image form and
    click **Add card**; use **Edit** to change one, ↑/↓ to reorder, and
    **Delete** to remove one.
-9. Under **Text & image section**, fill in a title, body text, and/or an
+10. Under **Text & image section**, fill in a title, body text, and/or an
    image, then **Save**. **Remove image** clears just the image;
    **Clear whole section** wipes all three back to empty; **Move section
    up**/**down** repositions it on the page.
@@ -417,7 +453,8 @@ client/customer contact.
    that's Super Admin only).
 2. See whether the survey is on, how many responses have come in, and
    **Download CSV** / **Download JSON** — no ability to turn the survey
-   itself on or off.
+   itself on or off, edit its questions, or delete responses (all Super
+   Admin only).
 3. Under **Hero**, type a heading and/or subheading and click **Save hero
    text** — this works the same as Super Admin. Choose a file and click
    **Upload**, or **Remove**, for the hero image. If the hero video player
@@ -460,10 +497,11 @@ netlify link                  # or: netlify init, to create a new site
 netlify deploy --prod
 ```
 
-Confirm the deploy summary lists **11 functions** (`survey-state`,
-`survey-response`, `survey-export`, `announcement`, `player`, `whoami`,
-`hero-image`, `sessions`, `theme`, `cards`, `feature`). If it says 0,
-you're deploying from inside `public/` instead of the project root.
+Confirm the deploy summary lists **12 functions** (`survey-state`,
+`survey-questions`, `survey-response`, `survey-export`, `announcement`,
+`player`, `whoami`, `hero-image`, `sessions`, `theme`, `cards`, `feature`).
+If it says 0, you're deploying from inside `public/` instead of the
+project root.
 
 Don't forget to set both `ADMIN_KEY` and `CUSTOMER_ADMIN_KEY` (see above) —
 without them, every admin action returns a clear error instead of quietly
@@ -486,14 +524,30 @@ curl -X POST https://<site>/api/survey-state -H "content-type: application/json"
 curl -X POST https://<site>/api/survey-state -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"active":true}'
 curl https://<site>/api/survey-state   # should show {"active":true,...}
 
+# 1b. Survey questions (super only — confirm customer key is rejected on writes)
+curl https://<site>/api/survey-questions   # public GET, 5 seeded questions
+curl -X POST https://<site>/api/survey-questions -H "content-type: application/json" -H "x-admin-key: <ckey>" -d '{"action":"add","type":"text","label":"Anything else?"}'  # 401 if no key, 403 with customer key
+curl -X POST https://<site>/api/survey-questions -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"action":"add","type":"text","label":"Anything else?"}'
+curl https://<site>/api/survey-questions   # now 6 questions
+# copy the new question's "id" from the response, then:
+curl -X POST https://<site>/api/survey-questions -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"action":"hide","id":"<id-from-above>","hidden":true}'
+curl https://<site>/api/survey-questions   # that question now shows "hidden":true
+curl -X POST https://<site>/api/survey-questions -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"action":"delete","id":"<id-from-above>"}'
+curl https://<site>/api/survey-questions   # back to 5 questions
+
 # 2. Submit a response as if both mandatory ratings were answered
-curl -X POST https://<site>/api/survey-response -H "content-type: application/json" -d '{"q1_rating":5,"q2_rating":4}'
+curl -X POST https://<site>/api/survey-response -H "content-type: application/json" -d '{"answers":{"q1":5,"q2":4}}'
 # copy the "id" from the response, then update it with an open answer:
-curl -X POST https://<site>/api/survey-response -H "content-type: application/json" -d '{"id":"<id-from-above>","q3_text":"Loved the AI keynote"}'
+curl -X POST https://<site>/api/survey-response -H "content-type: application/json" -d '{"id":"<id-from-above>","answers":{"q3":"Loved the AI keynote"}}'
 
 # 3. Download everything with EITHER key and confirm both fields are on the same row
 curl -H "x-admin-key: <key>" https://<site>/api/survey-export
 curl -H "x-admin-key: <ckey>" https://<site>/api/survey-export
+
+# 3b. Delete all responses (super only — confirm customer key is rejected)
+curl -X DELETE https://<site>/api/survey-export -H "x-admin-key: <ckey>"  # 403
+curl -X DELETE https://<site>/api/survey-export -H "x-admin-key: <key>"
+curl -H "x-admin-key: <key>" "https://<site>/api/survey-export?format=json"   # []
 
 # 4. Publish an announcement, then confirm it, then clear it (super only)
 curl -X POST https://<site>/api/announcement -H "content-type: application/json" -H "x-admin-key: <ckey>" -d '{"text":"Test"}'  # 401
@@ -526,21 +580,22 @@ curl -X DELETE https://<site>/api/hero-image -H "x-admin-key: <key>"   # clean u
 Then manually:
 
 8. Open `admin.html`, unlock with `ADMIN_KEY`, and confirm every section is
-   visible: survey on/off, announcement, hero video player, hero image.
-   Try unlocking it with `CUSTOMER_ADMIN_KEY` instead — it should be
-   rejected (Super Admin only).
+   visible: survey on/off, survey questions editor, announcement, hero
+   video player, hero image. Try unlocking it with `CUSTOMER_ADMIN_KEY`
+   instead — it should be rejected (Super Admin only).
 9. Open `customer-admin.html`, unlock with `CUSTOMER_ADMIN_KEY`, and
    confirm you only see: survey status (read-only) + response
    counts/downloads, and the hero image uploader. There should be no
-   survey on/off toggle, no announcement field, and no player field. Then
-   confirm `ADMIN_KEY` also unlocks this page (Super Admin is a superset).
+   survey on/off toggle, no questions editor, no **Clear all responses**
+   button, no announcement field, and no player field. Then confirm
+   `ADMIN_KEY` also unlocks this page (Super Admin is a superset).
 10. Open the live URL in a normal window with the survey on — it should
-    appear. Rate both stars, confirm the close (×) button becomes clickable,
-    close it, and check the response count went up by one in either admin
-    page.
-11. Open it again in an incognito window, fill all 5 fields and hit
-    **Submit feedback**, then confirm that response also shows up in the
-    CSV/JSON download with `complete = true`.
+    appear. Answer every question currently marked required, confirm the
+    close (×) button becomes clickable, close it, and check the response
+    count went up by one in either admin page.
+11. Open it again in an incognito window, fill in every field shown and
+    hit **Submit feedback**, then confirm that response also shows up in
+    the CSV/JSON download with `complete = true`.
 12. Load the site on mobile and confirm the popup and star buttons are
     usable at that width.
 13. Publish an announcement from `admin.html` and confirm the purple bar
@@ -789,14 +844,35 @@ Then manually:
     panel — never beside it — at every width from a large phone down to a
     small one, with no horizontal scrolling and no piece of the layout
     overflowing the screen edge.
+39. In `admin.html`, under **Questions**, add a new free-text question,
+    confirm it shows up in the list with a badge count increment, then
+    trigger the survey on the live site and confirm the new question
+    appears at the end. **Hide** it and re-trigger the survey (turn it off
+    and on again) — confirm it no longer appears on the site, but is still
+    listed in the admin panel with a "Hidden" tag and a **Show** button.
+    **Show** it again, then **Edit** its text and confirm the new wording
+    appears on the site's next round. Reorder it with ↑ and confirm the
+    site's question order changes to match. **Delete** it and confirm it's
+    gone from both the admin list and the next round on the site.
+40. Submit a couple of test responses on the live site, then in
+    `admin.html` click **Clear all responses**, confirm the browser prompt
+    warns it's permanent, confirm it, and check the response count drops
+    to 0 and both CSV/JSON downloads come back empty. Confirm
+    `customer-admin.html` has no **Clear all responses** button at all.
 
 ## Before a live event
 
 Turn the survey off (or leave it off) until you actually want it live —
-`admin.html` → **Turn off**. To wipe test data before the real thing:
+`admin.html` → **Turn off**. To wipe test survey *responses*, use
+**Clear all responses** in `admin.html`'s Survey block instead of the CLI
+— it's the same effect (an empty response list) without needing Netlify
+CLI access, and it's Super Admin only so Customer Admin can't do it by
+accident. For everything else (or if you'd rather use the CLI for
+responses too):
 
 ```bash
 netlify blobs:delete quantexa-survey responses --force
+netlify blobs:delete quantexa-survey questions --force   # only if you also want the question list back to the original 5
 netlify blobs:delete demoleqture-hero-image bytes --force
 netlify blobs:delete demoleqture-hero-image info --force
 netlify blobs:delete demoleqture-theme theme --force
@@ -818,8 +894,8 @@ configured during testing.
 Open text answers are free-form and unmoderated — anything a visitor types
 goes straight into the downloadable export, visible to whoever has either
 `ADMIN_KEY` or `CUSTOMER_ADMIN_KEY`. There's no way for other visitors to
-see survey answers (unlike the Q&A feature) — only ratings/text exported by
-an admin. Uploaded hero images and image link cards are public by design
+see survey answers (unlike the Q&A feature) — only answers exported by an
+admin, or deleted outright by Super Admin via **Clear all responses**. Uploaded hero images and image link cards are public by design
 (served to every visitor, and card links open wherever the admin pointed
 them), so don't upload anything sensitive and only link to trusted
 destinations — both admin keys have equal ability to add cards and change
