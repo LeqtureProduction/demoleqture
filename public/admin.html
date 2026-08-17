@@ -349,7 +349,7 @@
           <span class="feature-icon">&#128197;</span>
           <div>
             <div class="feature-name">Programme</div>
-            <div class="feature-desc">The list of scheduled sessions, each with an Add to calendar button.</div>
+            <div class="feature-desc">The list of scheduled sessions, plus which calendar options show in the Add to calendar button.</div>
           </div>
         </div>
         <div class="status-row">
@@ -364,6 +364,29 @@
           <button type="button" class="btn btn-primary" id="programme-text-save">Save section text</button>
         </div>
         <p class="hint">Leave both blank to keep the default wording.</p>
+
+        <div class="divider" style="margin:14px 0;"></div>
+
+        <div class="status-row">
+          <span>Add to calendar options</span>
+          <span class="badge" id="calopts-badge">—</span>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;margin:12px 0 8px;font-weight:500;">
+          <input type="checkbox" id="calopt-google" style="width:auto;margin:0;">
+          Google Calendar
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;margin:0 0 8px;font-weight:500;">
+          <input type="checkbox" id="calopt-outlook" style="width:auto;margin:0;">
+          Outlook / Office 365
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;margin:0 0 16px;font-weight:500;">
+          <input type="checkbox" id="calopt-ics" style="width:auto;margin:0;">
+          Apple / iCal (.ics)
+        </label>
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="calopts-save">Save calendar options</button>
+        </div>
+        <p class="hint">Controls which links show up in every session's "Add to calendar" dropdown on the site. At least one must stay checked.</p>
 
         <div class="divider" style="margin:14px 0;"></div>
 
@@ -733,6 +756,7 @@
         fetchCards();
         fetchFeature();
         fetchSessionsAdmin();
+        fetchCalOptions();
         fetchQuestions();
         fetchRecordingsAdmin();
         return fetchState();
@@ -789,6 +813,7 @@
     fetchFeature();
     fetchQuestions();
     fetchRecordingsAdmin();
+    fetchCalOptions();
   });
 
   function refreshCount() {
@@ -1565,6 +1590,7 @@
       fetchFeature();
       fetchSessionsAdmin();
       fetchLogo();
+      fetchCalOptions();
     }
   }, 15000);
   document.addEventListener("visibilitychange", function () {
@@ -1574,6 +1600,7 @@
       fetchFeature();
       fetchSessionsAdmin();
       fetchLogo();
+      fetchCalOptions();
     }
   });
 
@@ -1712,6 +1739,46 @@
   var currentSessionsAdmin = [];
   var editingSessionId = null;
   var sessionRemovePhotoFlag = false;
+
+  // ---- Add to calendar options ----
+  var calOptsBadge = document.getElementById("calopts-badge");
+  var calOptGoogle = document.getElementById("calopt-google");
+  var calOptOutlook = document.getElementById("calopt-outlook");
+  var calOptIcs = document.getElementById("calopt-ics");
+  var calOptsSaveBtn = document.getElementById("calopts-save");
+
+  function renderCalOptions(data) {
+    var opts = data || { google: true, outlook: true, ics: true };
+    calOptGoogle.checked = !!opts.google;
+    calOptOutlook.checked = !!opts.outlook;
+    calOptIcs.checked = !!opts.ics;
+    var allOn = opts.google && opts.outlook && opts.ics;
+    calOptsBadge.textContent = allOn ? "ALL ON" : "CUSTOM";
+    calOptsBadge.className = "badge " + (allOn ? "" : "badge-on");
+  }
+
+  function fetchCalOptions() {
+    return fetch("/api/calendar-options", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(renderCalOptions)
+      .catch(function () {});
+  }
+
+  calOptsSaveBtn.addEventListener("click", function () {
+    calOptsSaveBtn.disabled = true;
+    fetch("/api/calendar-options", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify({ google: calOptGoogle.checked, outlook: calOptOutlook.checked, ics: calOptIcs.checked }),
+    })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(renderCalOptions)
+      .catch(function (err) { alert(err.message); })
+      .finally(function () { calOptsSaveBtn.disabled = false; });
+  });
 
   function fetchSessionsAdmin() {
     return fetch("/api/sessions", { cache: "no-store" })

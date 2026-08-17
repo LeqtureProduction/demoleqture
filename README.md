@@ -34,6 +34,7 @@ netlify/functions/          → serverless functions
   hero-image.mjs                GET (public): the hero image / POST, DELETE (super or customer): upload or remove it
   logo.mjs                     GET (public): the site logo / POST, DELETE (super or customer): upload or remove it
   sessions.mjs                 GET (public): the programme (session list) / POST (super only): add, edit, delete, reorder
+  calendar-options.mjs         GET (public): which "Add to calendar" links are enabled / POST (super or customer): toggle them
   recordings.mjs               GET (public): the recordings list, incl. auto-matched speaker photo / POST (super only): add, edit, delete, reorder
   theme.mjs                    GET (public): font, accent + per-section colors / POST (super or customer): change them
   cards.mjs                    GET (public): the link cards list/images/section text / POST, DELETE (super or customer): manage them
@@ -249,13 +250,22 @@ programme, shown as the same click-to-expand accordion as before.
   dropdown updates every session's displayed time and date instantly, and
   the choice is remembered (via `localStorage`) for their next visit.
 - **Add to calendar.** Every session has an "Add to calendar" button with
-  three options: Google Calendar (opens a pre-filled event in a new tab),
-  Outlook / Office 365 (same, via Outlook's web compose link), and Apple /
-  iCal (downloads a `.ics` file that Apple Calendar, Outlook desktop, and
-  most other calendar apps can import directly). All three use the exact
-  UTC instant of the session, so the event lands at the right time on the
-  attendee's calendar regardless of which timezone they had selected on
-  the page.
+  up to three options: Google Calendar (opens a pre-filled event in a new
+  tab), Outlook / Office 365 (same, via Outlook's web compose link), and
+  Apple / iCal (downloads a `.ics` file that Apple Calendar, Outlook
+  desktop, and most other calendar apps can import directly). All three
+  use the exact UTC instant of the session, so the event lands at the
+  right time on the attendee's calendar regardless of which timezone they
+  had selected on the page.
+- **Which of the three show up is admin-controlled** — either admin panel
+  has three checkboxes ("Add to calendar options", right under the
+  Programme heading/subheading) to turn each one on or off site-wide. At
+  least one must stay checked; trying to save with all three unchecked is
+  rejected. Changes apply for every visitor within about 15 seconds, same
+  as everything else here. Backed by `calendar-options.mjs` / Netlify
+  Blobs (`demoleqture-calendar-options`) — separate from the session data
+  itself, so either admin can adjust it even though the session list is
+  Super Admin only.
 - Backed by `sessions.mjs` / Netlify Blobs. The list is public (anyone
   visiting the site can fetch it); adding, editing, deleting, or
   reordering needs the Super Admin key specifically.
@@ -477,6 +487,7 @@ two logins, two entirely different shared secrets:
 | Text & image section | Yes | Yes |
 | Recordings (add/edit/delete/reorder) | Yes | No |
 | Recordings heading/subtitle text | Yes | Yes |
+| Add to calendar options (Google/Outlook/iCal on-off) | Yes | Yes |
 
 Both are plain, unlisted pages — not linked from the site nav — gated by a
 shared secret each, not a full login system. Enough to keep random visitors
@@ -609,11 +620,11 @@ netlify link                  # or: netlify init, to create a new site
 netlify deploy --prod
 ```
 
-Confirm the deploy summary lists **14 functions** (`survey-state`,
+Confirm the deploy summary lists **15 functions** (`survey-state`,
 `survey-questions`, `survey-response`, `survey-export`, `announcement`,
 `player`, `whoami`, `hero-image`, `logo`, `sessions`, `recordings`,
-`theme`, `cards`, `feature`). If it says 0, you're deploying from inside
-`public/` instead of the project root.
+`theme`, `cards`, `feature`, `calendar-options`). If it says 0, you're
+deploying from inside `public/` instead of the project root.
 
 Don't forget to set both `ADMIN_KEY` and `CUSTOMER_ADMIN_KEY` (see above) —
 without them, every admin action returns a clear error instead of quietly
@@ -907,6 +918,14 @@ curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-
 curl https://<site>/api/theme   # sections.sessions.title/subtitle come back — either key can set this
 curl -X POST https://<site>/api/theme -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"font":"","accent":"","sections":{"hero":{"bg":"","text":"","title":"","subtitle":""},"sessions":{"bg":"","text":"","title":"","subtitle":""},"recordings":{"bg":"","text":"","title":"","subtitle":""},"footer":{"bg":"","text":"","title":"","subtitle":""}}}'
 curl https://<site>/api/theme   # back to blank
+
+# 14b. Add to calendar options — either admin can toggle, at least one must stay on
+curl https://<site>/api/calendar-options   # {"google":true,"outlook":true,"ics":true,...} by default, no key needed
+curl -X POST https://<site>/api/calendar-options -H "content-type: application/json" -H "x-admin-key: <ckey>" -d '{"google":true,"outlook":false,"ics":true}'
+curl https://<site>/api/calendar-options   # outlook now false
+curl -X POST https://<site>/api/calendar-options -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"google":false,"outlook":false,"ics":false}'   # 400, at least one must stay on
+curl -X POST https://<site>/api/calendar-options -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"google":true,"outlook":true,"ics":true}'
+curl https://<site>/api/calendar-options   # back to all true
 ```
 
 Then manually:
@@ -924,6 +943,15 @@ Then manually:
     moment regardless of which timezone you were viewing). Choose Apple /
     iCal and confirm a `.ics` file downloads; opening it in a calendar app
     should show the same event.
+28b. In either admin panel, under **Programme → Add to calendar
+    options**, uncheck Outlook / Office 365 and Apple / iCal, leaving
+    only Google checked, then **Save calendar options**. Reload the site
+    and confirm every session's "Add to calendar" dropdown now shows only
+    the Google Calendar link. Try unchecking all three and confirm the
+    save is rejected with an error instead of silently emptying the
+    dropdown. Re-check all three and save to restore the default. Open
+    the other admin panel and confirm it reflects the change within ~15
+    seconds too — this setting isn't Super-Admin-only.
 29. Under **Programme** in either admin panel, set a custom heading and
     subheading and confirm the site updates within ~15 seconds; clear both
     to restore the default wording.
@@ -1096,11 +1124,13 @@ netlify blobs:delete demoleqture-sessions list --force
 netlify blobs:delete demoleqture-recordings list --force
 ```
 
-The theme, image link cards, and text & image section are cosmetic/content,
-not test data, so there's usually no need to wipe `demoleqture-theme`,
-`demoleqture-cards`, or `demoleqture-feature` before a live event — only do
-this if you specifically want to clear whatever a Customer Admin left
-configured during testing.
+The theme, image link cards, text & image section, and calendar options
+are cosmetic/content, not test data, so there's usually no need to wipe
+`demoleqture-theme`, `demoleqture-cards`, `demoleqture-feature`, or
+`demoleqture-calendar-options` before a live event — only do this if you
+specifically want to clear whatever a Customer Admin left configured
+during testing (`netlify blobs:delete demoleqture-calendar-options
+options --force` for the last one).
 
 ## Moderation / privacy note
 

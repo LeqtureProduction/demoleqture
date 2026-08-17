@@ -1135,6 +1135,7 @@
   var list = document.getElementById("prog-list");
   var tzSelect = document.getElementById("tz-select");
   var currentSessions = [];
+  var currentCalOptions = { google: true, outlook: true, ics: true };
 
   // Full IANA timezone list (same set used by
   // https://live.mentalhealthday.com/2026/template), so visitors get the
@@ -1288,9 +1289,9 @@
               '<div class="add-cal">' +
                 '<button type="button" class="add-cal-btn" data-cal-toggle>Add to calendar ▾</button>' +
                 '<div class="add-cal-menu" hidden>' +
-                  '<a href="' + links.google + '" target="_blank" rel="noopener">Google Calendar</a>' +
-                  '<a href="' + links.outlook + '" target="_blank" rel="noopener">Outlook / Office 365</a>' +
-                  '<button type="button" data-cal-ics>Apple / iCal (.ics)</button>' +
+                  (currentCalOptions.google ? '<a href="' + links.google + '" target="_blank" rel="noopener">Google Calendar</a>' : '') +
+                  (currentCalOptions.outlook ? '<a href="' + links.outlook + '" target="_blank" rel="noopener">Outlook / Office 365</a>' : '') +
+                  (currentCalOptions.ics ? '<button type="button" data-cal-ics>Apple / iCal (.ics)</button>' : '') +
                 '</div>' +
               '</div>' +
             '</div>' +
@@ -1348,9 +1349,23 @@
       .catch(function () {});
   }
 
+  // Which of the three "Add to calendar" links show up, site-wide —
+  // admin-controlled, defaults to all three while the setting loads.
+  function fetchCalendarOptions() {
+    return fetch("/api/calendar-options", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data) return;
+        currentCalOptions = { google: !!data.google, outlook: !!data.outlook, ics: !!data.ics };
+        renderSessions();
+      })
+      .catch(function () {});
+  }
+
   fetchSessions();
-  setInterval(function () { if (!document.hidden) fetchSessions(); }, 15000);
-  document.addEventListener("visibilitychange", function () { if (!document.hidden) fetchSessions(); });
+  fetchCalendarOptions();
+  setInterval(function () { if (!document.hidden) { fetchSessions(); fetchCalendarOptions(); } }, 15000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) { fetchSessions(); fetchCalendarOptions(); } });
 })();
 </script>
 
