@@ -138,12 +138,14 @@ make available to visitors mid-session.
   it. There's no automatic popup and nothing to dismiss; the button just
   stays there, available, for as long as a link is published.
 - **Clicking the button opens a small, non-blocking card, not a
-  fullscreen takeover.** It's a compact ~320px-wide box that appears
-  near the button in the bottom-right corner, containing the linked page
-  in an iframe. The space around the card is completely transparent —
-  there's no dimmed backdrop — so the rest of the page stays fully
-  visible and clickable while the card is open. Visitors can close it
-  with the × and reopen it as many times as they like.
+  fullscreen takeover.** It's a compact ~320x560px box (capped at 78% of
+  the viewport height) that appears near the button, growing upward from
+  the bottom-right corner so it stays anchored near the button while
+  showing as much of the Menti screen as comfortably fits. The space
+  around the card is completely transparent — there's no dimmed
+  backdrop — so the rest of the page stays fully visible and clickable
+  while the card is open. Visitors can close it with the × and reopen it
+  as many times as they like.
 - Clearing the link (**Turn off**) hides the button for everyone (and
   closes the card for anyone who currently has it open) within ~15
   seconds, until you publish again.
