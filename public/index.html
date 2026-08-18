@@ -434,15 +434,22 @@
      needing to scroll inside it. The overlay behind it covers the whole
      viewport just to dim the page, same as the survey popup — only the
      modal itself is deliberately kept small. */
+  /* A small, non-blocking card anchored to the bottom-right corner —
+     deliberately NOT a fullscreen dimmed modal, so the rest of the page
+     stays fully visible (and clickable) around it. Opens only when a
+     visitor clicks the Mentimeter button; publishing a link never opens
+     this automatically, it only reveals the button (see script). */
   .menti-overlay{
-    position:fixed;inset:0;z-index:200;background:rgba(10,10,10,0.72);
-    display:flex;align-items:center;justify-content:center;padding:20px;
+    position:fixed;right:24px;bottom:92px;z-index:200;
+    background:transparent;
   }
   .menti-overlay[hidden]{display:none;}
   .menti-modal{
-    width:100%;max-width:420px;height:min(640px,85vh);
+    width:320px;max-width:calc(100vw - 48px);
+    height:400px;max-height:60vh;
     background:linear-gradient(155deg,#141414,#0a0a0a);
     border:1px solid #2c2c2c;border-radius:var(--radius);
+    box-shadow:0 12px 40px rgba(0,0,0,0.5);
     display:flex;flex-direction:column;overflow:hidden;
   }
   .menti-head{
@@ -463,11 +470,12 @@
 
   /* Persistent "Mentimeter" button — shown at all times (any page
      section, scroll position, or hero player state) whenever Super
-     Admin has a Menti link published, so visitors can open it on demand
-     instead of only seeing the auto-popup once. Uses the accent color
-     (--purple, overridden by Site theme's accent field) so it always
-     matches whatever branding is set. Gets re-parented into the hero
-     video panel while that panel is in fullscreen — see the fullscreen
+     Admin has a Menti link published. Publishing only ever reveals this
+     button; it never opens the popup by itself — the popup only opens
+     when a visitor clicks the button. Uses the accent color (--purple,
+     overridden by Site theme's accent field) so it always matches
+     whatever branding is set. Gets re-parented into the hero video
+     panel while that panel is in fullscreen — see the fullscreen
      script — so it doesn't disappear behind a fullscreen video. */
   .menti-fab{
     position:fixed;bottom:24px;right:24px;z-index:150;
@@ -482,6 +490,8 @@
   .menti-fab::before{content:"";width:8px;height:8px;border-radius:50%;background:#1f0a33;display:inline-block;}
   @media (max-width:480px){
     .menti-fab{bottom:16px;right:16px;padding:12px 16px;font-size:13px;}
+    .menti-overlay{right:12px;bottom:78px;}
+    .menti-modal{width:calc(100vw - 24px);height:380px;}
   }
 
   @media (max-width:860px){
@@ -674,7 +684,7 @@
 </div>
 
 <div class="menti-overlay" id="menti-overlay" hidden>
-  <div class="menti-modal" role="dialog" aria-modal="true" aria-labelledby="menti-title">
+  <div class="menti-modal" role="dialog" aria-modal="false" aria-labelledby="menti-title">
     <div class="menti-head">
       <span class="eyebrow on-dark" id="menti-title">Live participation</span>
       <button type="button" class="menti-close" id="menti-close" aria-label="Close">&times;</button>
@@ -964,38 +974,24 @@
 </script>
 <script>
 (function () {
-  // Menti popup — Super Admin publishes a link and it pops up for every
-  // visitor within ~15 seconds, same "updated_at as round id" dismiss
-  // pattern as the announcement bar: closing it only hides that specific
-  // round, and it reappears automatically if Super Admin publishes again
-  // (even the same URL, since publishing always bumps updated_at).
-  //
-  // A persistent "Mentimeter" button (the fab) is always visible whenever
-  // a link is published, independent of the auto-popup dismiss state, so
-  // visitors can reopen the participation link at any time even after
-  // closing the automatic popup.
+  // Menti — Super Admin publishes a link and, within ~15 seconds, a
+  // persistent "Mentimeter" button appears for every visitor. Publishing
+  // never opens anything by itself: the small popup card only opens when
+  // a visitor clicks that button, and closing it just hides the card —
+  // there's no auto-popup and nothing to "dismiss" for future rounds.
   var overlay = document.getElementById("menti-overlay");
   var iframe = document.getElementById("menti-iframe");
   var closeBtn = document.getElementById("menti-close");
   var fab = document.getElementById("menti-fab");
-  var DISMISS_KEY = "qxa_menti_dismissed";
-  var dismissedId = null;
-  try { dismissedId = localStorage.getItem(DISMISS_KEY); } catch (e) {}
-  var currentId = null;
   var currentUrl = "";
 
   closeBtn.addEventListener("click", function () {
     overlay.hidden = true;
     iframe.src = "";
     iframe.removeAttribute("data-url");
-    if (currentId) {
-      dismissedId = currentId;
-      try { localStorage.setItem(DISMISS_KEY, currentId); } catch (e) {}
-    }
   });
 
-  // Opens the link on demand, bypassing the dismiss gate — a manual open
-  // from the always-there button should work no matter what was dismissed.
+  // The only way this card ever opens — a visitor clicking the button.
   fab.addEventListener("click", function () {
     if (!currentUrl) return;
     if (iframe.getAttribute("data-url") !== currentUrl) {
@@ -1015,18 +1011,8 @@
         if (!currentUrl) {
           overlay.hidden = true;
           iframe.src = "";
-          return;
+          iframe.removeAttribute("data-url");
         }
-        currentId = String(data.updated_at);
-        if (currentId === dismissedId) {
-          overlay.hidden = true;
-          return;
-        }
-        if (iframe.getAttribute("data-url") !== currentUrl) {
-          iframe.src = currentUrl;
-          iframe.setAttribute("data-url", currentUrl);
-        }
-        overlay.hidden = false;
       })
       .catch(function () {});
   }
