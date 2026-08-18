@@ -1047,6 +1047,8 @@
   var fsBar = document.getElementById("hero-fs-bar");
   var mentiFab = document.getElementById("menti-fab");
   var mentiFabHome = mentiFab ? mentiFab.parentNode : null;
+  var mentiOverlay = document.getElementById("menti-overlay");
+  var mentiOverlayHome = mentiOverlay ? mentiOverlay.parentNode : null;
 
   var currentPlayerUrl = "";
   var imageExists = false;
@@ -1116,16 +1118,27 @@
     return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement || null;
   }
 
-  // While the panel is fullscreen, move the Mentimeter button into the
-  // reserved top bar so it renders in its own space above the video
-  // instead of being hidden behind the fullscreen element; move it back
-  // to its normal spot (fixed bottom-right of the page) on exit.
+  // While the panel is fullscreen, move both the Mentimeter button and
+  // the Mentimeter popup overlay inside it, so they render on top of the
+  // video instead of being hidden behind the fullscreen element — a
+  // fullscreen element only shows its own descendants above everything
+  // else, so the popup needs to move too, not just the button that opens
+  // it. Both move back to their normal spot in the page on exit.
   function handleFullscreenChange() {
-    if (!mentiFab) return;
-    if (currentFullscreenElement() === playerPanel && fsBar) {
-      fsBar.appendChild(mentiFab);
-    } else if (mentiFabHome) {
-      mentiFabHome.appendChild(mentiFab);
+    var isPanelFullscreen = currentFullscreenElement() === playerPanel;
+    if (mentiFab) {
+      if (isPanelFullscreen && fsBar) {
+        fsBar.appendChild(mentiFab);
+      } else if (mentiFabHome) {
+        mentiFabHome.appendChild(mentiFab);
+      }
+    }
+    if (mentiOverlay) {
+      if (isPanelFullscreen) {
+        playerPanel.appendChild(mentiOverlay);
+      } else if (mentiOverlayHome) {
+        mentiOverlayHome.appendChild(mentiOverlay);
+      }
     }
   }
 

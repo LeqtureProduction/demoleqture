@@ -166,7 +166,12 @@ surface to everyone mid-session.
   screen below that strip. The button sits in its own empty space rather
   than floating over the video image. For YouTube links, the embed is
   built with `fs=0`, which hides YouTube's own fullscreen button,
-  steering visitors toward ours automatically. **Clevercast has no
+  steering visitors toward ours automatically. Clicking the Mentimeter
+  button while fullscreen also opens the popup itself on top of the
+  video, not just the button — the popup is moved into the fullscreen
+  panel the same way the button is, since a fullscreen element only
+  shows its own descendants above everything else, and both move back to
+  their normal spot in the page automatically on exit. **Clevercast has no
   equivalent setting** — a visitor could still use Clevercast's own
   fullscreen control instead of ours, and in that case the whole video
   (with no reserved strip) takes over the entire screen and the
@@ -833,7 +838,10 @@ Then manually:
     the corner of the player (not YouTube's own controls), and confirm
     the video goes fullscreen with a plain empty strip across the top of
     the screen and the Mentimeter button sitting inside that strip,
-    clickable, above the video rather than floating over it. (Clevercast
+    clickable, above the video rather than floating over it. Click the
+    button and confirm the popup itself also opens on top of the video
+    (not just the button being visible) — close it with the × and
+    confirm the video stays fullscreen. (Clevercast
     links don't have an equivalent guarantee — if a visitor uses
     Clevercast's own fullscreen control instead of ours, the whole video
     takes over with no reserved strip and Mentimeter won't be reachable
