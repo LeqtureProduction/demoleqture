@@ -147,6 +147,44 @@ surface to everyone mid-session.
 - Backed by `menti.mjs` / Netlify Blobs (`demoleqture-menti`). The current
   link is public (anyone visiting the site can fetch it); only
   publishing, changing, or turning it off needs the Super Admin key.
+- **A persistent "Mentimeter" button, independent of the auto-popup.**
+  Whenever a link is published, an always-visible pill button labeled
+  "Mentimeter," styled in the site's accent color (`--purple`, set under
+  Site theme), appears fixed in the bottom-right corner of the site.
+  Visitors can click it to (re)open the link at any time — including
+  after they've already closed the automatic popup for that round, since
+  the button ignores the dismiss tracking entirely. It disappears
+  automatically when there's no link published.
+- **Staying reachable while the hero video is fullscreen.** The hero
+  video player (YouTube/Clevercast) has its own small round fullscreen
+  button in the corner of the player. Visitors should use that button,
+  not the video's own built-in fullscreen control, to go fullscreen —
+  doing so fullscreens our own player panel (rather than handing
+  fullscreen control to the third-party iframe), laid out as a plain
+  reserved strip across the top of the screen (about 56px tall) with the
+  Mentimeter button inside it, and the video filling the rest of the
+  screen below that strip. The button sits in its own empty space rather
+  than floating over the video image. For YouTube links, the embed is
+  built with `fs=0`, which hides YouTube's own fullscreen button,
+  steering visitors toward ours automatically. **Clevercast has no
+  equivalent setting** — a visitor could still use Clevercast's own
+  fullscreen control instead of ours, and in that case the whole video
+  (with no reserved strip) takes over the entire screen and the
+  Mentimeter button won't be reachable until they exit fullscreen. This
+  isn't a bug: once a cross-origin third-party iframe becomes the
+  browser's fullscreen element via its own controls, nothing from the
+  parent page — including our reserved strip — can render on top of it.
+  It's a hard browser security restriction with no JavaScript
+  workaround; the reserved strip only exists (and only helps) when
+  fullscreen is entered through our own button.
+  - Note: on iOS Safari, the Fullscreen API only supports fullscreening
+    `<video>` elements natively — arbitrary wrapper elements like our
+    player panel cannot be fullscreened at all there. On an iPhone/iPad,
+    our custom fullscreen button will have no effect in Safari; a
+    visitor going fullscreen there would have to use the embed's own
+    native controls (if any), which reverts to the same iframe-takes-over
+    limitation described above. This is a platform limitation, not
+    specific to this site.
 
 ## Site logo
 
@@ -786,6 +824,23 @@ Then manually:
     for everyone within ~15 seconds and doesn't come back until you
     publish again. Confirm `customer-admin.html` has no Menti controls at
     all — this is Super Admin only.
+14c. With the Menti link still published, confirm a "Mentimeter" pill
+    button (in the site's accent color) is fixed in the bottom-right
+    corner of the site at all times, including after you've closed the
+    auto-popup — clicking it should reopen the link regardless. Turn the
+    Menti link off and confirm the button disappears. Publish a YouTube
+    link as the hero video, click the small round fullscreen button in
+    the corner of the player (not YouTube's own controls), and confirm
+    the video goes fullscreen with a plain empty strip across the top of
+    the screen and the Mentimeter button sitting inside that strip,
+    clickable, above the video rather than floating over it. (Clevercast
+    links don't have an equivalent guarantee — if a visitor uses
+    Clevercast's own fullscreen control instead of ours, the whole video
+    takes over with no reserved strip and Mentimeter won't be reachable
+    until they exit fullscreen; that's an inherent browser restriction,
+    not something to try to "fix." Also note this custom fullscreen
+    button has no effect in iOS Safari, which only supports
+    fullscreening `<video>` elements — a platform limitation.)
 15. Upload a hero image from either admin page while the player is off —
     confirm it appears to the right of the heading within ~15 seconds inside
     a square frame, sized to sit neatly next to the text rather than

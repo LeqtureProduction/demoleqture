@@ -313,6 +313,45 @@
   .video-embed{position:relative;width:100%;padding-top:56.25%;background:#000;border-radius:var(--radius);overflow:hidden;}
   .video-embed iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
   .video-embed img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}
+  /* Custom fullscreen control for the video, in the corner of the embed.
+     We fullscreen our own #hero-player-panel wrapper (not the iframe
+     itself), laid out as a top bar + video area. The Mentimeter button
+     is moved into that top bar while fullscreen (see the script near the
+     end of the page), so it sits in its own reserved strip above the
+     video rather than floating over it — visible the whole time, for
+     any embed. The YouTube embed's own fullscreen button is
+     intentionally suppressed (fs=0) so this is the one and only way to
+     fullscreen a YouTube link; a Clevercast (or other) embed may still
+     expose its own built-in fullscreen control we can't suppress or
+     hook into — if a visitor uses that instead of ours, the iframe
+     becomes fullscreen on its own and this bar won't be involved at
+     all, which is a browser cross-origin restriction, not something we
+     can override. */
+  .hero-fullscreen-btn{
+    position:absolute;bottom:12px;right:12px;z-index:5;
+    width:38px;height:38px;border-radius:50%;
+    background:rgba(10,10,10,0.65);border:1px solid rgba(255,255,255,0.25);
+    color:var(--white);font-size:17px;line-height:1;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    transition:background .15s,border-color .15s;
+  }
+  .hero-fullscreen-btn:hover{background:rgba(10,10,10,0.85);border-color:rgba(255,255,255,0.5);}
+  .hero-fs-bar{display:none;}
+  #hero-player-panel:fullscreen{display:flex;flex-direction:column;background:#000;}
+  #hero-player-panel:-webkit-full-screen{display:flex;flex-direction:column;background:#000;}
+  #hero-player-panel:fullscreen .hero-fs-bar,
+  #hero-player-panel:-webkit-full-screen .hero-fs-bar{
+    display:flex;align-items:center;justify-content:flex-end;
+    flex:0 0 auto;height:56px;padding:0 16px;background:rgba(10,10,10,0.94);
+  }
+  #hero-player-panel:fullscreen .hero-fs-bar .menti-fab,
+  #hero-player-panel:-webkit-full-screen .hero-fs-bar .menti-fab{
+    position:static;box-shadow:none;
+  }
+  #hero-player-panel:fullscreen .video-embed,
+  #hero-player-panel:-webkit-full-screen .video-embed{
+    flex:1 1 auto;width:100%;max-width:none;height:auto;padding-top:0;
+  }
   /* Hero image: no fixed square/letterbox — the box hugs the image's own
      shape so nothing but the photo itself is visible. Sized as a fluid
      percentage of the column (not a fixed pixel box) so it scales
@@ -422,6 +461,29 @@
     background:#fff;display:block;
   }
 
+  /* Persistent "Mentimeter" button — shown at all times (any page
+     section, scroll position, or hero player state) whenever Super
+     Admin has a Menti link published, so visitors can open it on demand
+     instead of only seeing the auto-popup once. Uses the accent color
+     (--purple, overridden by Site theme's accent field) so it always
+     matches whatever branding is set. Gets re-parented into the hero
+     video panel while that panel is in fullscreen — see the fullscreen
+     script — so it doesn't disappear behind a fullscreen video. */
+  .menti-fab{
+    position:fixed;bottom:24px;right:24px;z-index:150;
+    display:flex;align-items:center;gap:8px;
+    background:var(--purple);color:#1f0a33;
+    font-family:'Inter',sans-serif;font-weight:700;font-size:14px;
+    padding:13px 20px;border-radius:30px;border:none;cursor:pointer;
+    box-shadow:0 6px 20px rgba(0,0,0,0.35);transition:transform .15s,box-shadow .15s;
+  }
+  .menti-fab:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,0,0,0.4);}
+  .menti-fab[hidden]{display:none;}
+  .menti-fab::before{content:"";width:8px;height:8px;border-radius:50%;background:#1f0a33;display:inline-block;}
+  @media (max-width:480px){
+    .menti-fab{bottom:16px;right:16px;padding:12px 16px;font-size:13px;}
+  }
+
   @media (max-width:860px){
     /* .hero-grid.has-side (2 classes) otherwise beats this rule's
        specificity even inside the media query, keeping the 2-column
@@ -499,8 +561,10 @@
     </div>
     <div class="hero-panel" id="hero-player-panel" hidden>
       <div class="label">Live now</div>
+      <div class="hero-fs-bar" id="hero-fs-bar"></div>
       <div class="video-embed">
         <iframe id="hero-player-iframe" src="" title="Live stream" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>
+        <button type="button" class="hero-fullscreen-btn" id="hero-fullscreen-btn" aria-label="Fullscreen" title="Fullscreen">&#9974;</button>
       </div>
     </div>
     <div class="hero-panel" id="hero-image-panel" hidden>
@@ -620,6 +684,8 @@
     </div>
   </div>
 </div>
+
+<button type="button" class="menti-fab" id="menti-fab" hidden>Mentimeter</button>
 
 <script>
 (function () {
@@ -903,28 +969,50 @@
   // pattern as the announcement bar: closing it only hides that specific
   // round, and it reappears automatically if Super Admin publishes again
   // (even the same URL, since publishing always bumps updated_at).
+  //
+  // A persistent "Mentimeter" button (the fab) is always visible whenever
+  // a link is published, independent of the auto-popup dismiss state, so
+  // visitors can reopen the participation link at any time even after
+  // closing the automatic popup.
   var overlay = document.getElementById("menti-overlay");
   var iframe = document.getElementById("menti-iframe");
   var closeBtn = document.getElementById("menti-close");
+  var fab = document.getElementById("menti-fab");
   var DISMISS_KEY = "qxa_menti_dismissed";
   var dismissedId = null;
   try { dismissedId = localStorage.getItem(DISMISS_KEY); } catch (e) {}
   var currentId = null;
+  var currentUrl = "";
 
   closeBtn.addEventListener("click", function () {
     overlay.hidden = true;
     iframe.src = "";
+    iframe.removeAttribute("data-url");
     if (currentId) {
       dismissedId = currentId;
       try { localStorage.setItem(DISMISS_KEY, currentId); } catch (e) {}
     }
   });
 
+  // Opens the link on demand, bypassing the dismiss gate — a manual open
+  // from the always-there button should work no matter what was dismissed.
+  fab.addEventListener("click", function () {
+    if (!currentUrl) return;
+    if (iframe.getAttribute("data-url") !== currentUrl) {
+      iframe.src = currentUrl;
+      iframe.setAttribute("data-url", currentUrl);
+    }
+    overlay.hidden = false;
+  });
+
   function check() {
     fetch("/api/menti", { cache: "no-store" })
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        if (!data || !data.url) {
+        currentUrl = (data && data.url) || "";
+        fab.hidden = !currentUrl;
+
+        if (!currentUrl) {
           overlay.hidden = true;
           iframe.src = "";
           return;
@@ -934,9 +1022,9 @@
           overlay.hidden = true;
           return;
         }
-        if (iframe.getAttribute("data-url") !== data.url) {
-          iframe.src = data.url;
-          iframe.setAttribute("data-url", data.url);
+        if (iframe.getAttribute("data-url") !== currentUrl) {
+          iframe.src = currentUrl;
+          iframe.setAttribute("data-url", currentUrl);
         }
         overlay.hidden = false;
       })
@@ -955,38 +1043,95 @@
   var iframe = document.getElementById("hero-player-iframe");
   var imagePanel = document.getElementById("hero-image-panel");
   var imageEl = document.getElementById("hero-image-el");
+  var fullscreenBtn = document.getElementById("hero-fullscreen-btn");
+  var fsBar = document.getElementById("hero-fs-bar");
+  var mentiFab = document.getElementById("menti-fab");
+  var mentiFabHome = mentiFab ? mentiFab.parentNode : null;
 
   var currentPlayerUrl = "";
   var imageExists = false;
   var imageVersion = 0;
 
-  // Turns a normal YouTube watch/share/live link into its embeddable form.
-  // Anything else (Clevercast embed links, or an already-embeddable URL of
-  // any kind) is used exactly as pasted in the admin panel.
+  // Turns a normal YouTube watch/share/live link into its embeddable form,
+  // and adds fs=0 so YouTube's own fullscreen button is hidden — visitors
+  // are steered to our custom fullscreen button instead, so Mentimeter can
+  // stay reachable while the video is fullscreen. Clevercast (and any other
+  // third-party embed) has no equivalent parameter: if a visitor uses that
+  // player's own native fullscreen control instead of ours, the browser's
+  // cross-origin fullscreen model means nothing outside that iframe —
+  // including our own reserved top bar — can be drawn on top of it. The
+  // reserved bar reliably shows up only when fullscreen was entered via
+  // our own button below.
+  function addNoFsParam(url) {
+    try {
+      var u = new URL(url);
+      u.searchParams.set("fs", "0");
+      return u.toString();
+    } catch (e) {
+      return url;
+    }
+  }
+
   function toEmbedUrl(raw) {
     try {
       var u = new URL(raw);
       var host = u.hostname.replace(/^www\./, "");
       if (host === "youtu.be") {
         var id = u.pathname.slice(1);
-        return id ? "https://www.youtube.com/embed/" + id : raw;
+        return id ? addNoFsParam("https://www.youtube.com/embed/" + id) : raw;
       }
       if (host === "youtube.com" || host === "m.youtube.com") {
         if (u.pathname === "/watch") {
           var v = u.searchParams.get("v");
-          if (v) return "https://www.youtube.com/embed/" + v;
+          if (v) return addNoFsParam("https://www.youtube.com/embed/" + v);
         }
         if (u.pathname.indexOf("/live/") === 0) {
           var parts = u.pathname.split("/");
-          if (parts[2]) return "https://www.youtube.com/embed/" + parts[2];
+          if (parts[2]) return addNoFsParam("https://www.youtube.com/embed/" + parts[2]);
         }
-        if (u.pathname.indexOf("/embed/") === 0) return raw;
+        if (u.pathname.indexOf("/embed/") === 0) return addNoFsParam(raw);
       }
       return raw;
     } catch (e) {
       return raw;
     }
   }
+
+  // Fullscreens OUR OWN wrapping panel (not the iframe itself), laid out
+  // as a reserved top bar plus the video area below it (see CSS), so the
+  // Mentimeter button — moved into that bar while fullscreen — always has
+  // its own strip of empty space at the top rather than floating over the
+  // video image.
+  function requestPanelFullscreen() {
+    var el = playerPanel;
+    var fn = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if (fn) fn.call(el);
+  }
+
+  if (fullscreenBtn) {
+    fullscreenBtn.addEventListener("click", requestPanelFullscreen);
+  }
+
+  function currentFullscreenElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement || null;
+  }
+
+  // While the panel is fullscreen, move the Mentimeter button into the
+  // reserved top bar so it renders in its own space above the video
+  // instead of being hidden behind the fullscreen element; move it back
+  // to its normal spot (fixed bottom-right of the page) on exit.
+  function handleFullscreenChange() {
+    if (!mentiFab) return;
+    if (currentFullscreenElement() === playerPanel && fsBar) {
+      fsBar.appendChild(mentiFab);
+    } else if (mentiFabHome) {
+      mentiFabHome.appendChild(mentiFab);
+    }
+  }
+
+  document.addEventListener("fullscreenchange", handleFullscreenChange);
+  document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+  document.addEventListener("msfullscreenchange", handleFullscreenChange);
 
   // The video player always wins over the image when both are configured —
   // the image is only ever shown when there's no live link.

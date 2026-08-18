@@ -290,7 +290,7 @@
           <button type="button" class="btn btn-primary" id="player-publish">Publish</button>
           <button type="button" class="btn btn-outline" id="player-off">Turn off</button>
         </div>
-        <p class="hint">Shows a live player to the right of the main heading for everyone within about 15 seconds, replacing the hero image while it's live. Paste any normal YouTube link (watch, youtu.be, or /live/) or a Clevercast embed link. Publishing a new link replaces the old one; Turn off removes it until you publish again.</p>
+        <p class="hint">Shows a live player to the right of the main heading for everyone within about 15 seconds, replacing the hero image while it's live. Paste any normal YouTube link (watch, youtu.be, or /live/) or a Clevercast embed link. Publishing a new link replaces the old one; Turn off removes it until you publish again. A small round fullscreen button sits in the corner of the player — visitors should use it (rather than the video's own fullscreen control) to go fullscreen. Doing so reserves a plain strip of empty space at the top of the screen with the Mentimeter button in it, so the video itself doesn't cover it. For YouTube this is reliable, since the video's own built-in fullscreen button is hidden automatically. Clevercast links don't support that, so a visitor could still tap the player's own fullscreen control instead of ours — in that case the whole video (with no reserved strip) takes over the screen and Mentimeter won't be reachable until they exit fullscreen. That's a browser security restriction on third-party embeds, not something we can override.</p>
       </div>
 
       <div class="feature-block band-grey" id="block-menti">
@@ -310,7 +310,7 @@
           <button type="button" class="btn btn-primary" id="menti-publish">Publish</button>
           <button type="button" class="btn btn-outline" id="menti-off">Turn off</button>
         </div>
-        <p class="hint">Shows a popup with this link to every visitor within about 15 seconds — a bounded box, not a fullscreen takeover, so it looks like a small window rather than covering the page. Visitors can close it any time; closing only dismisses that round, so publishing again (even the same link) brings it back for everyone. Turn off removes it until you publish again. Super Admin only.</p>
+        <p class="hint">Shows a popup with this link to every visitor within about 15 seconds — a bounded box, not a fullscreen takeover, so it looks like a small window rather than covering the page. Visitors can close it any time; closing only dismisses that round, so publishing again (even the same link) brings it back for everyone. Turn off removes it until you publish again. While a link is published, an always-visible "Mentimeter" button (in the site's accent color) also appears in the bottom-right corner of the site, so visitors can reopen the link at any time, even after closing the popup. Super Admin only.</p>
       </div>
 
       <div class="feature-block band-grey" id="block-hero-image">
