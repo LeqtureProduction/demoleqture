@@ -390,6 +390,38 @@
     font-size:22px;font-weight:700;display:flex;align-items:center;justify-content:center;
   }
 
+  /* MENTI POPUP — a bounded, portrait-ish box (not a fullscreen embed),
+     sized so a typical Menti audience/join page shows in full without
+     needing to scroll inside it. The overlay behind it covers the whole
+     viewport just to dim the page, same as the survey popup — only the
+     modal itself is deliberately kept small. */
+  .menti-overlay{
+    position:fixed;inset:0;z-index:200;background:rgba(10,10,10,0.72);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .menti-overlay[hidden]{display:none;}
+  .menti-modal{
+    width:100%;max-width:420px;height:min(640px,85vh);
+    background:linear-gradient(155deg,#141414,#0a0a0a);
+    border:1px solid #2c2c2c;border-radius:var(--radius);
+    display:flex;flex-direction:column;overflow:hidden;
+  }
+  .menti-head{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:16px 18px 12px;flex-shrink:0;
+  }
+  .menti-close{
+    width:30px;height:30px;border-radius:50%;background:transparent;border:1px solid #3a3a3a;
+    color:var(--white);font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;transition:all .15s;flex-shrink:0;
+  }
+  .menti-close:hover{border-color:var(--white);}
+  .menti-frame-wrap{flex:1;min-height:0;padding:0 12px 12px;}
+  .menti-frame-wrap iframe{
+    width:100%;height:100%;border:none;border-radius:calc(var(--radius) - 4px);
+    background:#fff;display:block;
+  }
+
   @media (max-width:860px){
     /* .hero-grid.has-side (2 classes) otherwise beats this rule's
        specificity even inside the media query, keeping the 2-column
@@ -573,6 +605,18 @@
       <div class="survey-thanks-icon">&#10003;</div>
       <h3 class="survey-title" style="margin-top:14px;">Thanks for your feedback!</h3>
       <p class="survey-sub" style="margin-bottom:0;">Your answers have been saved.</p>
+    </div>
+  </div>
+</div>
+
+<div class="menti-overlay" id="menti-overlay" hidden>
+  <div class="menti-modal" role="dialog" aria-modal="true" aria-labelledby="menti-title">
+    <div class="menti-head">
+      <span class="eyebrow on-dark" id="menti-title">Live participation</span>
+      <button type="button" class="menti-close" id="menti-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="menti-frame-wrap">
+      <iframe id="menti-iframe" src="" title="Live participation" allow="clipboard-write"></iframe>
     </div>
   </div>
 </div>
@@ -843,6 +887,58 @@
         }
         textEl.textContent = data.text;
         bar.hidden = false;
+      })
+      .catch(function () {});
+  }
+
+  check();
+  setInterval(function () { if (!document.hidden) check(); }, 15000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
+})();
+</script>
+<script>
+(function () {
+  // Menti popup — Super Admin publishes a link and it pops up for every
+  // visitor within ~15 seconds, same "updated_at as round id" dismiss
+  // pattern as the announcement bar: closing it only hides that specific
+  // round, and it reappears automatically if Super Admin publishes again
+  // (even the same URL, since publishing always bumps updated_at).
+  var overlay = document.getElementById("menti-overlay");
+  var iframe = document.getElementById("menti-iframe");
+  var closeBtn = document.getElementById("menti-close");
+  var DISMISS_KEY = "qxa_menti_dismissed";
+  var dismissedId = null;
+  try { dismissedId = localStorage.getItem(DISMISS_KEY); } catch (e) {}
+  var currentId = null;
+
+  closeBtn.addEventListener("click", function () {
+    overlay.hidden = true;
+    iframe.src = "";
+    if (currentId) {
+      dismissedId = currentId;
+      try { localStorage.setItem(DISMISS_KEY, currentId); } catch (e) {}
+    }
+  });
+
+  function check() {
+    fetch("/api/menti", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data || !data.url) {
+          overlay.hidden = true;
+          iframe.src = "";
+          return;
+        }
+        currentId = String(data.updated_at);
+        if (currentId === dismissedId) {
+          overlay.hidden = true;
+          return;
+        }
+        if (iframe.getAttribute("data-url") !== data.url) {
+          iframe.src = data.url;
+          iframe.setAttribute("data-url", data.url);
+        }
+        overlay.hidden = false;
       })
       .catch(function () {});
   }

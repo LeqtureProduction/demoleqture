@@ -31,6 +31,7 @@ netlify/functions/          → serverless functions
   survey-export.mjs            GET (super or customer): download all responses as CSV or JSON / DELETE (super only): clear all responses
   announcement.mjs             GET (public): current site announcement / POST (super only): publish or clear it
   player.mjs                   GET (public): current hero video link / POST (super only): publish or turn it off
+  menti.mjs                    GET (public): current Menti popup link / POST (super only): publish or turn it off
   hero-image.mjs                GET (public): the hero image / POST, DELETE (super or customer): upload or remove it
   logo.mjs                     GET (public): the site logo / POST, DELETE (super or customer): upload or remove it
   sessions.mjs                 GET (public): the programme (session list) / POST (super only): add, edit, delete, reorder
@@ -118,6 +119,34 @@ site whenever you want, e.g. "Lunch is now being served in the atrium."
   `localStorage`.
 
 Controlled from the same `admin.html` page as the survey — see below.
+
+## Live participation (Menti) popup
+
+A Super-Admin-only push notification for a live audience-participation
+tool — a Mentimeter link (e.g.
+`https://www.menti.com/alck7vv1f2hi`), or really any URL you want to
+surface to everyone mid-session.
+
+- Publish a link under **Menti popup** in `admin.html` (Super Admin
+  only — this isn't in `customer-admin.html` at all, same tier as the
+  announcement bar and hero video player) and it pops up for every
+  visitor within about 15 seconds.
+- **The popup box is deliberately small, not a fullscreen takeover** — a
+  bounded ~420px-wide, portrait-shaped window (capped at 85% of the
+  viewport height) containing the linked page in an iframe, dimmed
+  background behind it. It's sized to show a typical Menti join/vote
+  screen in full, the way it'd look on a phone, rather than stretching
+  edge-to-edge or requiring visitors to scroll around inside it.
+- Visitors can close it any time via the × — no mandatory interaction
+  like the survey has. Closing only dismisses that specific round
+  (tracked by when it was published, same pattern as the announcement
+  bar); publishing again — even the exact same link — brings the popup
+  back for everyone, since every publish counts as a fresh round.
+- Clearing the link (**Turn off**) hides it for everyone within ~15
+  seconds until you publish again.
+- Backed by `menti.mjs` / Netlify Blobs (`demoleqture-menti`). The current
+  link is public (anyone visiting the site can fetch it); only
+  publishing, changing, or turning it off needs the Super Admin key.
 
 ## Site logo
 
@@ -479,6 +508,7 @@ two logins, two entirely different shared secrets:
 | Survey responses (delete) | Yes | No |
 | Site announcement | Yes | No |
 | Hero video player | Yes | No |
+| Menti popup (link + publish/turn off) | Yes | No |
 | Hero image | Yes | Yes — **disabled while the hero video player is live** (there's nothing to preview, so changing it would just be confusing; the fields grey out with an explanation until a Super Admin turns the player off) |
 | Site logo (nav bar, top-left) | Yes | Yes |
 | Hero eyebrow text | Yes | Yes |
@@ -620,11 +650,12 @@ netlify link                  # or: netlify init, to create a new site
 netlify deploy --prod
 ```
 
-Confirm the deploy summary lists **15 functions** (`survey-state`,
+Confirm the deploy summary lists **16 functions** (`survey-state`,
 `survey-questions`, `survey-response`, `survey-export`, `announcement`,
-`player`, `whoami`, `hero-image`, `logo`, `sessions`, `recordings`,
-`theme`, `cards`, `feature`, `calendar-options`). If it says 0, you're
-deploying from inside `public/` instead of the project root.
+`player`, `menti`, `whoami`, `hero-image`, `logo`, `sessions`,
+`recordings`, `theme`, `cards`, `feature`, `calendar-options`). If it
+says 0, you're deploying from inside `public/` instead of the project
+root.
 
 Don't forget to set both `ADMIN_KEY` and `CUSTOMER_ADMIN_KEY` (see above) —
 without them, every admin action returns a clear error instead of quietly
@@ -686,6 +717,14 @@ curl https://<site>/api/player   # should show the same url back
 curl -X POST https://<site>/api/player -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"url":""}'
 curl https://<site>/api/player   # should show {"url":"",...}
 
+# 5b. Publish a Menti popup link, then turn it off (super only)
+curl -X POST https://<site>/api/menti -H "content-type: application/json" -H "x-admin-key: <ckey>" -d '{"url":"https://www.menti.com/alck7vv1f2hi"}'  # 401
+curl -X POST https://<site>/api/menti -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"url":"https://www.menti.com/alck7vv1f2hi"}'
+curl https://<site>/api/menti   # should show the same url back
+curl -X POST https://<site>/api/menti -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"url":"not-a-valid-url"}'   # 400, must start with http:// or https://
+curl -X POST https://<site>/api/menti -H "content-type: application/json" -H "x-admin-key: <key>" -d '{"url":""}'
+curl https://<site>/api/menti   # should show {"url":"",...}
+
 # 6. Upload a hero image as Customer Admin, check metadata, then remove it
 curl -X POST https://<site>/api/hero-image -H "x-admin-key: <ckey>" -F "image=@/path/to/test.jpg"
 curl https://<site>/api/hero-image?meta=1   # {"exists":true,"updated_at":...}
@@ -736,6 +775,17 @@ Then manually:
     to the right of the heading within ~15 seconds, that the hero switches
     to two columns only while it's showing, and that **Turn off** removes it
     and collapses the hero back to one column.
+14b. Publish the Menti link (`https://www.menti.com/alck7vv1f2hi` or any
+    test link) under **Menti popup** in `admin.html` and confirm a small,
+    bounded popup box appears for every visitor within ~15 seconds — it
+    should look like a compact window with the linked page inside it, not
+    a fullscreen overlay covering the whole browser. Close it with the ×
+    and confirm it stays closed on refresh. Publish the *same* link again
+    and confirm the popup reappears (each publish is a fresh "round," even
+    with an unchanged URL). Click **Turn off** and confirm it disappears
+    for everyone within ~15 seconds and doesn't come back until you
+    publish again. Confirm `customer-admin.html` has no Menti controls at
+    all — this is Super Admin only.
 15. Upload a hero image from either admin page while the player is off —
     confirm it appears to the right of the heading within ~15 seconds inside
     a square frame, sized to sit neatly next to the text rather than

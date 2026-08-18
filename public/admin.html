@@ -184,6 +184,7 @@
         <a href="#block-survey" class="quick-nav-pill">&#128203; Survey</a>
         <a href="#block-announcement" class="quick-nav-pill">&#128227; Announcement</a>
         <a href="#block-player" class="quick-nav-pill">&#127909; Hero video</a>
+        <a href="#block-menti" class="quick-nav-pill">&#128202; Menti popup</a>
         <a href="#block-hero-image" class="quick-nav-pill">&#128444; Logo &amp; hero</a>
         <a href="#block-programme" class="quick-nav-pill">&#128197; Programme</a>
         <a href="#block-theme" class="quick-nav-pill">&#127912; Theme</a>
@@ -290,6 +291,26 @@
           <button type="button" class="btn btn-outline" id="player-off">Turn off</button>
         </div>
         <p class="hint">Shows a live player to the right of the main heading for everyone within about 15 seconds, replacing the hero image while it's live. Paste any normal YouTube link (watch, youtu.be, or /live/) or a Clevercast embed link. Publishing a new link replaces the old one; Turn off removes it until you publish again.</p>
+      </div>
+
+      <div class="feature-block band-grey" id="block-menti">
+        <div class="feature-header">
+          <span class="feature-icon">&#128202;</span>
+          <div>
+            <div class="feature-name">Live participation (Menti)</div>
+            <div class="feature-desc">Pop up a Mentimeter (or any other) link for every visitor.</div>
+          </div>
+        </div>
+        <div class="status-row">
+          <span>Menti popup</span>
+          <span class="badge" id="menti-badge">—</span>
+        </div>
+        <input type="text" id="menti-input" placeholder="https://www.menti.com/&hellip;" autocomplete="off" />
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="menti-publish">Publish</button>
+          <button type="button" class="btn btn-outline" id="menti-off">Turn off</button>
+        </div>
+        <p class="hint">Shows a popup with this link to every visitor within about 15 seconds — a bounded box, not a fullscreen takeover, so it looks like a small window rather than covering the page. Visitors can close it any time; closing only dismisses that round, so publishing again (even the same link) brings it back for everyone. Turn off removes it until you publish again. Super Admin only.</p>
       </div>
 
       <div class="feature-block band-grey" id="block-hero-image">
@@ -696,6 +717,10 @@
   var playerBadge = document.getElementById("player-badge");
   var playerPublishBtn = document.getElementById("player-publish");
   var playerOffBtn = document.getElementById("player-off");
+  var mentiInput = document.getElementById("menti-input");
+  var mentiBadge = document.getElementById("menti-badge");
+  var mentiPublishBtn = document.getElementById("menti-publish");
+  var mentiOffBtn = document.getElementById("menti-off");
   var imagePreview = document.getElementById("image-preview");
   var imageBadge = document.getElementById("image-badge");
   var imageFile = document.getElementById("image-file");
@@ -750,6 +775,7 @@
         refreshCount();
         fetchAnnouncement();
         fetchPlayer();
+        fetchMenti();
         fetchHeroImage();
         fetchLogo();
         fetchTheme();
@@ -806,6 +832,7 @@
     refreshCount();
     fetchAnnouncement();
     fetchPlayer();
+    fetchMenti();
     fetchHeroImage();
     fetchLogo();
     fetchTheme();
@@ -1108,6 +1135,50 @@
   });
   playerOffBtn.addEventListener("click", function () {
     publishPlayer("");
+  });
+
+  function fetchMenti() {
+    return fetch("/api/menti", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var url = (data && data.url) || "";
+        mentiInput.value = url;
+        mentiBadge.textContent = url ? "LIVE" : "NONE";
+        mentiBadge.className = "badge " + (url ? "badge-on" : "");
+      })
+      .catch(function () {});
+  }
+
+  function publishMenti(url) {
+    mentiPublishBtn.disabled = true;
+    mentiOffBtn.disabled = true;
+    fetch("/api/menti", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": key },
+      body: JSON.stringify({ url: url }),
+    })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || "Request failed (" + r.status + ")."); });
+        return r.json();
+      })
+      .then(function (data) {
+        var u = (data.state && data.state.url) || "";
+        mentiInput.value = u;
+        mentiBadge.textContent = u ? "LIVE" : "NONE";
+        mentiBadge.className = "badge " + (u ? "badge-on" : "");
+      })
+      .catch(function (err) { alert(err.message); })
+      .finally(function () {
+        mentiPublishBtn.disabled = false;
+        mentiOffBtn.disabled = false;
+      });
+  }
+
+  mentiPublishBtn.addEventListener("click", function () {
+    publishMenti(mentiInput.value.trim());
+  });
+  mentiOffBtn.addEventListener("click", function () {
+    publishMenti("");
   });
 
   // ---- Site logo ----
